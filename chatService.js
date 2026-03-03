@@ -13,9 +13,7 @@ import {
   orderBy
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
-/* ========================= */
 /* FIND USER BY EMAIL */
-/* ========================= */
 export async function findUserByEmail(email) {
   email = email.trim().toLowerCase();
 
@@ -30,9 +28,7 @@ export async function findUserByEmail(email) {
   return snapshot.docs[0];
 }
 
-/* ========================= */
-/* ADD CONTACT */
-/* ========================= */
+/* ADD CONTACT (PERMANENT) */
 export async function addContact(contactUid) {
   const currentUid = auth.currentUser.uid;
 
@@ -44,9 +40,7 @@ export async function addContact(contactUid) {
   );
 }
 
-/* ========================= */
 /* LIST CONTACTS */
-/* ========================= */
 export function listenToContacts(callback) {
   const currentUid = auth.currentUser.uid;
 
@@ -56,7 +50,6 @@ export function listenToContacts(callback) {
   );
 
   return onSnapshot(q, async (snapshot) => {
-
     const contacts = [];
 
     for (const docSnap of snapshot.docs) {
@@ -73,9 +66,7 @@ export function listenToContacts(callback) {
   });
 }
 
-/* ========================= */
 /* CREATE OR GET CHAT */
-/* ========================= */
 export async function createOrGetChat(otherUserId) {
   const currentUserId = auth.currentUser.uid;
 
@@ -88,16 +79,15 @@ export async function createOrGetChat(otherUserId) {
     await setDoc(chatRef, {
       participants: [currentUserId, otherUserId],
       createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      updatedAt: serverTimestamp(),
+      lastMessage: ""
     });
   }
 
   return chatId;
 }
 
-/* ========================= */
 /* SEND MESSAGE */
-/* ========================= */
 export async function sendMessage(chatId, text) {
   if (!text.trim()) return;
 
@@ -113,27 +103,46 @@ export async function sendMessage(chatId, text) {
   await setDoc(
     doc(db, "chats", chatId),
     {
+      lastMessage: text,
       updatedAt: serverTimestamp()
     },
     { merge: true }
   );
 }
 
-/* ========================= */
-/* LISTEN TO MESSAGES */
-/* ========================= */
-export function listenToMessages(chatId, callback) {
+/* LIST USER CHATS (ONLY SHOW IF MESSAGE EXISTS) */
+export function listenToUserChats(callback) {
+  const currentUserId = auth.currentUser.uid;
+
   const q = query(
-    collection(db, "chats", chatId, "messages"),
-    orderBy("createdAt")
+    collection(db, "chats"),
+    where("participants", "array-contains", currentUserId),
+    orderBy("updatedAt", "desc")
   );
 
-  return onSnapshot(q, (snapshot) => {
-    const messages = snapshot.docs.map(d => ({
-      id: d.id,
-      ...d.data()
-    }));
+  return onSnapshot(q, async (snapshot) => {
+    const chats = [];
 
-    callback(messages);
+    for (const docSnap of snapshot.docs) {
+      const data = docSnap.data();
+
+      if (!data.lastMessage) continue;
+
+      const otherUserId = data.participants.find(
+        id => id !== currentUserId
+      );
+
+      const userDoc = await getDoc(doc(db, "users", otherUserId));
+
+      if (userDoc.exists()) {
+        chats.push({
+          chatId: docSnap.id,
+          lastMessage: data.lastMessage,
+          ...userDoc.data()
+        });
+      }
+    }
+
+    callback(chats);
   });
 }
