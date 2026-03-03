@@ -13,21 +13,69 @@ import {
   orderBy
 } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-firestore.js";
 
+/* ========================= */
 /* FIND USER BY EMAIL */
+/* ========================= */
 export async function findUserByEmail(email) {
+  email = email.trim().toLowerCase();
+
   const q = query(
     collection(db, "users"),
     where("email", "==", email)
   );
 
   const snapshot = await getDocs(q);
-
   if (snapshot.empty) return null;
 
   return snapshot.docs[0];
 }
 
-/* CREATE OR GET CHAT BETWEEN TWO USERS */
+/* ========================= */
+/* ADD CONTACT */
+/* ========================= */
+export async function addContact(contactUid) {
+  const currentUid = auth.currentUser.uid;
+
+  await setDoc(
+    doc(db, "users", currentUid, "contacts", contactUid),
+    {
+      addedAt: serverTimestamp()
+    }
+  );
+}
+
+/* ========================= */
+/* LIST CONTACTS */
+/* ========================= */
+export function listenToContacts(callback) {
+  const currentUid = auth.currentUser.uid;
+
+  const q = query(
+    collection(db, "users", currentUid, "contacts"),
+    orderBy("addedAt", "desc")
+  );
+
+  return onSnapshot(q, async (snapshot) => {
+
+    const contacts = [];
+
+    for (const docSnap of snapshot.docs) {
+      const userDoc = await getDoc(doc(db, "users", docSnap.id));
+      if (userDoc.exists()) {
+        contacts.push({
+          uid: docSnap.id,
+          ...userDoc.data()
+        });
+      }
+    }
+
+    callback(contacts);
+  });
+}
+
+/* ========================= */
+/* CREATE OR GET CHAT */
+/* ========================= */
 export async function createOrGetChat(otherUserId) {
   const currentUserId = auth.currentUser.uid;
 
@@ -39,6 +87,7 @@ export async function createOrGetChat(otherUserId) {
   if (!chatSnap.exists()) {
     await setDoc(chatRef, {
       participants: [currentUserId, otherUserId],
+      createdAt: serverTimestamp(),
       updatedAt: serverTimestamp()
     });
   }
@@ -46,8 +95,12 @@ export async function createOrGetChat(otherUserId) {
   return chatId;
 }
 
+/* ========================= */
 /* SEND MESSAGE */
+/* ========================= */
 export async function sendMessage(chatId, text) {
+  if (!text.trim()) return;
+
   await addDoc(
     collection(db, "chats", chatId, "messages"),
     {
@@ -57,20 +110,25 @@ export async function sendMessage(chatId, text) {
     }
   );
 
-  await setDoc(doc(db, "chats", chatId), {
-    lastMessage: text,
-    updatedAt: serverTimestamp()
-  }, { merge: true });
+  await setDoc(
+    doc(db, "chats", chatId),
+    {
+      updatedAt: serverTimestamp()
+    },
+    { merge: true }
+  );
 }
 
-/* LISTEN TO CHAT MESSAGES */
+/* ========================= */
+/* LISTEN TO MESSAGES */
+/* ========================= */
 export function listenToMessages(chatId, callback) {
   const q = query(
     collection(db, "chats", chatId, "messages"),
     orderBy("createdAt")
   );
 
-  return onSnapshot(q, snapshot => {
+  return onSnapshot(q, (snapshot) => {
     const messages = snapshot.docs.map(d => ({
       id: d.id,
       ...d.data()
