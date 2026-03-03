@@ -11,16 +11,29 @@
 <div class="header">Axon Cord</div>
 
 <div class="main">
-  <div>
-    <h2>Profile</h2>
-    <p style="color:#6b7280; margin-top:6px;">
-      Account settings and preferences
-    </p>
+  <div style="text-align:center;">
+
+    <img id="userPhoto"
+         style="width:90px;height:90px;border-radius:50%;margin-bottom:15px;display:none;">
+
+    <h2 id="userName">Loading...</h2>
+    <p id="userEmail" style="color:#6b7280;margin-top:6px;"></p>
+
+    <button id="logoutBtn"
+      style="margin-top:20px;
+             padding:10px 16px;
+             background:#ef4444;
+             border:none;
+             border-radius:6px;
+             color:white;
+             cursor:pointer;">
+      Logout
+    </button>
+
   </div>
 </div>
 
 <div class="bottom-nav">
-
   <a href="index.html">
     <svg viewBox="0 0 24 24">
       <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
@@ -41,8 +54,35 @@
     </svg>
     <span>Profile</span>
   </a>
-
 </div>
+
+<script type="module">
+  import { protectPage, logoutUser } from "./auth.js";
+  import { getCurrentUser } from "./auth.js";
+
+  protectPage();
+
+  const user = getCurrentUser();
+
+  import { auth } from "./firebase.js";
+  import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+
+  onAuthStateChanged(auth, (user) => {
+    if (user) {
+      document.getElementById("userName").textContent = user.displayName;
+      document.getElementById("userEmail").textContent = user.email;
+
+      if (user.photoURL) {
+        const photo = document.getElementById("userPhoto");
+        photo.src = user.photoURL;
+        photo.style.display = "block";
+      }
+    }
+  });
+
+  document.getElementById("logoutBtn")
+    .addEventListener("click", logoutUser);
+</script>
 
 </body>
 </html>
