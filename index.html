@@ -8,14 +8,11 @@
 </head>
 <body>
 
-<!-- Header -->
 <div class="header">Axon Cord</div>
 
-<!-- Main Content -->
 <div class="main">
   <div class="empty-state">
 
-    <!-- Chat Bubble Outline Icon -->
     <svg viewBox="0 0 24 24">
       <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
     </svg>
@@ -26,7 +23,6 @@
   </div>
 </div>
 
-<!-- Floating Compose Button -->
 <div class="fab">
   <svg viewBox="0 0 24 24" fill="none">
     <line x1="12" y1="5" x2="12" y2="19"/>
@@ -34,9 +30,7 @@
   </svg>
 </div>
 
-<!-- Bottom Navigation -->
 <div class="bottom-nav">
-
   <a href="index.html" class="active">
     <svg viewBox="0 0 24 24">
       <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
@@ -57,8 +51,12 @@
     </svg>
     <span>Profile</span>
   </a>
-
 </div>
+
+<script type="module">
+  import { protectPage } from "./auth.js";
+  protectPage();
+</script>
 
 </body>
 </html>
