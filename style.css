@@ -15,7 +15,6 @@
 
 body {
   background: var(--bg);
-  color: var(--text);
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -23,14 +22,14 @@ body {
 
 /* Header */
 .header {
-  padding: 20px;
+  padding: 18px 20px;
   font-size: 18px;
   font-weight: 600;
-  background: white;
+  background: #ffffff;
   border-bottom: 1px solid var(--border);
 }
 
-/* Main Content */
+/* Main area */
 .main {
   flex: 1;
   display: flex;
@@ -40,7 +39,34 @@ body {
   padding: 20px;
 }
 
-/* Floating Action Button */
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.empty-state svg {
+  width: 64px;
+  height: 64px;
+  stroke: #d1d5db;
+  fill: none;
+  stroke-width: 1.5;
+}
+
+.empty-state h2 {
+  font-size: 24px;
+  font-weight: 600;
+  color: #000;
+}
+
+.empty-state p {
+  color: #6b7280;
+  font-size: 16px;
+}
+
+/* Floating Button */
 .fab {
   position: fixed;
   right: 20px;
@@ -49,7 +75,6 @@ body {
   height: 56px;
   border-radius: 50%;
   background: var(--primary);
-  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,7 +85,8 @@ body {
 .fab svg {
   width: 22px;
   height: 22px;
-  fill: white;
+  stroke: white;
+  stroke-width: 2;
 }
 
 /* Bottom Navigation */
@@ -69,7 +95,7 @@ body {
   bottom: 0;
   left: 0;
   right: 0;
-  background: white;
+  background: #ffffff;
   border-top: 1px solid var(--border);
   display: flex;
   justify-content: space-around;
@@ -85,7 +111,6 @@ body {
   align-items: center;
   gap: 4px;
   font-weight: 500;
-  transition: 0.2s ease;
 }
 
 .bottom-nav a svg {
@@ -98,9 +123,9 @@ body {
   color: var(--primary);
 }
 
-/* Desktop spacing */
+/* Desktop slight scaling */
 @media (min-width: 900px) {
-  .main {
-    font-size: 18px;
+  .empty-state h2 {
+    font-size: 26px;
   }
 }
