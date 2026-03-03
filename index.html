@@ -8,22 +8,23 @@
 </head>
 <body>
 
+<!-- Header -->
 <div class="header">Chats</div>
 
-<!-- Chat List Area -->
-<div id="chatList" style="padding:20px; padding-bottom:90px;">
-  <p style="color:#6b7280;">No conversations yet</p>
+<!-- Chat List Container -->
+<div id="chatList" class="page-content">
+  <p class="empty-text">No conversations yet</p>
 </div>
 
-<!-- Floating Plus Button -->
+<!-- Floating Button (UNCHANGED UI) -->
 <div class="fab">
-  <svg viewBox="0 0 24 24" fill="none">
+  <svg viewBox="0 0 24 24">
     <line x1="12" y1="5" x2="12" y2="19" stroke="white" stroke-width="2"/>
     <line x1="5" y1="12" x2="19" y2="12" stroke="white" stroke-width="2"/>
   </svg>
 </div>
 
-<!-- Bottom Navigation -->
+<!-- Bottom Navigation (UNCHANGED UI) -->
 <div class="bottom-nav">
   <a href="index.html" class="active">
     <svg viewBox="0 0 24 24">
@@ -50,27 +51,38 @@
 <!-- Logic -->
 <script type="module">
 import { protectPage } from "./auth.js";
-import { findUserByEmail, createOrGetChat } from "./chatService.js";
+import { listenToUserChats } from "./chatService.js";
 
 protectPage();
 
-/* PLUS BUTTON CLICK */
-document.querySelector(".fab").addEventListener("click", async () => {
+/* LISTEN TO USER CHATS */
+listenToUserChats((chats) => {
 
-  const email = prompt("Enter user's email:");
+  const container = document.getElementById("chatList");
+  container.innerHTML = "";
 
-  if (!email) return;
-
-  const userDoc = await findUserByEmail(email.trim());
-
-  if (!userDoc) {
-    alert("User not found.");
+  if (chats.length === 0) {
+    container.innerHTML = `<p class="empty-text">No conversations yet</p>`;
     return;
   }
 
-  const chatId = await createOrGetChat(userDoc.id);
+  chats.forEach(chat => {
 
-  window.location.href = "chat.html?id=" + chatId;
+    const card = document.createElement("div");
+    card.className = "contact-card";
+
+    card.innerHTML = `
+      <div class="contact-name">${chat.displayName}</div>
+      <div class="contact-email">${chat.lastMessage}</div>
+    `;
+
+    card.onclick = () => {
+      window.location.href = "chat.html?id=" + chat.chatId;
+    };
+
+    container.appendChild(card);
+  });
+
 });
 </script>
 
