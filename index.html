@@ -2,27 +2,31 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Chats</title>
+  <title>Axon Cord</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="header">Chats</div>
+<div class="header">Axon Cord</div>
 
 <div class="main">
-  <div>
+  <div class="empty-state">
+    <!-- Chat Bubble Icon -->
+    <svg viewBox="0 0 24 24">
+      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
+    </svg>
+
     <h2>No conversations yet</h2>
-    <p style="color: var(--muted); margin-top: 6px;">
-      Start chatting with your contacts
-    </p>
+    <p>Start chatting with your contacts</p>
   </div>
 </div>
 
 <!-- Floating Button -->
 <div class="fab">
-  <svg viewBox="0 0 24 24">
-    <path d="M12 5v14M5 12h14" stroke="white" stroke-width="2" stroke-linecap="round"/>
+  <svg viewBox="0 0 24 24" fill="none">
+    <line x1="12" y1="5" x2="12" y2="19"/>
+    <line x1="5" y1="12" x2="19" y2="12"/>
   </svg>
 </div>
 
@@ -37,7 +41,7 @@
 
   <a href="contacts.html">
     <svg viewBox="0 0 24 24">
-      <path d="M16 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm-8 0a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4 0-6 2-6 4v1h8v-1c0-2-2-4-2-4zm8 0c-4 0-6 2-6 4v1h12v-1c0-2-2-4-6-4z"/>
+      <path d="M16 11a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm-8 0a4 4 0 1 0-4-4 4 4 0 0 0 4 4zm0 2c-4 0-6 2-6 4v1h8v-1c0-2-2-4-2-4zm8 0c-4 0-6 2-6 4v1h12v-1c0-2-4-4-6-4z"/>
     </svg>
     <span>Contacts</span>
   </a>
