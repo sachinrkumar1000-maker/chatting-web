@@ -8,28 +8,22 @@
 </head>
 <body>
 
-<div class="header">Axon Cord</div>
+<div class="header">Chats</div>
 
-<div class="main">
-  <div class="empty-state">
-
-    <svg viewBox="0 0 24 24">
-      <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"/>
-    </svg>
-
-    <h2>No conversations yet</h2>
-    <p>Start chatting with your contacts</p>
-
-  </div>
+<!-- Chat List Area -->
+<div id="chatList" style="padding:20px; padding-bottom:90px;">
+  <p style="color:#6b7280;">No conversations yet</p>
 </div>
 
+<!-- Floating Plus Button -->
 <div class="fab">
   <svg viewBox="0 0 24 24" fill="none">
-    <line x1="12" y1="5" x2="12" y2="19"/>
-    <line x1="5" y1="12" x2="19" y2="12"/>
+    <line x1="12" y1="5" x2="12" y2="19" stroke="white" stroke-width="2"/>
+    <line x1="5" y1="12" x2="19" y2="12" stroke="white" stroke-width="2"/>
   </svg>
 </div>
 
+<!-- Bottom Navigation -->
 <div class="bottom-nav">
   <a href="index.html" class="active">
     <svg viewBox="0 0 24 24">
@@ -53,9 +47,31 @@
   </a>
 </div>
 
+<!-- Logic -->
 <script type="module">
-  import { protectPage } from "./auth.js";
-  protectPage();
+import { protectPage } from "./auth.js";
+import { findUserByEmail, createOrGetChat } from "./chatService.js";
+
+protectPage();
+
+/* PLUS BUTTON CLICK */
+document.querySelector(".fab").addEventListener("click", async () => {
+
+  const email = prompt("Enter user's email:");
+
+  if (!email) return;
+
+  const userDoc = await findUserByEmail(email.trim());
+
+  if (!userDoc) {
+    alert("User not found.");
+    return;
+  }
+
+  const chatId = await createOrGetChat(userDoc.id);
+
+  window.location.href = "chat.html?id=" + chatId;
+});
 </script>
 
 </body>
