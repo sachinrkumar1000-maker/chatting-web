@@ -1,17 +1,911 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Axoncord</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AxonCord</title>
+<link href="https://fonts.googleapis.com/css2?family=gg+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-primary: #313338;
+    --bg-secondary: #2b2d31;
+    --bg-tertiary: #1e1f22;
+    --bg-accent: #404249;
+    --bg-modifier-hover: rgba(255,255,255,0.06);
+    --bg-modifier-active: rgba(255,255,255,0.16);
+    --bg-modifier-selected: rgba(255,255,255,0.1);
+    --text-normal: #dbdee1;
+    --text-muted: #949ba4;
+    --text-link: #00a8fc;
+    --brand: #5865f2;
+    --brand-hover: #4752c4;
+    --brand-active: #3c45a5;
+    --green: #23a55a;
+    --red: #f23f42;
+    --yellow: #f0b232;
+    --nitro: #ff73fa;
+    --nitro-dark: #e040fb;
+    --channel-default: #949ba4;
+    --scrollbar: #1a1b1e;
+    --input-bg: #1e1f22;
+    --mention-bg: rgba(88,101,242,0.3);
+    --mention-hover: rgba(88,101,242,0.5);
+  }
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif; background: var(--bg-primary); color: var(--text-normal); overflow: hidden; height: 100vh; width: 100vw; font-size: 16px; }
+  
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 4px; }
 
-<!-- Firebase -->
+  /* AUTH OVERLAY */
+  #auth-overlay {
+    position: fixed; inset: 0; z-index: 9999;
+    background: #5865f2;
+    display: flex; align-items: center; justify-content: center;
+    background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+  }
+  .auth-card {
+    background: var(--bg-secondary);
+    border-radius: 8px;
+    padding: 32px;
+    width: 480px;
+    max-width: 95vw;
+    text-align: center;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+  }
+  .auth-logo { font-size: 36px; margin-bottom: 8px; }
+  .auth-title { font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 8px; }
+  .auth-subtitle { color: var(--text-muted); font-size: 16px; margin-bottom: 24px; }
+  .google-btn {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    background: #fff; color: #1f1f1f; border: none;
+    padding: 12px 24px; border-radius: 4px; font-size: 16px; font-weight: 500;
+    cursor: pointer; width: 100%; transition: background 0.2s;
+    margin-bottom: 16px;
+  }
+  .google-btn:hover { background: #f5f5f5; }
+  .google-icon { width: 20px; height: 20px; }
+  .auth-divider { display: flex; align-items: center; gap: 12px; color: var(--text-muted); font-size: 12px; text-transform: uppercase; margin: 16px 0; }
+  .auth-divider::before, .auth-divider::after { content:''; flex:1; height:1px; background: var(--bg-accent); }
+  .auth-input-group { margin-bottom: 16px; text-align: left; }
+  .auth-label { font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 8px; display: block; }
+  .auth-input { width: 100%; background: var(--input-bg); border: 1px solid rgba(0,0,0,0.3); border-radius: 4px; color: var(--text-normal); padding: 10px 12px; font-size: 16px; outline: none; }
+  .auth-input:focus { border-color: var(--brand); }
+  .auth-btn { width: 100%; background: var(--brand); color: #fff; border: none; padding: 12px; border-radius: 4px; font-size: 16px; font-weight: 500; cursor: pointer; transition: background 0.2s; }
+  .auth-btn:hover { background: var(--brand-hover); }
+  .auth-switch { margin-top: 8px; color: var(--text-muted); font-size: 14px; }
+  .auth-switch a { color: var(--text-link); cursor: pointer; text-decoration: none; }
+  .auth-switch a:hover { text-decoration: underline; }
+  .auth-error { background: rgba(242,63,66,0.1); border: 1px solid var(--red); color: var(--red); padding: 8px 12px; border-radius: 4px; font-size: 14px; margin-bottom: 12px; display: none; }
+
+  /* MAIN APP */
+  #app { display: flex; height: 100vh; width: 100vw; }
+  
+  /* SERVER SIDEBAR */
+  #server-sidebar {
+    width: 72px; background: var(--bg-tertiary);
+    display: flex; flex-direction: column; align-items: center;
+    padding: 12px 0; gap: 8px; overflow-y: auto; flex-shrink: 0;
+  }
+  .server-icon {
+    width: 48px; height: 48px; border-radius: 50%;
+    background: var(--bg-secondary); cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; font-weight: 700; color: var(--text-normal);
+    transition: border-radius 0.2s, background 0.2s;
+    position: relative; flex-shrink: 0; overflow: hidden;
+    text-transform: uppercase;
+  }
+  .server-icon:hover, .server-icon.active { border-radius: 16px; background: var(--brand); color: #fff; }
+  .server-icon.active { border-radius: 16px; }
+  .server-icon img { width: 100%; height: 100%; object-fit: cover; }
+  .server-pill {
+    position: absolute; left: -8px; top: 50%; transform: translateY(-50%);
+    width: 8px; background: #fff; border-radius: 0 4px 4px 0;
+    transition: height 0.2s;
+  }
+  .server-icon.active .server-pill { height: 40px; }
+  .server-icon:hover .server-pill { height: 20px; }
+  .server-divider { width: 32px; height: 2px; background: var(--bg-accent); border-radius: 1px; }
+  .server-add-btn { width: 48px; height: 48px; border-radius: 50%; background: var(--bg-secondary); color: var(--green); font-size: 24px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+  .server-add-btn:hover { border-radius: 16px; background: var(--green); color: #fff; }
+  .server-explore-btn { width: 48px; height: 48px; border-radius: 50%; background: var(--bg-secondary); color: var(--green); font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
+  .server-explore-btn:hover { border-radius: 16px; background: var(--green); color: #fff; }
+  .dm-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--brand); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; flex-shrink: 0; }
+  .dm-icon:hover { border-radius: 16px; }
+  .dm-icon svg { width: 28px; height: 28px; fill: #fff; }
+
+  /* CHANNEL SIDEBAR */
+  #channel-sidebar {
+    width: 240px; background: var(--bg-secondary);
+    display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .server-header {
+    padding: 16px; font-size: 15px; font-weight: 700; color: var(--text-normal);
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+    cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    transition: background 0.1s;
+  }
+  .server-header:hover { background: var(--bg-modifier-hover); }
+  .channels-list { flex: 1; overflow-y: auto; padding: 8px 8px 0; }
+  .channel-category {
+    font-size: 11px; font-weight: 700; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    padding: 16px 8px 4px; cursor: pointer;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .channel-category:hover { color: var(--text-normal); }
+  .channel-item {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 8px; border-radius: 4px; cursor: pointer;
+    color: var(--channel-default); font-size: 15px;
+    margin: 1px 0; transition: all 0.1s; position: relative;
+  }
+  .channel-item:hover { background: var(--bg-modifier-hover); color: var(--text-normal); }
+  .channel-item.active { background: var(--bg-modifier-selected); color: var(--text-normal); }
+  .channel-icon { font-size: 18px; flex-shrink: 0; width: 18px; }
+  .channel-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .channel-badge { background: var(--red); color: #fff; border-radius: 8px; padding: 0 6px; font-size: 11px; font-weight: 700; min-width: 16px; text-align: center; }
+  .user-panel {
+    background: var(--bg-tertiary); padding: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .user-avatar-sm {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--brand); flex-shrink: 0; position: relative;
+    overflow: hidden; cursor: pointer;
+  }
+  .user-avatar-sm img { width: 100%; height: 100%; object-fit: cover; }
+  .user-status-dot {
+    position: absolute; bottom: -1px; right: -1px;
+    width: 10px; height: 10px; background: var(--green);
+    border-radius: 50%; border: 2px solid var(--bg-tertiary);
+  }
+  .user-info-sm { flex: 1; overflow: hidden; }
+  .user-name-sm { font-size: 13px; font-weight: 600; color: var(--text-normal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-tag-sm { font-size: 11px; color: var(--text-muted); }
+  .user-controls { display: flex; gap: 4px; }
+  .user-ctrl-btn { width: 28px; height: 28px; border-radius: 4px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.1s; }
+  .user-ctrl-btn:hover { background: var(--bg-modifier-hover); color: var(--text-normal); }
+
+  /* MAIN CONTENT */
+  #main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  
+  /* CHANNEL HEADER */
+  #channel-header {
+    height: 48px; background: var(--bg-primary);
+    border-bottom: 1px solid rgba(0,0,0,0.2);
+    display: flex; align-items: center; padding: 0 16px; gap: 8px;
+    flex-shrink: 0;
+  }
+  .channel-header-icon { color: var(--text-muted); font-size: 20px; }
+  .channel-header-name { font-size: 15px; font-weight: 700; color: var(--text-normal); }
+  .channel-header-divider { width: 1px; height: 20px; background: var(--bg-accent); margin: 0 8px; }
+  .channel-header-topic { font-size: 14px; color: var(--text-muted); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .header-actions { display: flex; gap: 4px; margin-left: auto; }
+  .header-action-btn { width: 32px; height: 32px; border-radius: 4px; background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; transition: all 0.1s; }
+  .header-action-btn:hover { color: var(--text-normal); }
+
+  /* MESSAGES */
+  #messages-container {
+    flex: 1; overflow-y: auto; padding: 16px 0;
+    display: flex; flex-direction: column;
+  }
+  .message-group { padding: 4px 16px; display: flex; gap: 16px; margin-bottom: 2px; }
+  .message-group:hover { background: rgba(0,0,0,0.06); }
+  .message-avatar { width: 40px; height: 40px; border-radius: 50%; flex-shrink: 0; cursor: pointer; overflow: hidden; background: var(--brand); display: flex; align-items: center; justify-content: center; font-weight: 700; color: #fff; margin-top: 2px; }
+  .message-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .message-content-wrap { flex: 1; min-width: 0; }
+  .message-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+  .message-author { font-size: 15px; font-weight: 600; color: var(--text-normal); cursor: pointer; }
+  .message-author:hover { text-decoration: underline; }
+  .message-timestamp { font-size: 11px; color: var(--text-muted); }
+  .message-text { font-size: 15px; color: var(--text-normal); line-height: 1.375; word-break: break-word; }
+  .message-continued { padding-left: 56px; }
+  .message-continued:hover { background: rgba(0,0,0,0.06); }
+  .message-continued .message-text { padding: 2px 16px; }
+  .system-msg { color: var(--text-muted); font-size: 13px; padding: 4px 16px; font-style: italic; }
+  .date-divider { display: flex; align-items: center; gap: 12px; padding: 16px 16px; color: var(--text-muted); font-size: 12px; font-weight: 600; }
+  .date-divider::before, .date-divider::after { content:''; flex:1; height:1px; background: var(--bg-accent); }
+
+  /* MESSAGE INPUT */
+  #message-input-area { padding: 0 16px 24px; flex-shrink: 0; }
+  .message-input-wrap {
+    background: var(--bg-accent); border-radius: 8px;
+    display: flex; align-items: flex-end; gap: 0; padding: 0 16px 0 0;
+  }
+  .input-add-btn { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; font-size: 22px; flex-shrink: 0; }
+  .input-add-btn:hover { color: var(--text-normal); }
+  #message-input {
+    flex: 1; background: transparent; border: none; outline: none;
+    color: var(--text-normal); font-size: 15px; padding: 11px 4px;
+    resize: none; max-height: 300px; line-height: 1.375;
+  }
+  #message-input::placeholder { color: var(--text-muted); }
+  .input-actions { display: flex; align-items: center; gap: 4px; padding: 8px 0; }
+  .input-action-btn { width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; color: var(--text-muted); cursor: pointer; border-radius: 4px; font-size: 20px; }
+  .input-action-btn:hover { color: var(--text-normal); }
+  .send-btn { background: var(--brand); color: #fff; border: none; border-radius: 4px; width: 32px; height: 32px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .send-btn:hover { background: var(--brand-hover); }
+
+  /* MEMBERS SIDEBAR */
+  #members-sidebar {
+    width: 240px; background: var(--bg-secondary);
+    overflow-y: auto; flex-shrink: 0; padding: 16px 8px;
+  }
+  .members-category { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 16px 8px 4px; }
+  .member-item { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 4px; cursor: pointer; margin: 1px 0; }
+  .member-item:hover { background: var(--bg-modifier-hover); }
+  .member-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--brand); flex-shrink: 0; position: relative; overflow: hidden; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+  .member-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .member-status { position: absolute; bottom: -1px; right: -1px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--bg-secondary); }
+  .status-online { background: var(--green); }
+  .status-idle { background: var(--yellow); }
+  .status-dnd { background: var(--red); }
+  .status-offline { background: var(--text-muted); }
+  .member-name { font-size: 14px; color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .member-item:hover .member-name { color: var(--text-normal); }
+  .member-tag { font-size: 11px; color: var(--brand); font-weight: 600; margin-left: auto; flex-shrink: 0; }
+
+  /* DM VIEW */
+  #dm-sidebar {
+    width: 240px; background: var(--bg-secondary);
+    display: flex; flex-direction: column; flex-shrink: 0;
+  }
+  .dm-header { padding: 8px; }
+  .dm-search { background: var(--bg-tertiary); border: none; border-radius: 4px; padding: 6px 8px; color: var(--text-normal); font-size: 14px; width: 100%; outline: none; }
+  .dm-section-title { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; padding: 16px 16px 4px; }
+  .dm-item { display: flex; align-items: center; gap: 12px; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin: 1px 8px; }
+  .dm-item:hover { background: var(--bg-modifier-hover); }
+  .dm-item.active { background: var(--bg-modifier-selected); }
+  .dm-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--brand); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 13px; position: relative; overflow: hidden; }
+  .dm-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .dm-info { flex: 1; overflow: hidden; }
+  .dm-name { font-size: 14px; font-weight: 600; color: var(--text-normal); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .dm-preview { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* HOME / FRIENDS */
+  #friends-view {
+    flex: 1; display: flex; flex-direction: column; background: var(--bg-primary);
+  }
+  .friends-header {
+    height: 48px; border-bottom: 1px solid rgba(0,0,0,0.2);
+    display: flex; align-items: center; padding: 0 16px; gap: 16px;
+    background: var(--bg-primary);
+  }
+  .friends-icon { font-size: 22px; color: var(--text-muted); }
+  .friends-title { font-size: 15px; font-weight: 700; color: var(--text-normal); }
+  .friends-nav { display: flex; gap: 4px; }
+  .friends-nav-btn { padding: 4px 12px; border-radius: 4px; font-size: 14px; cursor: pointer; color: var(--text-muted); border: none; background: transparent; }
+  .friends-nav-btn:hover { background: var(--bg-modifier-hover); color: var(--text-normal); }
+  .friends-nav-btn.active { background: var(--bg-modifier-selected); color: var(--text-normal); }
+  .friends-nav-btn.green { background: var(--green); color: #fff; }
+  .friends-content { flex: 1; overflow-y: auto; padding: 16px; }
+  .friends-search { background: var(--bg-tertiary); border: none; border-radius: 4px; padding: 8px 12px; color: var(--text-normal); font-size: 14px; width: 100%; outline: none; margin-bottom: 16px; }
+  .friend-item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 8px; border-top: 1px solid rgba(255,255,255,0.05); cursor: pointer; }
+  .friend-item:hover { background: var(--bg-modifier-hover); }
+  .friend-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--brand); flex-shrink: 0; position: relative; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; overflow: hidden; }
+  .friend-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .friend-info { flex: 1; }
+  .friend-name { font-size: 14px; font-weight: 600; color: var(--text-normal); }
+  .friend-status { font-size: 13px; color: var(--text-muted); }
+  .friend-actions { display: flex; gap: 8px; }
+  .friend-btn { width: 32px; height: 32px; border-radius: 50%; background: var(--bg-tertiary); border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+  .friend-btn:hover { background: var(--bg-accent); color: var(--text-normal); }
+  .friend-btn.green:hover { background: rgba(35,165,90,0.2); color: var(--green); }
+  .friend-btn.red:hover { background: rgba(242,63,66,0.2); color: var(--red); }
+
+  /* ACTIVITY SIDEBAR (right in friends view) */
+  #activity-sidebar { width: 360px; background: var(--bg-secondary); padding: 16px; overflow-y: auto; flex-shrink: 0; }
+  .activity-title { font-size: 15px; font-weight: 700; color: var(--text-normal); margin-bottom: 16px; }
+  .activity-item { display: flex; gap: 12px; padding: 12px; background: var(--bg-tertiary); border-radius: 8px; margin-bottom: 8px; }
+  .activity-avatar { width: 40px; height: 40px; border-radius: 50%; background: var(--brand); flex-shrink: 0; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; overflow: hidden; }
+  .activity-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .activity-info { flex: 1; }
+  .activity-name { font-size: 14px; font-weight: 600; color: var(--text-normal); }
+  .activity-game { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+  .activity-time { font-size: 12px; color: var(--text-muted); }
+
+  /* MODALS */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+    display: flex; align-items: center; justify-content: center;
+    z-index: 1000; opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+  .modal {
+    background: var(--bg-secondary); border-radius: 8px;
+    padding: 0; width: 440px; max-width: 95vw; max-height: 90vh;
+    overflow-y: auto; transform: scale(0.9); transition: transform 0.2s;
+  }
+  .modal-overlay.open .modal { transform: scale(1); }
+  .modal-header { padding: 24px 24px 8px; }
+  .modal-title { font-size: 20px; font-weight: 700; color: var(--text-normal); }
+  .modal-subtitle { font-size: 14px; color: var(--text-muted); margin-top: 8px; }
+  .modal-body { padding: 16px 24px 24px; }
+  .modal-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px; background: var(--bg-tertiary); border-top: 1px solid rgba(0,0,0,0.2); }
+  .modal-close { position: absolute; right: 16px; top: 16px; background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; }
+  .modal-close:hover { color: var(--text-normal); }
+  .modal-input-group { margin-bottom: 16px; }
+  .modal-label { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.4px; margin-bottom: 8px; display: block; }
+  .modal-input { width: 100%; background: var(--input-bg); border: 1px solid rgba(0,0,0,0.3); border-radius: 4px; color: var(--text-normal); padding: 10px 12px; font-size: 14px; outline: none; }
+  .modal-input:focus { border-color: var(--brand); }
+  .btn { padding: 9px 16px; border-radius: 4px; border: none; font-size: 14px; font-weight: 500; cursor: pointer; transition: background 0.1s; }
+  .btn-ghost { background: transparent; color: var(--text-normal); }
+  .btn-ghost:hover { text-decoration: underline; }
+  .btn-primary { background: var(--brand); color: #fff; }
+  .btn-primary:hover { background: var(--brand-hover); }
+  .btn-danger { background: var(--red); color: #fff; }
+  .btn-danger:hover { background: #d32f2f; }
+  .btn-success { background: var(--green); color: #fff; }
+  .btn-success:hover { background: #1a8a47; }
+
+  /* SERVER CREATION */
+  .server-create-option { display: flex; align-items: center; gap: 16px; padding: 16px; border-radius: 8px; border: 1px solid var(--bg-accent); cursor: pointer; margin-bottom: 12px; transition: all 0.2s; }
+  .server-create-option:hover { border-color: var(--brand); background: var(--mention-bg); }
+  .server-create-icon { width: 48px; height: 48px; border-radius: 50%; background: var(--bg-accent); display: flex; align-items: center; justify-content: center; font-size: 24px; flex-shrink: 0; }
+  .server-create-info { flex: 1; }
+  .server-create-title { font-size: 15px; font-weight: 600; color: var(--text-normal); }
+  .server-create-desc { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+  /* NITRO PAGE */
+  #nitro-view {
+    flex: 1; overflow-y: auto; padding: 32px;
+    background: linear-gradient(135deg, #0d0d1a 0%, #1a0d2e 50%, #0d0d1a 100%);
+  }
+  .nitro-hero { text-align: center; padding: 48px 0; }
+  .nitro-title { font-size: 48px; font-weight: 900; background: linear-gradient(135deg, #ff73fa, #8c8cff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 16px; }
+  .nitro-subtitle { font-size: 20px; color: var(--text-muted); margin-bottom: 48px; }
+  .nitro-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; margin-bottom: 48px; }
+  .nitro-plan {
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px; padding: 32px; text-align: center; transition: all 0.3s;
+    position: relative; overflow: hidden;
+  }
+  .nitro-plan:hover { transform: translateY(-4px); border-color: rgba(255,115,250,0.5); }
+  .nitro-plan.featured { border-color: rgba(255,115,250,0.7); background: rgba(255,115,250,0.08); }
+  .nitro-plan.featured::before { content: 'MOST POPULAR'; position: absolute; top: 16px; right: -24px; background: linear-gradient(135deg, #ff73fa, #8c8cff); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: 1px; padding: 4px 32px; transform: rotate(35deg); }
+  .plan-icon { font-size: 48px; margin-bottom: 16px; }
+  .plan-name { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+  .plan-price { font-size: 40px; font-weight: 900; color: var(--nitro); margin-bottom: 4px; }
+  .plan-price span { font-size: 16px; color: var(--text-muted); }
+  .plan-features { list-style: none; text-align: left; margin: 24px 0; }
+  .plan-features li { padding: 6px 0; color: var(--text-muted); font-size: 14px; }
+  .plan-features li::before { content: '✓'; color: var(--nitro); font-weight: 700; margin-right: 8px; }
+  .nitro-btn { background: linear-gradient(135deg, #ff73fa, #8c8cff); color: #fff; border: none; padding: 14px 32px; border-radius: 24px; font-size: 16px; font-weight: 700; cursor: pointer; width: 100%; transition: opacity 0.2s; }
+  .nitro-btn:hover { opacity: 0.9; }
+
+  /* SHOP */
+  #shop-view { flex: 1; overflow-y: auto; padding: 32px; }
+  .shop-header { font-size: 28px; font-weight: 800; color: var(--text-normal); margin-bottom: 8px; }
+  .shop-subtitle { color: var(--text-muted); margin-bottom: 32px; }
+  .shop-categories { display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; }
+  .shop-category-btn { padding: 8px 20px; border-radius: 20px; border: 1px solid var(--bg-accent); background: transparent; color: var(--text-muted); cursor: pointer; font-size: 14px; font-weight: 600; transition: all 0.2s; }
+  .shop-category-btn:hover, .shop-category-btn.active { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 16px; }
+  .shop-item { background: var(--bg-secondary); border-radius: 8px; overflow: hidden; cursor: pointer; transition: transform 0.2s; border: 1px solid transparent; }
+  .shop-item:hover { transform: translateY(-2px); border-color: var(--brand); }
+  .shop-item-preview { height: 160px; background: linear-gradient(135deg, var(--brand), var(--nitro)); display: flex; align-items: center; justify-content: center; font-size: 64px; }
+  .shop-item-info { padding: 12px; }
+  .shop-item-name { font-size: 14px; font-weight: 600; color: var(--text-normal); margin-bottom: 4px; }
+  .shop-item-price { font-size: 13px; color: var(--nitro); font-weight: 600; }
+  .shop-item-type { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 4px; }
+
+  /* PROFILE MODAL */
+  .profile-banner { height: 80px; background: linear-gradient(135deg, var(--brand), var(--nitro)); border-radius: 8px 8px 0 0; }
+  .profile-avatar-lg { width: 80px; height: 80px; border-radius: 50%; background: var(--brand); border: 6px solid var(--bg-secondary); margin: -40px 0 0 16px; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 32px; font-weight: 700; }
+  .profile-avatar-lg img { width: 100%; height: 100%; object-fit: cover; }
+  .profile-info { padding: 8px 16px 16px; }
+  .profile-name { font-size: 20px; font-weight: 700; color: var(--text-normal); }
+  .profile-tag { color: var(--text-muted); font-size: 14px; }
+  .profile-badges { display: flex; gap: 4px; margin: 8px 0; }
+  .badge { background: var(--bg-accent); color: var(--text-muted); padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+  .badge.nitro { background: rgba(255,115,250,0.2); color: var(--nitro); }
+  .badge.staff { background: rgba(88,101,242,0.2); color: var(--brand); }
+  .profile-divider { height: 1px; background: var(--bg-accent); margin: 12px 0; }
+  .profile-section-title { font-size: 12px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.4px; margin-bottom: 8px; }
+  .profile-about { font-size: 14px; color: var(--text-normal); line-height: 1.5; }
+
+  /* CONTEXT MENU */
+  .context-menu {
+    position: fixed; background: var(--bg-tertiary); border-radius: 4px;
+    padding: 6px 8px; min-width: 180px; z-index: 2000;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+    display: none;
+  }
+  .context-menu.open { display: block; }
+  .ctx-item { padding: 6px 8px; border-radius: 2px; cursor: pointer; font-size: 14px; color: var(--text-normal); display: flex; align-items: center; gap: 8px; }
+  .ctx-item:hover { background: var(--brand); color: #fff; }
+  .ctx-item.danger { color: var(--red); }
+  .ctx-item.danger:hover { background: var(--red); color: #fff; }
+  .ctx-divider { height: 1px; background: var(--bg-accent); margin: 4px 0; }
+
+  /* TOOLTIP */
+  .tooltip { position: fixed; background: var(--bg-tertiary); color: var(--text-normal); padding: 6px 10px; border-radius: 4px; font-size: 13px; font-weight: 600; pointer-events: none; z-index: 3000; box-shadow: 0 4px 8px rgba(0,0,0,0.4); white-space: nowrap; display: none; }
+
+  /* NOTIFICATION BADGE */
+  .notif-badge { position: absolute; bottom: -2px; right: -2px; background: var(--red); color: #fff; border-radius: 10px; padding: 0 4px; font-size: 10px; font-weight: 700; min-width: 16px; text-align: center; border: 2px solid var(--bg-tertiary); }
+
+  /* MENTION / PING HIGHLIGHT */
+  .mention { background: var(--mention-bg); color: #c9cdfb; border-radius: 3px; padding: 0 2px; cursor: pointer; }
+  .mention:hover { background: var(--mention-hover); }
+
+  /* VOICE CHANNEL */
+  .voice-connected { background: rgba(35,165,90,0.1); border-radius: 8px; padding: 12px; margin: 8px; }
+  .voice-status { font-size: 11px; color: var(--green); font-weight: 600; margin-bottom: 4px; }
+  .voice-channel-name { font-size: 13px; color: var(--text-normal); font-weight: 600; }
+  .voice-actions { display: flex; gap: 4px; margin-top: 8px; }
+  .voice-btn { flex: 1; padding: 6px; border-radius: 4px; background: var(--bg-accent); border: none; color: var(--text-muted); cursor: pointer; font-size: 14px; }
+  .voice-btn:hover { background: var(--bg-modifier-active); color: var(--text-normal); }
+  .voice-btn.red:hover { background: rgba(242,63,66,0.2); color: var(--red); }
+
+  /* EMOJI PICKER */
+  .emoji-picker { position: absolute; bottom: 60px; right: 16px; background: var(--bg-secondary); border-radius: 8px; padding: 12px; width: 340px; box-shadow: 0 8px 16px rgba(0,0,0,0.4); z-index: 100; display: none; border: 1px solid var(--bg-accent); }
+  .emoji-picker.open { display: block; }
+  .emoji-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 4px; }
+  .emoji-btn { font-size: 24px; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; }
+  .emoji-btn:hover { background: var(--bg-modifier-hover); }
+
+  /* PINNED MESSAGES */
+  .pinned-icon::after { content: '📌'; font-size: 12px; }
+
+  /* GIF / IMAGE UPLOAD previews */
+  .attachment-preview { max-width: 400px; border-radius: 4px; margin-top: 8px; }
+  .attachment-preview img, .attachment-preview video { max-width: 100%; border-radius: 4px; }
+
+  /* SETTINGS */
+  #settings-view { flex: 1; display: flex; overflow: hidden; }
+  .settings-nav { width: 240px; background: var(--bg-secondary); padding: 16px 8px; overflow-y: auto; }
+  .settings-section { font-size: 11px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); padding: 16px 8px 4px; letter-spacing: 0.4px; }
+  .settings-item { display: flex; align-items: center; padding: 8px 12px; border-radius: 4px; cursor: pointer; color: var(--text-muted); font-size: 15px; gap: 8px; }
+  .settings-item:hover { background: var(--bg-modifier-hover); color: var(--text-normal); }
+  .settings-item.active { background: var(--bg-modifier-selected); color: var(--text-normal); }
+  .settings-danger { color: var(--red) !important; }
+  .settings-content { flex: 1; overflow-y: auto; padding: 40px 40px; max-width: 740px; }
+  .settings-title { font-size: 20px; font-weight: 700; color: var(--text-normal); margin-bottom: 24px; padding-bottom: 16px; border-bottom: 1px solid var(--bg-accent); }
+  .settings-row { display: flex; align-items: center; justify-content: space-between; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+  .settings-row-info { flex: 1; }
+  .settings-row-title { font-size: 15px; font-weight: 600; color: var(--text-normal); }
+  .settings-row-desc { font-size: 14px; color: var(--text-muted); margin-top: 4px; }
+  .toggle { width: 44px; height: 24px; background: var(--bg-accent); border-radius: 12px; cursor: pointer; position: relative; transition: background 0.2s; flex-shrink: 0; }
+  .toggle.on { background: var(--green); }
+  .toggle::after { content:''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: #fff; top: 3px; left: 3px; transition: left 0.2s; }
+  .toggle.on::after { left: 23px; }
+
+  /* ROLES / PERMISSION INDICATOR */
+  .role-badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+
+  /* WELCOME SCREEN */
+  .welcome-screen { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-muted); text-align: center; padding: 48px; }
+  .welcome-icon { font-size: 72px; margin-bottom: 24px; }
+  .welcome-title { font-size: 28px; font-weight: 700; color: var(--text-normal); margin-bottom: 12px; }
+  .welcome-desc { font-size: 16px; max-width: 500px; line-height: 1.5; }
+
+  /* LOADING */
+  .loading-spinner { display: inline-block; width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* INVITE MODAL */
+  .invite-link { background: var(--input-bg); border-radius: 4px; padding: 10px 12px; font-size: 14px; color: var(--text-normal); display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .invite-copy-btn { background: var(--brand); color: #fff; border: none; border-radius: 4px; padding: 6px 12px; font-size: 13px; font-weight: 600; cursor: pointer; flex-shrink: 0; }
+
+  /* SERVER BOOST */
+  .boost-bar-wrap { margin-top: 16px; }
+  .boost-bar-bg { height: 8px; background: var(--bg-accent); border-radius: 4px; overflow: hidden; }
+  .boost-bar-fill { height: 100%; background: linear-gradient(135deg, #ff73fa, #8c8cff); border-radius: 4px; transition: width 0.5s; }
+  .boost-level { font-size: 13px; color: var(--nitro); font-weight: 600; margin-top: 4px; }
+
+  /* ANIMATED elements */
+  @keyframes fadeInUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+  .fade-in { animation: fadeInUp 0.3s ease; }
+  @keyframes slideIn { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:translateX(0); } }
+
+  /* Unread indicator */
+  .unread-dot { width: 8px; height: 8px; background: #fff; border-radius: 50%; position: absolute; left: -4px; top: 50%; transform: translateY(-50%); }
+  .channel-item.unread .channel-name { color: var(--text-normal); font-weight: 600; }
+
+  /* Message reactions */
+  .reactions { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+  .reaction { background: var(--bg-secondary); border: 1px solid var(--bg-accent); border-radius: 8px; padding: 2px 8px; font-size: 14px; cursor: pointer; display: flex; align-items: center; gap: 4px; }
+  .reaction:hover { background: var(--mention-bg); border-color: var(--brand); }
+  .reaction.active { background: var(--mention-bg); border-color: var(--brand); }
+  .reaction-count { font-size: 13px; color: var(--text-muted); }
+
+  /* Typing indicator */
+  .typing-indicator { padding: 4px 16px; color: var(--text-muted); font-size: 13px; height: 24px; display: flex; align-items: center; gap: 4px; }
+  .typing-dots span { display: inline-block; width: 4px; height: 4px; background: var(--text-muted); border-radius: 50%; animation: typingBounce 1.2s infinite; }
+  .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce { 0%,60%,100% { transform:translateY(0); } 30% { transform:translateY(-4px); } }
+
+  /* Message hover actions */
+  .msg-hover-actions { position: absolute; right: 16px; top: -16px; background: var(--bg-secondary); border: 1px solid var(--bg-accent); border-radius: 4px; display: none; gap: 2px; padding: 4px; }
+  .message-group:hover .msg-hover-actions { display: flex; }
+  .msg-action-btn { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: 4px; cursor: pointer; font-size: 16px; color: var(--text-muted); }
+  .msg-action-btn:hover { background: var(--bg-modifier-hover); color: var(--text-normal); }
+  .message-group { position: relative; }
+
+  /* Media queries */
+  @media (max-width: 1024px) { #members-sidebar, #activity-sidebar { display: none; } }
+  @media (max-width: 768px) { #channel-sidebar, #dm-sidebar { display: none; } }
+</style>
+</head>
+<body>
+
+<!-- AUTH OVERLAY -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">⚡</div>
+    <div class="auth-title">Welcome to AxonCord</div>
+    <div class="auth-subtitle">We're so excited to see you again!</div>
+    <div class="auth-error" id="auth-error"></div>
+    
+    <!-- Google Sign In -->
+    <button class="google-btn" id="google-signin-btn">
+      <svg class="google-icon" viewBox="0 0 24 24">
+        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+      </svg>
+      Continue with Google
+    </button>
+
+    <div class="auth-divider">or</div>
+
+    <!-- Email Login form -->
+    <div id="login-form">
+      <div class="auth-input-group">
+        <label class="auth-label">Email or Phone Number *</label>
+        <input type="email" class="auth-input" id="login-email" placeholder="Enter email">
+      </div>
+      <div class="auth-input-group">
+        <label class="auth-label">Password *</label>
+        <input type="password" class="auth-input" id="login-password" placeholder="Enter password">
+      </div>
+      <button class="auth-btn" id="login-btn">Log In</button>
+      <div class="auth-switch">Need an account? <a id="goto-register">Register</a></div>
+    </div>
+
+    <div id="register-form" style="display:none">
+      <div class="auth-input-group">
+        <label class="auth-label">Email *</label>
+        <input type="email" class="auth-input" id="reg-email" placeholder="Enter email">
+      </div>
+      <div class="auth-input-group">
+        <label class="auth-label">Username *</label>
+        <input type="text" class="auth-input" id="reg-username" placeholder="Enter a username">
+      </div>
+      <div class="auth-input-group">
+        <label class="auth-label">Password *</label>
+        <input type="password" class="auth-input" id="reg-password" placeholder="Create a password">
+      </div>
+      <div class="auth-input-group">
+        <label class="auth-label">Date of Birth *</label>
+        <input type="date" class="auth-input" id="reg-dob">
+      </div>
+      <button class="auth-btn" id="register-btn">Continue</button>
+      <div class="auth-switch">Already have an account? <a id="goto-login">Login</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app" style="display:none">
+
+  <!-- SERVER SIDEBAR -->
+  <div id="server-sidebar">
+    <div class="dm-icon" id="home-btn" title="Direct Messages" onclick="showDMView()">
+      <svg viewBox="0 0 24 24"><path d="M19.73 4.87a18.2 18.2 0 0 0-4.6-1.44c-.21.4-.4.8-.58 1.21-1.69-.25-3.35-.25-5.04 0-.18-.41-.37-.82-.59-1.21-1.6.27-3.14.75-4.6 1.44C.75 9.38-.09 13.78.07 18.11c1.72 1.25 3.41 2.01 5.08 2.51.41-.55.77-1.14 1.08-1.77-.59-.22-1.16-.49-1.7-.82.14-.1.28-.2.41-.31a13.01 13.01 0 0 0 11.12 0c.13.11.27.21.41.31-.54.33-1.12.6-1.7.82.31.63.67 1.22 1.08 1.77 1.67-.5 3.37-1.26 5.08-2.51.18-4.88-.73-9.24-3.07-13.24zM8.02 15.33c-1.18 0-2.16-1.1-2.16-2.45 0-1.36.94-2.46 2.16-2.46 1.23 0 2.18 1.11 2.16 2.46.01 1.35-.93 2.45-2.16 2.45zm7.97 0c-1.18 0-2.16-1.1-2.16-2.45 0-1.36.94-2.46 2.16-2.46 1.22 0 2.17 1.11 2.16 2.46 0 1.35-.94 2.45-2.16 2.45z"/></svg>
+    </div>
+    <div class="server-divider"></div>
+    <div id="servers-list"></div>
+    <div class="server-add-btn" onclick="openModal('create-server-modal')" title="Add a Server">＋</div>
+    <div class="server-explore-btn" onclick="openModal('explore-modal')" title="Explore Public Servers">🧭</div>
+    <div class="server-icon" onclick="showNitro()" title="Discord Nitro" style="background:linear-gradient(135deg,#ff73fa,#8c8cff);font-size:24px;">✨</div>
+    <div class="server-icon" onclick="showShop()" title="Shop" style="font-size:24px;">🛒</div>
+  </div>
+
+  <!-- DM / Channel Sidebar (changes based on view) -->
+  <div id="left-sidebar"></div>
+
+  <!-- Main View -->
+  <div id="main-view" style="flex:1;display:flex;flex-direction:column;overflow:hidden;"></div>
+
+  <!-- Right Sidebar (members/activity) -->
+  <div id="right-sidebar"></div>
+
+</div>
+
+<!-- MODALS -->
+<!-- Create Server -->
+<div class="modal-overlay" id="create-server-modal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('create-server-modal')">×</button>
+    <div class="modal-header">
+      <div class="modal-title">Create Your Server</div>
+      <div class="modal-subtitle">Your server is where you and your friends hang out. Make yours and start talking.</div>
+    </div>
+    <div class="modal-body" id="create-server-body">
+      <div class="server-create-option" onclick="showServerForm('community')">
+        <div class="server-create-icon">👥</div>
+        <div class="server-create-info">
+          <div class="server-create-title">Create My Own</div>
+          <div class="server-create-desc">Build a community for your friends or interests</div>
+        </div>
+        <span style="color:var(--text-muted)">›</span>
+      </div>
+      <div class="server-create-option" onclick="showServerForm('gaming')">
+        <div class="server-create-icon">🎮</div>
+        <div class="server-create-info">
+          <div class="server-create-title">Gaming</div>
+          <div class="server-create-desc">Hang out and talk about your favorite games</div>
+        </div>
+        <span style="color:var(--text-muted)">›</span>
+      </div>
+      <div class="server-create-option" onclick="showServerForm('school')">
+        <div class="server-create-icon">📚</div>
+        <div class="server-create-info">
+          <div class="server-create-title">School Club</div>
+          <div class="server-create-desc">Study together and get homework help</div>
+        </div>
+        <span style="color:var(--text-muted)">›</span>
+      </div>
+      <div class="server-create-option" onclick="showServerForm('art')">
+        <div class="server-create-icon">🎨</div>
+        <div class="server-create-info">
+          <div class="server-create-title">Art & Creative</div>
+          <div class="server-create-desc">Share your work and inspire others</div>
+        </div>
+        <span style="color:var(--text-muted)">›</span>
+      </div>
+      <div class="server-create-option" onclick="joinServerPrompt()">
+        <div class="server-create-icon">🔗</div>
+        <div class="server-create-info">
+          <div class="server-create-title">Join a Server</div>
+          <div class="server-create-desc">Enter an invite link to join an existing server</div>
+        </div>
+        <span style="color:var(--text-muted)">›</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Server Form -->
+<div class="modal-overlay" id="server-form-modal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('server-form-modal')">×</button>
+    <div class="modal-header">
+      <div class="modal-title">Customize Your Server</div>
+      <div class="modal-subtitle">Give your server a personality with a name and an icon.</div>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;margin-bottom:16px">
+        <div id="server-icon-upload" onclick="document.getElementById('server-icon-file').click()" style="width:80px;height:80px;border-radius:50%;background:var(--bg-accent);display:flex;align-items:center;justify-content:center;margin:0 auto;cursor:pointer;font-size:32px;overflow:hidden;border:2px dashed var(--text-muted)">
+          ➕
+        </div>
+        <input type="file" id="server-icon-file" style="display:none" accept="image/*" onchange="previewServerIcon(this)">
+      </div>
+      <div class="modal-input-group">
+        <label class="modal-label">Server Name</label>
+        <input type="text" class="modal-input" id="new-server-name" placeholder="Type a server name">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('server-form-modal')">Back</button>
+      <button class="btn btn-primary" onclick="createServer()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Join Server -->
+<div class="modal-overlay" id="join-server-modal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('join-server-modal')">×</button>
+    <div class="modal-header">
+      <div class="modal-title">Join a Server</div>
+      <div class="modal-subtitle">Enter an invite below to join an existing server</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-input-group">
+        <label class="modal-label">Invite Link</label>
+        <input type="text" class="modal-input" id="invite-input" placeholder="https://axoncord.gg/hTKzmn">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('join-server-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="joinServer()">Join Server</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Friend -->
+<div class="modal-overlay" id="add-friend-modal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('add-friend-modal')">×</button>
+    <div class="modal-header">
+      <div class="modal-title">Add Friend</div>
+      <div class="modal-subtitle">You can add friends with their AxonCord username.</div>
+    </div>
+    <div class="modal-body">
+      <div class="modal-input-group">
+        <label class="modal-label">Username</label>
+        <input type="text" class="modal-input" id="add-friend-input" placeholder="Enter a Username#0000">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('add-friend-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="sendFriendRequest()">Send Friend Request</button>
+    </div>
+  </div>
+</div>
+
+<!-- Create Channel -->
+<div class="modal-overlay" id="create-channel-modal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('create-channel-modal')">×</button>
+    <div class="modal-header"><div class="modal-title">Create Channel</div></div>
+    <div class="modal-body">
+      <div class="modal-input-group">
+        <label class="modal-label">Channel Type</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <div id="ch-type-text" onclick="selectChannelType('text')" style="flex:1;padding:12px;background:var(--bg-accent);border-radius:4px;cursor:pointer;border:2px solid var(--brand);text-align:center">
+            <div style="font-size:20px">💬</div>
+            <div style="font-size:13px;color:var(--text-normal);font-weight:600;margin-top:4px">Text</div>
+          </div>
+          <div id="ch-type-voice" onclick="selectChannelType('voice')" style="flex:1;padding:12px;background:var(--bg-accent);border-radius:4px;cursor:pointer;border:2px solid transparent;text-align:center">
+            <div style="font-size:20px">🔊</div>
+            <div style="font-size:13px;color:var(--text-normal);font-weight:600;margin-top:4px">Voice</div>
+          </div>
+          <div id="ch-type-announce" onclick="selectChannelType('announce')" style="flex:1;padding:12px;background:var(--bg-accent);border-radius:4px;cursor:pointer;border:2px solid transparent;text-align:center">
+            <div style="font-size:20px">📣</div>
+            <div style="font-size:13px;color:var(--text-normal);font-weight:600;margin-top:4px">Announce</div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-input-group">
+        <label class="modal-label">Channel Name</label>
+        <input type="text" class="modal-input" id="new-channel-name" placeholder="new-channel">
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;color:var(--text-normal);font-size:14px">
+        <input type="checkbox" id="ch-private" style="width:16px;height:16px;accent-color:var(--brand)">
+        Private Channel
+      </label>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeModal('create-channel-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="createChannel()">Create Channel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Invite People Modal -->
+<div class="modal-overlay" id="invite-modal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('invite-modal')">×</button>
+    <div class="modal-header">
+      <div class="modal-title" id="invite-modal-title">Invite people to General</div>
+    </div>
+    <div class="modal-body">
+      <div class="invite-link">
+        <span id="invite-link-text">https://axoncord.gg/abc123</span>
+        <button class="invite-copy-btn" onclick="copyInviteLink()">Copy</button>
+      </div>
+      <div style="margin-top:12px;color:var(--text-muted);font-size:13px">Your invite link expires in 7 days. <a href="#" style="color:var(--text-link)">Edit invite link</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- Profile Modal -->
+<div class="modal-overlay" id="profile-modal">
+  <div class="modal" style="position:relative;padding:0">
+    <button class="modal-close" onclick="closeModal('profile-modal')" style="z-index:1">×</button>
+    <div class="profile-banner" id="profile-banner"></div>
+    <div class="profile-avatar-lg" id="profile-avatar-lg"></div>
+    <div class="profile-info">
+      <div class="profile-name" id="profile-modal-name"></div>
+      <div class="profile-tag" id="profile-modal-tag"></div>
+      <div class="profile-badges" id="profile-badges"></div>
+      <div class="profile-divider"></div>
+      <div class="profile-section-title">About Me</div>
+      <div class="profile-about" id="profile-about">No bio set. Click to edit.</div>
+      <div class="profile-divider"></div>
+      <div class="profile-section-title">Member Since</div>
+      <div style="font-size:14px;color:var(--text-normal)" id="profile-since"></div>
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button class="btn btn-primary" onclick="openDM(currentProfileUser)">Message</button>
+        <button class="btn" style="background:var(--bg-accent);color:var(--text-normal)" onclick="closeModal('profile-modal')">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal">
+  <div class="modal" style="width:800px;max-width:95vw;padding:0;height:90vh;display:flex;flex-direction:column">
+    <div id="settings-view" style="flex:1;overflow:hidden">
+      <div class="settings-nav">
+        <div class="settings-section">User Settings</div>
+        <div class="settings-item active" onclick="showSettingsPage('profile')">👤 My Account</div>
+        <div class="settings-item" onclick="showSettingsPage('profile-customize')">🎨 Profiles</div>
+        <div class="settings-item" onclick="showSettingsPage('privacy')">🔒 Privacy & Safety</div>
+        <div class="settings-item" onclick="showSettingsPage('authorized-apps')">📱 Authorized Apps</div>
+        <div class="settings-item" onclick="showSettingsPage('devices')">💻 Devices</div>
+        <div class="settings-item" onclick="showSettingsPage('connections')">🔗 Connections</div>
+        <div class="settings-item" onclick="showSettingsPage('clips')">📹 Clips</div>
+        <div class="settings-item" onclick="showSettingsPage('friend-requests')">👥 Friend Requests</div>
+        <div class="settings-section">Billing Settings</div>
+        <div class="settings-item" onclick="showSettingsPage('nitro')">✨ Nitro</div>
+        <div class="settings-item" onclick="showSettingsPage('billing')">💳 Billing</div>
+        <div class="settings-item" onclick="showSettingsPage('shop')">🛒 Shop</div>
+        <div class="settings-section">App Settings</div>
+        <div class="settings-item" onclick="showSettingsPage('appearance')">🎨 Appearance</div>
+        <div class="settings-item" onclick="showSettingsPage('accessibility')">♿ Accessibility</div>
+        <div class="settings-item" onclick="showSettingsPage('voice')">🎙️ Voice & Video</div>
+        <div class="settings-item" onclick="showSettingsPage('notifications')">🔔 Notifications</div>
+        <div class="settings-item" onclick="showSettingsPage('keybinds')">⌨️ Keybinds</div>
+        <div class="settings-item" onclick="showSettingsPage('language')">🌐 Language</div>
+        <div class="settings-item" onclick="showSettingsPage('streamer')">🎬 Streamer Mode</div>
+        <div class="settings-section">Other</div>
+        <div class="settings-item" onclick="showSettingsPage('changelog')">📋 Change Log</div>
+        <div class="settings-item" onclick="showSettingsPage('hypesquad')">⬡ HypeSquad</div>
+        <div class="settings-item settings-danger" onclick="signOut()">🚪 Log Out</div>
+      </div>
+      <div class="settings-content" id="settings-content">
+        <!-- Filled dynamically -->
+      </div>
+    </div>
+    <div style="position:absolute;top:8px;right:8px">
+      <button class="btn btn-ghost" onclick="closeModal('settings-modal')" style="background:var(--bg-accent);color:var(--text-normal);padding:8px 16px">✕ ESC</button>
+    </div>
+  </div>
+</div>
+
+<!-- Explore Modal -->
+<div class="modal-overlay" id="explore-modal">
+  <div class="modal" style="width:700px;position:relative">
+    <button class="modal-close" onclick="closeModal('explore-modal')">×</button>
+    <div class="modal-header">
+      <div class="modal-title">Explore Public Servers</div>
+      <input type="text" style="background:var(--input-bg);border:1px solid var(--bg-accent);border-radius:4px;padding:8px 12px;color:var(--text-normal);width:100%;margin-top:12px;outline:none;font-size:14px" placeholder="Search for servers...">
+    </div>
+    <div class="modal-body">
+      <div style="font-size:14px;font-weight:700;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.4px;margin-bottom:12px">Featured Communities</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px" id="explore-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Nitro Purchase Modal -->
+<div class="modal-overlay" id="nitro-purchase-modal">
+  <div class="modal" style="position:relative">
+    <button class="modal-close" onclick="closeModal('nitro-purchase-modal')">×</button>
+    <div class="modal-header">
+      <div class="modal-title">Subscribe to Nitro</div>
+    </div>
+    <div class="modal-body">
+      <div style="text-align:center;padding:24px">
+        <div style="font-size:64px">✨</div>
+        <div style="font-size:20px;font-weight:700;color:var(--nitro);margin:12px 0">This is a demo!</div>
+        <div style="color:var(--text-muted)">In a real app, this would connect to a payment processor. For now, we'll give you Nitro for free!</div>
+        <button class="btn btn-primary" style="margin-top:16px;padding:12px 32px" onclick="giveNitro()">Get Nitro (Demo)</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Context Menu -->
+<div class="context-menu" id="context-menu"></div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip"></div>
+
+<!-- FIREBASE + APP SCRIPTS -->
 <script type="module">
-import { initializeApp }              from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut }
-                                       from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut as fbSignOut, onAuthStateChanged, updateProfile } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyCVn1UZp3v-2X9v23o4jIot46TlaZZQ0jU",
@@ -22,1026 +916,1504 @@ const firebaseConfig = {
   appId: "1:514941956089:web:6015ce4c6cc5ac8d975728"
 };
 
-const app      = initializeApp(firebaseConfig);
-const auth     = getAuth(app);
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 
-onAuthStateChanged(auth, user => {
-  if (user) showApp(user); else showLogin();
-});
-
-window._signIn = async () => {
-  const btn = document.getElementById('gbtn');
-  btn.classList.add('loading');
-  try { await signInWithPopup(auth, provider); }
-  catch(e) { btn.classList.remove('loading'); showToast(e.message); }
+// ===========================
+// STATE
+// ===========================
+window.appState = {
+  user: null,
+  hasNitro: false,
+  currentServer: null,
+  currentChannel: null,
+  currentView: 'home', // 'home', 'server', 'dm', 'nitro', 'shop', 'settings'
+  servers: [],
+  messages: {},
+  friends: [],
+  pendingRequests: [],
+  dms: {},
+  currentDM: null,
+  selectedChannelType: 'text',
+  currentProfileUser: null,
 };
+window.currentProfileUser = null;
 
-window._signOut = () => signOut(auth);
-
-function showLogin() {
-  document.getElementById('login').style.display = 'flex';
-  document.getElementById('appshell').style.display = 'none';
-  document.title = 'Axoncord — Sign In';
-}
-
-function showApp(user) {
-  document.getElementById('login').style.display = 'none';
-  document.getElementById('appshell').style.display = 'flex';
-  document.title = 'Axoncord';
-
-  const name = user.displayName || 'User';
-  const initials = name.split(' ').map(n=>n[0]).join('').toUpperCase().slice(0,2);
-
-  document.querySelectorAll('.me-name').forEach(el => el.textContent = name);
-  document.querySelectorAll('.me-email').forEach(el => el.textContent = user.email || '');
-  document.querySelectorAll('.me-init').forEach(el => el.textContent = initials);
-
-  if (user.photoURL) {
-    document.querySelectorAll('.me-photo').forEach(img => {
-      img.src = user.photoURL; img.style.display = 'block';
-      img.nextElementSibling && (img.nextElementSibling.style.display = 'none');
-    });
+// Default servers and data
+const defaultServers = [
+  {
+    id: 'server-axon',
+    name: 'AxonCord Official',
+    icon: '⚡',
+    color: '#5865f2',
+    categories: [
+      { name: 'Information', channels: [{id:'ch-welcome',name:'welcome',type:'text'},{id:'ch-rules',name:'rules',type:'text'},{id:'ch-announcements',name:'announcements',type:'announce'}] },
+      { name: 'General', channels: [{id:'ch-general',name:'general',type:'text'},{id:'ch-memes',name:'memes',type:'text'},{id:'ch-media',name:'media',type:'text'}] },
+      { name: 'Voice Channels', channels: [{id:'ch-v1',name:'General',type:'voice'},{id:'ch-v2',name:'Gaming',type:'voice'}] },
+    ],
+    members: [],
+    boosts: 7,
+    boostLevel: 2,
   }
-}
-
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('on');
-  setTimeout(() => t.classList.remove('on'), 3500);
-}
-</script>
-
-<style>
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-
-:root{
-  --bg0:#030508;
-  --bg1:#060c14;
-  --bg2:#0a1220;
-  --bg3:#0f1a2e;
-  --panel:#0d1525;
-  --border:rgba(0,230,255,.08);
-  --border2:rgba(0,230,255,.18);
-  --cyan:#00e5ff;
-  --cyan2:#00b4cc;
-  --cyan-dim:rgba(0,229,255,.12);
-  --cyan-glow:rgba(0,229,255,.35);
-  --magenta:#ff2d78;
-  --text:#d4e8f0;
-  --text2:#7a9ab0;
-  --text3:#3d5a6e;
-  --sent-bg:rgba(0,229,255,.13);
-  --sent-border:rgba(0,229,255,.25);
-  --recv-bg:rgba(255,255,255,.04);
-  --recv-border:rgba(255,255,255,.07);
-  --sidebar:240px;
-  --contacts:300px;
-}
-
-html,body{height:100%;font-family:'Outfit',sans-serif;background:var(--bg0);color:var(--text);overflow:hidden}
-
-/* ═══════════════════════ CANVAS BACKGROUND ═══════════════════════ */
-#neural-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
-
-/* ═══════════════════════ LOGIN PAGE ═══════════════════════ */
-#login{
-  position:relative;z-index:10;
-  display:flex;align-items:center;justify-content:center;
-  min-height:100vh;overflow:hidden;
-}
-
-.login-glow{
-  position:absolute;inset:0;
-  background:
-    radial-gradient(ellipse 55% 45% at 15% 25%,rgba(0,229,255,.12) 0%,transparent 70%),
-    radial-gradient(ellipse 45% 55% at 85% 75%,rgba(255,45,120,.10) 0%,transparent 70%),
-    radial-gradient(ellipse 30% 30% at 50% 50%,rgba(0,229,255,.06) 0%,transparent 70%);
-  animation:glowPulse 8s ease-in-out infinite alternate;
-}
-@keyframes glowPulse{
-  0%{opacity:.7;transform:scale(1)}
-  100%{opacity:1;transform:scale(1.06)}
-}
-
-.grid-overlay{
-  position:absolute;inset:0;
-  background-image:
-    linear-gradient(rgba(0,229,255,.04) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(0,229,255,.04) 1px,transparent 1px);
-  background-size:48px 48px;
-  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 40%,transparent 100%);
-}
-
-.scan-line{
-  position:absolute;top:-2px;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,var(--cyan),transparent);
-  box-shadow:0 0 20px var(--cyan);
-  animation:scan 6s linear infinite;
-  opacity:.4;
-}
-@keyframes scan{from{top:-2px}to{top:100%}}
-
-/* hexagon decoration */
-.hex-ring{
-  position:absolute;width:600px;height:600px;
-  border:1px solid rgba(0,229,255,.06);
-  border-radius:50%;
-  animation:spinSlow 40s linear infinite;
-}
-.hex-ring:nth-child(2){width:450px;height:450px;border-color:rgba(255,45,120,.06);animation-direction:reverse;animation-duration:30s}
-.hex-ring:nth-child(3){width:300px;height:300px;border-color:rgba(0,229,255,.08);animation-duration:20s}
-@keyframes spinSlow{to{transform:rotate(360deg)}}
-
-.login-card{
-  position:relative;z-index:2;
-  width:min(460px,calc(100vw - 32px));
-  background:linear-gradient(135deg,rgba(10,18,32,.95),rgba(6,12,20,.95));
-  border:1px solid var(--border2);
-  border-radius:20px;
-  padding:52px 44px 44px;
-  box-shadow:
-    0 0 0 1px rgba(0,229,255,.06),
-    0 40px 100px rgba(0,0,0,.6),
-    inset 0 1px 0 rgba(0,229,255,.1),
-    0 0 80px rgba(0,229,255,.06);
-  animation:cardReveal .8s cubic-bezier(.22,1,.36,1) both;
-  backdrop-filter:blur(32px);
-}
-@keyframes cardReveal{
-  from{opacity:0;transform:translateY(40px) scale(.95)}
-  to{opacity:1;transform:none}
-}
-
-/* corner accents */
-.login-card::before,.login-card::after{
-  content:'';position:absolute;width:20px;height:20px;
-  border-color:var(--cyan);border-style:solid;
-}
-.login-card::before{top:-1px;left:-1px;border-width:2px 0 0 2px;border-radius:4px 0 0 0}
-.login-card::after{bottom:-1px;right:-1px;border-width:0 2px 2px 0;border-radius:0 0 4px 0}
-
-.brand{display:flex;align-items:center;gap:12px;margin-bottom:40px}
-.brand-icon{
-  width:44px;height:44px;border-radius:12px;position:relative;
-  background:linear-gradient(135deg,#00e5ff22,#00e5ff08);
-  border:1px solid rgba(0,229,255,.3);
-  display:flex;align-items:center;justify-content:center;
-  box-shadow:0 0 24px rgba(0,229,255,.2),inset 0 1px 0 rgba(0,229,255,.2);
-}
-.brand-icon svg{filter:drop-shadow(0 0 6px var(--cyan))}
-.brand-name{
-  font-family:'Orbitron',monospace;font-weight:900;
-  font-size:22px;letter-spacing:1px;
-  background:linear-gradient(90deg,#fff 0%,var(--cyan) 100%);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
-}
-.brand-tag{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--text3);margin-left:auto}
-
-h1.headline{
-  font-family:'Orbitron',monospace;font-weight:700;
-  font-size:clamp(24px,5vw,30px);letter-spacing:-.5px;
-  line-height:1.15;margin-bottom:10px;
-  color:#fff;
-}
-h1.headline em{font-style:normal;color:var(--cyan);text-shadow:0 0 20px rgba(0,229,255,.5)}
-.sub{font-size:14px;color:var(--text2);line-height:1.65;margin-bottom:36px;font-weight:300}
-
-/* status pill */
-.status-pill{
-  display:inline-flex;align-items:center;gap:7px;
-  background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.15);
-  border-radius:99px;padding:5px 12px;
-  font-size:11px;color:var(--cyan);letter-spacing:.06em;margin-bottom:28px;
-  animation:pillIn .6s .3s both;
-}
-@keyframes pillIn{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:none}}
-.status-dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:blink 1.5s ease-in-out infinite}
-@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
-
-/* Google btn */
-#gbtn{
-  width:100%;display:flex;align-items:center;justify-content:center;gap:12px;
-  padding:16px 24px;background:#fff;border:none;border-radius:12px;
-  color:#111;font-size:15px;font-weight:600;font-family:'Outfit',sans-serif;
-  cursor:pointer;transition:transform .2s,box-shadow .2s,opacity .2s;
-  box-shadow:0 4px 24px rgba(0,0,0,.3),0 0 0 0 rgba(0,229,255,0);
-  position:relative;overflow:hidden;
-}
-#gbtn::before{
-  content:'';position:absolute;inset:0;
-  background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,.4) 50%,transparent 100%);
-  transform:translateX(-100%);transition:transform .5s;
-}
-#gbtn:hover{transform:translateY(-2px);box-shadow:0 8px 36px rgba(0,0,0,.4),0 0 0 1px rgba(0,229,255,.2)}
-#gbtn:hover::before{transform:translateX(100%)}
-#gbtn:active{transform:translateY(0)}
-#gbtn.loading{opacity:.6;pointer-events:none}
-#gbtn.loading::after{
-  content:'';position:absolute;right:20px;top:50%;transform:translateY(-50%);
-  width:18px;height:18px;border:2.5px solid #111;border-top-color:transparent;
-  border-radius:50%;animation:spin .7s linear infinite;
-}
-@keyframes spin{to{transform:translateY(-50%) rotate(360deg)}}
-
-.features{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:24px}
-.feat{
-  display:flex;align-items:center;gap:8px;
-  background:rgba(0,229,255,.04);border:1px solid var(--border);
-  border-radius:10px;padding:10px 12px;font-size:12px;color:var(--text2);
-}
-.feat-icon{font-size:16px}
-
-.login-legal{margin-top:24px;text-align:center;font-size:11px;color:var(--text3)}
-.login-legal a{color:var(--cyan);text-decoration:none}
-
-/* ═══════════════════════ APP SHELL ═══════════════════════ */
-#appshell{
-  position:relative;z-index:10;
-  display:none;width:100vw;height:100vh;
-  flex-direction:row;overflow:hidden;
-}
-
-/* ── LEFT SIDEBAR (profile + nav) ── */
-#sidebar{
-  width:var(--sidebar);flex-shrink:0;
-  background:var(--panel);
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;
-  height:100vh;overflow:hidden;
-}
-
-.sb-top{padding:20px 16px;border-bottom:1px solid var(--border)}
-.sb-brand{display:flex;align-items:center;gap:9px;margin-bottom:20px}
-.sb-brand-name{font-family:'Orbitron',monospace;font-weight:700;font-size:14px;letter-spacing:.5px;background:linear-gradient(90deg,#fff,var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-
-.me-card{
-  display:flex;align-items:center;gap:10px;
-  background:var(--cyan-dim);border:1px solid var(--border2);
-  border-radius:12px;padding:10px 12px;
-}
-.me-avatar{
-  width:36px;height:36px;border-radius:50%;flex-shrink:0;
-  background:linear-gradient(135deg,var(--cyan),var(--magenta));
-  display:flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:14px;color:#000;position:relative;overflow:hidden;
-}
-.me-photo{width:100%;height:100%;object-fit:cover;display:none;position:absolute;inset:0}
-.me-info{flex:1;min-width:0}
-.me-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.me-status{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2)}
-.online-dot{width:6px;height:6px;border-radius:50%;background:#00ff88;box-shadow:0 0 6px #00ff88}
-
-.sb-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
-.nav-lbl{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text3);padding:10px 8px 4px;font-weight:600}
-.nav-i{
-  display:flex;align-items:center;gap:10px;
-  padding:9px 10px;border-radius:10px;
-  font-size:13px;font-weight:500;color:var(--text2);
-  cursor:pointer;transition:all .18s;user-select:none;
-}
-.nav-i:hover{background:rgba(0,229,255,.06);color:var(--text)}
-.nav-i.on{background:rgba(0,229,255,.1);color:var(--cyan)}
-.nav-i .ico{font-size:17px;width:20px;text-align:center}
-.nav-badge{margin-left:auto;background:var(--cyan);color:#000;font-size:10px;font-weight:800;padding:2px 7px;border-radius:99px}
-
-.sb-bot{padding:12px 10px;border-top:1px solid var(--border)}
-.signout{
-  width:100%;display:flex;align-items:center;gap:9px;
-  padding:9px 10px;border-radius:10px;background:none;border:none;
-  font-size:13px;font-weight:500;color:var(--text2);
-  cursor:pointer;transition:all .18s;font-family:inherit;
-}
-.signout:hover{background:rgba(255,45,120,.1);color:var(--magenta)}
-
-/* ── CONTACTS PANEL ── */
-#contacts{
-  width:var(--contacts);flex-shrink:0;
-  background:var(--bg1);
-  border-right:1px solid var(--border);
-  display:flex;flex-direction:column;height:100vh;
-}
-
-.ct-head{
-  padding:20px 18px 16px;border-bottom:1px solid var(--border);
-}
-.ct-title{font-family:'Orbitron',monospace;font-weight:700;font-size:16px;color:#fff;margin-bottom:14px}
-.search-wrap{
-  display:flex;align-items:center;gap:9px;
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:10px;padding:9px 13px;
-  transition:border-color .2s;
-}
-.search-wrap:focus-within{border-color:var(--border2)}
-.search-wrap input{
-  background:none;border:none;outline:none;
-  color:var(--text);font-size:13px;font-family:inherit;width:100%;
-}
-.search-wrap input::placeholder{color:var(--text3)}
-
-.ct-tabs{display:flex;gap:6px;padding:12px 16px;border-bottom:1px solid var(--border)}
-.ct-tab{
-  flex:1;text-align:center;padding:7px;border-radius:8px;
-  font-size:12px;font-weight:600;cursor:pointer;transition:all .18s;
-  color:var(--text2);
-}
-.ct-tab.on{background:rgba(0,229,255,.12);color:var(--cyan);box-shadow:inset 0 0 0 1px rgba(0,229,255,.2)}
-
-.ct-list{flex:1;overflow-y:auto;padding:8px}
-
-.contact-item{
-  display:flex;align-items:center;gap:12px;
-  padding:12px 10px;border-radius:12px;cursor:pointer;
-  transition:background .18s;position:relative;
-}
-.contact-item:hover{background:rgba(255,255,255,.04)}
-.contact-item.active{background:rgba(0,229,255,.08);box-shadow:inset 0 0 0 1px rgba(0,229,255,.1)}
-
-.c-avatar{
-  width:42px;height:42px;border-radius:50%;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:15px;color:#000;position:relative;
-}
-.c-status-ring{
-  position:absolute;bottom:-1px;right:-1px;
-  width:13px;height:13px;border-radius:50%;
-  border:2px solid var(--bg1);
-}
-.c-status-ring.online{background:#00ff88;box-shadow:0 0 6px #00ff88}
-.c-status-ring.away{background:#ffaa00}
-.c-status-ring.offline{background:var(--text3)}
-
-.c-info{flex:1;min-width:0}
-.c-name{font-size:14px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.c-preview{font-size:12px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-
-.c-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
-.c-time{font-size:11px;color:var(--text3)}
-.c-unread{width:18px;height:18px;border-radius:50%;background:var(--cyan);color:#000;font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center}
-
-/* ── CHAT AREA ── */
-#chat{
-  flex:1;display:flex;flex-direction:column;
-  background:var(--bg0);height:100vh;overflow:hidden;
-  background-image:
-    radial-gradient(ellipse 60% 40% at 80% 20%,rgba(0,229,255,.04) 0%,transparent 60%),
-    radial-gradient(ellipse 50% 50% at 20% 80%,rgba(255,45,120,.03) 0%,transparent 60%);
-}
-
-.chat-head{
-  display:flex;align-items:center;gap:14px;
-  padding:0 20px;height:64px;flex-shrink:0;
-  background:rgba(10,18,32,.8);
-  border-bottom:1px solid var(--border);
-  backdrop-filter:blur(16px);
-}
-.chat-back{display:none;cursor:pointer;font-size:20px;color:var(--text2);padding:4px}
-.chat-av{
-  width:38px;height:38px;border-radius:50%;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-weight:700;font-size:14px;color:#000;
-}
-.chat-info{flex:1;min-width:0}
-.chat-name{font-size:15px;font-weight:600}
-.chat-typing{font-size:12px;color:var(--cyan);height:16px}
-.chat-actions{display:flex;gap:8px}
-.act-btn{
-  width:36px;height:36px;border-radius:9px;border:1px solid var(--border);
-  background:var(--bg2);display:flex;align-items:center;justify-content:center;
-  font-size:16px;cursor:pointer;transition:all .18s;
-}
-.act-btn:hover{border-color:var(--border2);background:var(--cyan-dim)}
-
-/* messages */
-.msgs{
-  flex:1;overflow-y:auto;padding:24px 20px;
-  display:flex;flex-direction:column;gap:4px;
-}
-
-.date-sep{
-  text-align:center;font-size:11px;color:var(--text3);
-  margin:16px 0;letter-spacing:.08em;text-transform:uppercase;
-  display:flex;align-items:center;gap:12px;
-}
-.date-sep::before,.date-sep::after{content:'';flex:1;height:1px;background:var(--border)}
-
-.msg-row{display:flex;align-items:flex-end;gap:8px;margin-bottom:2px}
-.msg-row.sent{flex-direction:row-reverse}
-
-.msg-av{
-  width:28px;height:28px;border-radius:50%;flex-shrink:0;
-  display:flex;align-items:center;justify-content:center;
-  font-size:11px;font-weight:700;color:#000;
-}
-
-.bubble{
-  max-width:65%;padding:10px 14px;border-radius:16px;
-  font-size:14px;line-height:1.55;position:relative;
-  word-break:break-word;
-  animation:bubbleIn .25s cubic-bezier(.34,1.56,.64,1) both;
-}
-@keyframes bubbleIn{from{opacity:0;transform:scale(.9) translateY(6px)}to{opacity:1;transform:none}}
-
-.msg-row.recv .bubble{
-  background:var(--recv-bg);border:1px solid var(--recv-border);
-  border-bottom-left-radius:4px;color:var(--text);
-}
-.msg-row.sent .bubble{
-  background:var(--sent-bg);border:1px solid var(--sent-border);
-  border-bottom-right-radius:4px;color:#c8f4ff;
-  box-shadow:0 0 20px rgba(0,229,255,.06);
-}
-
-.msg-time{
-  font-size:10px;color:var(--text3);margin-top:4px;
-  display:flex;align-items:center;gap:4px;
-}
-.msg-row.sent .msg-time{justify-content:flex-end}
-.read-tick{color:var(--cyan);font-size:12px}
-
-.reactions{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-.react{
-  background:rgba(255,255,255,.06);border:1px solid var(--border);
-  border-radius:99px;padding:2px 8px;font-size:12px;cursor:pointer;
-  transition:all .18s;display:flex;align-items:center;gap:3px;
-}
-.react:hover,.react.on{background:rgba(0,229,255,.1);border-color:rgba(0,229,255,.3)}
-.react-count{font-size:11px;color:var(--text2)}
-
-/* typing indicator */
-.typing-bubble{
-  display:flex;align-items:flex-end;gap:8px;
-  animation:bubbleIn .3s both;
-}
-.typing-dots{
-  background:var(--recv-bg);border:1px solid var(--recv-border);
-  border-radius:16px;border-bottom-left-radius:4px;
-  padding:12px 16px;display:flex;gap:5px;align-items:center;
-}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--text2);animation:bounce .9s ease-in-out infinite}
-.dot:nth-child(2){animation-delay:.15s}
-.dot:nth-child(3){animation-delay:.3s}
-@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
-
-/* input bar */
-.input-bar{
-  display:flex;align-items:flex-end;gap:10px;
-  padding:14px 20px;border-top:1px solid var(--border);
-  background:rgba(10,18,32,.8);backdrop-filter:blur(16px);flex-shrink:0;
-}
-.input-wrap{
-  flex:1;display:flex;align-items:center;gap:8px;
-  background:var(--bg2);border:1px solid var(--border);
-  border-radius:14px;padding:10px 14px;min-height:46px;
-  transition:border-color .2s;
-}
-.input-wrap:focus-within{border-color:var(--border2);box-shadow:0 0 0 3px rgba(0,229,255,.06)}
-.input-wrap textarea{
-  flex:1;background:none;border:none;outline:none;resize:none;
-  color:var(--text);font-size:14px;font-family:inherit;
-  max-height:120px;min-height:24px;line-height:1.5;
-}
-.input-wrap textarea::placeholder{color:var(--text3)}
-.emoji-btn{font-size:18px;cursor:pointer;user-select:none;transition:transform .2s}
-.emoji-btn:hover{transform:scale(1.2)}
-
-.send-btn{
-  width:46px;height:46px;border-radius:14px;border:none;flex-shrink:0;
-  background:linear-gradient(135deg,var(--cyan),var(--cyan2));
-  color:#000;font-size:20px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-  transition:transform .2s,box-shadow .2s;
-  box-shadow:0 0 20px rgba(0,229,255,.3);
-}
-.send-btn:hover{transform:scale(1.05);box-shadow:0 0 30px rgba(0,229,255,.5)}
-.send-btn:active{transform:scale(.96)}
-
-.attach-btn{
-  width:36px;height:36px;border-radius:10px;border:1px solid var(--border);
-  background:var(--bg2);color:var(--text2);font-size:18px;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  transition:all .18s;align-self:flex-end;
-}
-.attach-btn:hover{border-color:var(--border2);color:var(--text)}
-
-/* ── EMPTY STATE ── */
-#no-chat{
-  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-  gap:16px;color:var(--text3);
-}
-.no-chat-icon{
-  width:80px;height:80px;border-radius:50%;
-  background:var(--cyan-dim);border:1px solid var(--border);
-  display:flex;align-items:center;justify-content:center;font-size:36px;
-  box-shadow:0 0 40px rgba(0,229,255,.1);
-}
-#no-chat h3{font-family:'Orbitron',monospace;font-size:18px;color:var(--text2)}
-#no-chat p{font-size:14px;text-align:center;max-width:240px;line-height:1.6}
-
-/* ── SCROLLBAR ── */
-::-webkit-scrollbar{width:5px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:rgba(0,229,255,.1);border-radius:3px}
-::-webkit-scrollbar-thumb:hover{background:rgba(0,229,255,.2)}
-
-/* ── TOAST ── */
-#toast{
-  position:fixed;bottom:24px;left:50%;z-index:9999;
-  transform:translateX(-50%) translateY(16px);
-  background:var(--bg3);border:1px solid var(--border);
-  color:var(--text);padding:12px 22px;border-radius:12px;font-size:14px;
-  opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;
-  box-shadow:0 8px 40px rgba(0,0,0,.5);
-}
-#toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
-
-/* ── MOBILE OVERLAY ── */
-#mob-overlay{display:none;position:fixed;inset:0;z-index:150;background:rgba(0,0,0,.7);backdrop-filter:blur(4px)}
-#mob-overlay.on{display:block}
-
-/* ═══════ RESPONSIVE ═══════ */
-@media(max-width:1024px){
-  #sidebar{display:none}
-  :root{--contacts:260px}
-}
-@media(max-width:700px){
-  #contacts{
-    position:fixed;inset:0;z-index:200;width:100%;
-    transform:translateX(0);transition:transform .3s cubic-bezier(.22,1,.36,1);
-  }
-  #contacts.hidden{transform:translateX(-100%)}
-  #chat{width:100%}
-  .chat-back{display:block}
-  .login-card{padding:36px 22px 32px}
-  h1.headline{font-size:24px}
-  .features{grid-template-columns:1fr}
-}
-@media(max-width:400px){
-  :root{--contacts:100vw}
-}
-</style>
-</head>
-<body>
-
-<!-- Neural canvas -->
-<canvas id="neural-canvas"></canvas>
-
-<!-- ═══════════════════════ LOGIN ═══════════════════════ -->
-<div id="login">
-  <div class="login-glow"></div>
-  <div class="grid-overlay"></div>
-  <div class="scan-line"></div>
-  <div class="hex-ring"></div>
-  <div class="hex-ring"></div>
-  <div class="hex-ring"></div>
-
-  <div class="login-card">
-    <div class="brand">
-      <div class="brand-icon">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
-          <circle cx="5" cy="12" r="2" fill="#00e5ff"/>
-          <circle cx="12" cy="5" r="2" fill="#00e5ff" opacity=".8"/>
-          <circle cx="19" cy="12" r="2" fill="#00e5ff" opacity=".6"/>
-          <circle cx="12" cy="19" r="2" fill="#00e5ff" opacity=".4"/>
-          <line x1="7" y1="12" x2="10" y2="12" stroke="#00e5ff" stroke-width="1.5" opacity=".6"/>
-          <line x1="14" y1="12" x2="17" y2="12" stroke="#00e5ff" stroke-width="1.5" opacity=".4"/>
-          <line x1="12" y1="7" x2="12" y2="10" stroke="#00e5ff" stroke-width="1.5" opacity=".6"/>
-          <line x1="12" y1="14" x2="12" y2="17" stroke="#00e5ff" stroke-width="1.5" opacity=".4"/>
-        </svg>
-      </div>
-      <span class="brand-name">Axoncord</span>
-      <span class="brand-tag">v2.0</span>
-    </div>
-
-    <div class="status-pill">
-      <span class="status-dot"></span>
-      All systems operational
-    </div>
-
-    <h1 class="headline">Connect across<br>the <em>neural grid</em></h1>
-    <p class="sub">Axoncord is the next-generation messaging platform built for speed, privacy, and a seamless futuristic experience.</p>
-
-    <button id="gbtn" onclick="_signIn()">
-      <svg width="20" height="20" viewBox="0 0 48 48">
-        <path fill="#FFC107" d="M43.6 20.1H42V20H24v8h11.3C33.6 32.9 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.9z"/>
-        <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16 19 13 24 13c3.1 0 5.8 1.1 7.9 3l5.7-5.7C34 6.1 29.3 4 24 4 16.3 4 9.7 8.3 6.3 14.7z"/>
-        <path fill="#4CAF50" d="M24 44c5.2 0 9.8-2 13.3-5.2l-6.1-5.2C29.3 35.5 26.8 36.5 24 36.5c-5.2 0-9.6-3.1-11.3-7.6l-6.6 5.1C9.6 39.5 16.3 44 24 44z"/>
-        <path fill="#1976D2" d="M43.6 20.1H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.3 5.7l6.1 5.2C36.9 37 44 31.8 44 24c0-1.3-.1-2.7-.4-3.9z"/>
-      </svg>
-      Continue with Google
-    </button>
-
-    <div class="features">
-      <div class="feat"><span class="feat-icon">🔐</span> End-to-end encrypted</div>
-      <div class="feat"><span class="feat-icon">⚡</span> Real-time sync</div>
-      <div class="feat"><span class="feat-icon">🌐</span> Cross-platform</div>
-      <div class="feat"><span class="feat-icon">🛡️</span> Zero data sold</div>
-    </div>
-
-
-  </div>
-</div>
-
-<!-- ═══════════════════════ APP SHELL ═══════════════════════ -->
-<div id="appshell">
-
-  <!-- LEFT SIDEBAR -->
-  <nav id="sidebar">
-    <div class="sb-top">
-      <div class="sb-brand">
-        <div class="brand-icon" style="width:30px;height:30px;border-radius:8px">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-            <circle cx="5" cy="12" r="2" fill="#00e5ff"/>
-            <circle cx="12" cy="5" r="2" fill="#00e5ff" opacity=".8"/>
-            <circle cx="19" cy="12" r="2" fill="#00e5ff" opacity=".6"/>
-            <circle cx="12" cy="19" r="2" fill="#00e5ff" opacity=".4"/>
-            <line x1="7" y1="12" x2="10" y2="12" stroke="#00e5ff" stroke-width="1.5" opacity=".6"/>
-            <line x1="14" y1="12" x2="17" y2="12" stroke="#00e5ff" stroke-width="1.5" opacity=".4"/>
-            <line x1="12" y1="7" x2="12" y2="10" stroke="#00e5ff" stroke-width="1.5" opacity=".6"/>
-            <line x1="12" y1="14" x2="12" y2="17" stroke="#00e5ff" stroke-width="1.5" opacity=".4"/>
-          </svg>
-        </div>
-        <span class="sb-brand-name">Axoncord</span>
-      </div>
-      <div class="me-card">
-        <div class="me-avatar">
-          <img class="me-photo" alt=""/>
-          <span class="me-init">U</span>
-        </div>
-        <div class="me-info">
-          <div class="me-name">Loading…</div>
-          <div class="me-status"><span class="online-dot"></span> Online</div>
-        </div>
-      </div>
-    </div>
-
-    <div class="sb-nav">
-      <div class="nav-lbl">Messaging</div>
-      <div class="nav-i on" onclick="setNav(this)"><span class="ico">💬</span> Messages <span class="nav-badge">5</span></div>
-      <div class="nav-i" onclick="setNav(this)"><span class="ico">👥</span> Groups</div>
-      <div class="nav-i" onclick="setNav(this)"><span class="ico">📢</span> Channels</div>
-
-      <div class="nav-lbl">Tools</div>
-      <div class="nav-i" onclick="setNav(this)"><span class="ico">📞</span> Calls</div>
-      <div class="nav-i" onclick="setNav(this)"><span class="ico">📁</span> Files</div>
-      <div class="nav-i" onclick="setNav(this)"><span class="ico">🔔</span> Notifications</div>
-
-      <div class="nav-lbl">Account</div>
-      <div class="nav-i" onclick="setNav(this)"><span class="ico">⚙️</span> Settings</div>
-    </div>
-
-    <div class="sb-bot">
-      <button class="signout" onclick="_signOut()">
-        <span style="font-size:16px">⬡</span> Sign Out
-      </button>
-    </div>
-  </nav>
-
-  <!-- CONTACTS -->
-  <div id="contacts">
-    <div class="ct-head">
-      <div class="ct-title">Messages</div>
-      <div class="search-wrap">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" style="color:var(--text3);flex-shrink:0"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-        <input type="text" placeholder="Search messages…" oninput="filterContacts(this.value)"/>
-      </div>
-    </div>
-    <div class="ct-tabs">
-      <div class="ct-tab on" onclick="switchTab(this,'all')">All</div>
-      <div class="ct-tab" onclick="switchTab(this,'unread')">Unread</div>
-      <div class="ct-tab" onclick="switchTab(this,'groups')">Groups</div>
-    </div>
-    <div class="ct-list" id="contact-list"></div>
-  </div>
-
-  <!-- CHAT -->
-  <div id="chat">
-    <!-- empty state -->
-    <div id="no-chat" style="display:flex">
-      <div class="no-chat-icon">💬</div>
-      <h3>Open a conversation</h3>
-      <p>Select a contact from the left to start chatting on the neural grid.</p>
-    </div>
-
-    <!-- chat view (hidden until contact selected) -->
-    <div id="chat-inner" style="display:none;flex-direction:column;flex:1;overflow:hidden">
-      <div class="chat-head">
-        <div class="chat-back" onclick="backToContacts()">←</div>
-        <div class="chat-av" id="chat-av" style="background:linear-gradient(135deg,#00e5ff,#ff2d78)">AK</div>
-        <div class="chat-info">
-          <div class="chat-name" id="chat-name">Alex Kim</div>
-          <div class="chat-typing" id="chat-typing">Online</div>
-        </div>
-        <div class="chat-actions">
-          <div class="act-btn" title="Voice call">📞</div>
-          <div class="act-btn" title="Video call">📹</div>
-          <div class="act-btn" title="More">⋯</div>
-        </div>
-      </div>
-
-      <div class="msgs" id="msgs"></div>
-
-      <div class="input-bar">
-        <div class="attach-btn" title="Attach">📎</div>
-        <div class="input-wrap">
-          <span class="emoji-btn" onclick="insertEmoji()">😊</span>
-          <textarea id="msg-input" placeholder="Message…" rows="1"
-            oninput="autoResize(this)" onkeydown="handleKey(event)"></textarea>
-        </div>
-        <button class="send-btn" onclick="sendMessage()">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M2 21l21-9L2 3v7l15 2-15 2v7z"/></svg>
-        </button>
-      </div>
-    </div>
-  </div>
-</div>
-
-<div id="mob-overlay" onclick="backToContacts()"></div>
-<div id="toast"></div>
-
-<script>
-/* ───────── NEURAL CANVAS ───────── */
-(function(){
-  const canvas = document.getElementById('neural-canvas');
-  const ctx    = canvas.getContext('2d');
-  let W, H, nodes = [];
-
-  function resize(){
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
-  }
-  resize(); window.addEventListener('resize', resize);
-
-  const N = Math.min(60, Math.floor(window.innerWidth * window.innerHeight / 18000));
-  for(let i=0;i<N;i++) nodes.push({
-    x: Math.random()*window.innerWidth,
-    y: Math.random()*window.innerHeight,
-    vx:(Math.random()-.5)*.4,
-    vy:(Math.random()-.5)*.4,
-    r: Math.random()*1.5+.5
-  });
-
-  function draw(){
-    ctx.clearRect(0,0,W,H);
-    // update
-    nodes.forEach(n=>{
-      n.x+=n.vx; n.y+=n.vy;
-      if(n.x<0||n.x>W) n.vx*=-1;
-      if(n.y<0||n.y>H) n.vy*=-1;
-    });
-    // edges
-    for(let i=0;i<nodes.length;i++){
-      for(let j=i+1;j<nodes.length;j++){
-        const dx=nodes[i].x-nodes[j].x, dy=nodes[i].y-nodes[j].y;
-        const dist=Math.sqrt(dx*dx+dy*dy);
-        if(dist<160){
-          const a=(1-dist/160)*.25;
-          ctx.beginPath();
-          ctx.moveTo(nodes[i].x,nodes[i].y);
-          ctx.lineTo(nodes[j].x,nodes[j].y);
-          ctx.strokeStyle=`rgba(0,229,255,${a})`;
-          ctx.lineWidth=.8;
-          ctx.stroke();
-        }
-      }
-    }
-    // dots
-    nodes.forEach(n=>{
-      ctx.beginPath();
-      ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
-      ctx.fillStyle='rgba(0,229,255,.55)';
-      ctx.fill();
-    });
-    requestAnimationFrame(draw);
-  }
-  draw();
-})();
-
-/* ───────── DEMO DATA ───────── */
-const CONTACTS = [
-  {id:1, name:'Alex Kim',    init:'AK', color:'linear-gradient(135deg,#00e5ff,#0088aa)', status:'online',  time:'now',  preview:'On it! Pushing the fix...', unread:3, group:false},
-  {id:2, name:'Sofia Ruiz',  init:'SR', color:'linear-gradient(135deg,#ff2d78,#aa0055)', status:'online',  time:'2m',   preview:'Can we call later?', unread:1, group:false},
-  {id:3, name:'Team Nexus',  init:'TN', color:'linear-gradient(135deg,#7c3aed,#4f46e5)', status:'online',  time:'10m',  preview:'Zara: Deploy scheduled ✅', unread:0, group:true},
-  {id:4, name:'Tom Mercer',  init:'TM', color:'linear-gradient(135deg,#00ff88,#009944)', status:'away',    time:'1h',   preview:'Thanks!', unread:0, group:false},
-  {id:5, name:'Jana P.',     init:'JP', color:'linear-gradient(135deg,#f59e0b,#d97706)', status:'offline', time:'3h',   preview:'See you tomorrow', unread:0, group:false},
-  {id:6, name:'Ryan Cole',   init:'RC', color:'linear-gradient(135deg,#f43f5e,#be123c)', status:'offline', time:'1d',   preview:'Got it, noted.', unread:0, group:false},
-  {id:7, name:'Design Guild',init:'DG', color:'linear-gradient(135deg,#ec4899,#8b5cf6)', status:'online',  time:'2d',   preview:'Mia: New brand kit!', unread:0, group:true},
 ];
 
-const MSGS = {
-  1:[
-    {from:'them', text:'Hey! Just saw the new Axoncord update 🔥', time:'10:02 AM', reactions:[{e:'🔥',n:2},{e:'👍',n:1}]},
-    {from:'me',   text:'Right?? The UI is completely revamped.', time:'10:04 AM'},
-    {from:'them', text:'The neural grid background on login is insane. How did you build it?', time:'10:05 AM'},
-    {from:'me',   text:'Canvas API + animated nodes with proximity edges. Pure JS, no lib needed.', time:'10:06 AM'},
-    {from:'them', text:'Brilliant. Also the message animations feel super smooth.', time:'10:08 AM'},
-    {from:'me',   text:'CSS cubic-bezier spring animation on each bubble. Try it on mobile too!', time:'10:09 AM'},
-    {from:'them', text:'On it! Pushing the fix...', time:'10:11 AM'},
-  ],
-  2:[
-    {from:'me',   text:'Hey Sofia, got a minute?', time:'Yesterday'},
-    {from:'them', text:'Always! What\'s up?', time:'Yesterday'},
-    {from:'me',   text:'Wanted to sync on the Q3 campaign launch.', time:'Yesterday'},
-    {from:'them', text:'Can we call later?', time:'9:42 AM'},
-  ],
-  3:[
-    {from:'them', text:'[Zara] Deploy scheduled for 2pm ✅', time:'11:30 AM'},
-    {from:'them', text:'[Max] I\'ll be monitoring the servers.', time:'11:31 AM'},
-    {from:'me',   text:'Perfect. Let\'s go!', time:'11:35 AM'},
-  ],
+const EMOJIS = ['😀','😂','🥰','😎','🤔','😴','🥺','🤯','🎉','🔥','❤️','👍','👎','✅','❌','🚀','💯','🎮','🎨','🎵','🍕','🎁','💎','⚡','🌟','😭','🤣','😅','😱','🤩','💀','👻','🤖','🦄','🐸','🌈','🎯','🏆','💪','🙏'];
+
+const SHOP_ITEMS = [
+  {name:'Vibrant Vibes',type:'Profile Theme',price:'160 Tokens',emoji:'🌈',gradient:'linear-gradient(135deg,#ff6b6b,#ffa07a)'},
+  {name:'Galaxy Brain',type:'Profile Theme',price:'160 Tokens',emoji:'🌌',gradient:'linear-gradient(135deg,#667eea,#764ba2)'},
+  {name:'Neon Pulse',type:'Profile Effect',price:'200 Tokens',emoji:'⚡',gradient:'linear-gradient(135deg,#00f5ff,#00d4ff)'},
+  {name:'Degen\'s Delight',type:'Sticker Pack',price:'Free',emoji:'😎',gradient:'linear-gradient(135deg,#f7971e,#ffd200)'},
+  {name:'PixelPals',type:'Sticker Pack',price:'Free',emoji:'🎮',gradient:'linear-gradient(135deg,#11998e,#38ef7d)'},
+  {name:'Flames',type:'Avatar Decoration',price:'160 Tokens',emoji:'🔥',gradient:'linear-gradient(135deg,#ff4e50,#f9d423)'},
+  {name:'Snowflake',type:'Avatar Decoration',price:'160 Tokens',emoji:'❄️',gradient:'linear-gradient(135deg,#a8edea,#fed6e3)'},
+  {name:'Crown',type:'Avatar Decoration',price:'240 Tokens',emoji:'👑',gradient:'linear-gradient(135deg,#f7971e,#ffd200)'},
+  {name:'Zen Blossom',type:'Sound Pack',price:'100 Tokens',emoji:'🌸',gradient:'linear-gradient(135deg,#fda085,#f6d365)'},
+  {name:'Cyber Pack',type:'Sound Pack',price:'100 Tokens',emoji:'🤖',gradient:'linear-gradient(135deg,#4facfe,#00f2fe)'},
+];
+
+const EXPLORE_SERVERS = [
+  {name:'Minecraft Community',icon:'⛏️',members:'2.1M',desc:'The biggest Minecraft server'},
+  {name:'Valorant HQ',icon:'🎯',members:'1.8M',desc:'Talk valorant tips & find teammates'},
+  {name:'Anime Realm',icon:'🌸',members:'900K',desc:'All things anime and manga'},
+  {name:'Lofi Chill',icon:'🎵',members:'500K',desc:'Chill beats to study and relax'},
+  {name:'Coding Den',icon:'💻',members:'300K',desc:'Learn and share code together'},
+  {name:'Art Station',icon:'🎨',members:'250K',desc:'Share your digital artwork'},
+];
+
+// ===========================
+// AUTH
+// ===========================
+document.getElementById('google-signin-btn').onclick = async () => {
+  try {
+    await signInWithPopup(auth, provider);
+  } catch(e) {
+    showAuthError(e.message);
+  }
 };
 
-let activeId = null;
-let typingTimer = null;
+document.getElementById('login-btn').onclick = async () => {
+  const email = document.getElementById('login-email').value;
+  const pass = document.getElementById('login-password').value;
+  if (!email || !pass) return showAuthError('Please fill in all fields');
+  try {
+    await signInWithEmailAndPassword(auth, email, pass);
+  } catch(e) {
+    showAuthError(e.message.replace('Firebase: ', ''));
+  }
+};
 
-/* ───────── RENDER CONTACTS ───────── */
-function renderContacts(list){
-  const el = document.getElementById('contact-list');
-  el.innerHTML = list.map(c=>`
-    <div class="contact-item${activeId===c.id?' active':''}" onclick="openChat(${c.id})">
-      <div class="c-avatar" style="background:${c.color}">
-        ${c.init}
-        <div class="c-status-ring ${c.status}"></div>
+document.getElementById('register-btn').onclick = async () => {
+  const email = document.getElementById('reg-email').value;
+  const username = document.getElementById('reg-username').value;
+  const pass = document.getElementById('reg-password').value;
+  if (!email || !username || !pass) return showAuthError('Please fill in all fields');
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    await updateProfile(cred.user, { displayName: username });
+  } catch(e) {
+    showAuthError(e.message.replace('Firebase: ', ''));
+  }
+};
+
+document.getElementById('goto-register').onclick = () => {
+  document.getElementById('login-form').style.display = 'none';
+  document.getElementById('register-form').style.display = 'block';
+};
+document.getElementById('goto-login').onclick = () => {
+  document.getElementById('register-form').style.display = 'none';
+  document.getElementById('login-form').style.display = 'block';
+};
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+  setTimeout(() => el.style.display = 'none', 5000);
+}
+
+onAuthStateChanged(auth, user => {
+  if (user) {
+    appState.user = user;
+    document.getElementById('auth-overlay').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
+    initApp();
+  } else {
+    appState.user = null;
+    document.getElementById('auth-overlay').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+  }
+});
+
+window.signOut = async () => {
+  await fbSignOut(auth);
+  closeModal('settings-modal');
+};
+
+// ===========================
+// INIT APP
+// ===========================
+function initApp() {
+  // Load servers from localStorage
+  const saved = localStorage.getItem('axoncord_servers_' + appState.user.uid);
+  if (saved) {
+    appState.servers = JSON.parse(saved);
+  } else {
+    appState.servers = JSON.parse(JSON.stringify(defaultServers));
+    // Add user to default server
+    appState.servers[0].members = [{
+      uid: appState.user.uid,
+      name: appState.user.displayName || 'User',
+      avatar: appState.user.photoURL || null,
+      role: 'owner',
+      status: 'online'
+    }];
+    saveServers();
+  }
+  // Load messages
+  const savedMsgs = localStorage.getItem('axoncord_messages_' + appState.user.uid);
+  if (savedMsgs) appState.messages = JSON.parse(savedMsgs);
+
+  // Load friends
+  const savedFriends = localStorage.getItem('axoncord_friends_' + appState.user.uid);
+  if (savedFriends) appState.friends = JSON.parse(savedFriends);
+
+  // Load DMs
+  const savedDMs = localStorage.getItem('axoncord_dms_' + appState.user.uid);
+  if (savedDMs) appState.dms = JSON.parse(savedDMs);
+
+  // Load nitro
+  const savedNitro = localStorage.getItem('axoncord_nitro_' + appState.user.uid);
+  if (savedNitro) appState.hasNitro = true;
+
+  renderServerSidebar();
+  showDMView();
+
+  // Simulate some demo messages
+  injectDemoMessages();
+}
+
+function saveServers() {
+  localStorage.setItem('axoncord_servers_' + appState.user.uid, JSON.stringify(appState.servers));
+}
+function saveMessages() {
+  localStorage.setItem('axoncord_messages_' + appState.user.uid, JSON.stringify(appState.messages));
+}
+function saveFriends() {
+  localStorage.setItem('axoncord_friends_' + appState.user.uid, JSON.stringify(appState.friends));
+}
+function saveDMs() {
+  localStorage.setItem('axoncord_dms_' + appState.user.uid, JSON.stringify(appState.dms));
+}
+
+function injectDemoMessages() {
+  const ch = 'ch-general';
+  if (!appState.messages[ch] || appState.messages[ch].length === 0) {
+    appState.messages[ch] = [
+      { id: 'm1', author: 'AxonBot', avatar: null, content: 'Welcome to AxonCord! 🎉 This server is your home.', timestamp: Date.now() - 3600000, reactions: [{emoji:'🎉',count:3}] },
+      { id: 'm2', author: 'System', avatar: null, content: `<span class="mention">@${appState.user.displayName || 'User'}</span> just joined the server!`, timestamp: Date.now() - 1800000, reactions: [] },
+    ];
+    saveMessages();
+  }
+}
+
+// ===========================
+// SERVER SIDEBAR
+// ===========================
+function renderServerSidebar() {
+  const list = document.getElementById('servers-list');
+  list.innerHTML = '';
+  appState.servers.forEach((s, i) => {
+    const el = document.createElement('div');
+    el.className = 'server-icon' + (appState.currentServer === s.id ? ' active' : '');
+    el.title = s.name;
+    el.dataset.serverId = s.id;
+    // Pill
+    const pill = document.createElement('div');
+    pill.className = 'server-pill';
+    el.appendChild(pill);
+    if (s.iconUrl) {
+      const img = document.createElement('img');
+      img.src = s.iconUrl;
+      el.appendChild(img);
+    } else {
+      el.appendChild(document.createTextNode(s.icon || s.name.charAt(0)));
+    }
+    el.onclick = () => showServer(s.id);
+    el.oncontextmenu = (e) => { e.preventDefault(); showServerContextMenu(e, s.id); };
+    list.appendChild(el);
+  });
+}
+
+// ===========================
+// SHOW VIEWS
+// ===========================
+window.showDMView = function() {
+  appState.currentView = 'home';
+  appState.currentServer = null;
+  updateServerSidebarActive(null);
+  
+  document.getElementById('left-sidebar').innerHTML = renderDMSidebar();
+  document.getElementById('right-sidebar').innerHTML = renderActivitySidebar();
+  document.getElementById('main-view').innerHTML = renderFriendsView();
+  attachFriendsListeners();
+  document.getElementById('right-sidebar').style.width = '360px';
+  document.getElementById('right-sidebar').style.background = 'var(--bg-secondary)';
+  document.getElementById('right-sidebar').style.padding = '16px';
+  document.getElementById('right-sidebar').style.overflowY = 'auto';
+};
+
+window.showServer = function(serverId) {
+  const server = appState.servers.find(s => s.id === serverId);
+  if (!server) return;
+  appState.currentServer = serverId;
+  appState.currentView = 'server';
+  updateServerSidebarActive(serverId);
+
+  // Pick first text channel
+  let firstChannel = null;
+  for (const cat of server.categories) {
+    const tc = cat.channels.find(c => c.type === 'text');
+    if (tc) { firstChannel = tc; break; }
+  }
+
+  document.getElementById('left-sidebar').innerHTML = renderChannelSidebar(server);
+  document.getElementById('right-sidebar').innerHTML = renderMembersSidebar(server);
+  document.getElementById('right-sidebar').style.width = '240px';
+  document.getElementById('right-sidebar').style.background = 'var(--bg-secondary)';
+  document.getElementById('right-sidebar').style.padding = '';
+
+  if (firstChannel) showChannel(firstChannel.id, firstChannel.name, firstChannel.type);
+  else document.getElementById('main-view').innerHTML = `<div class="welcome-screen"><div class="welcome-icon">📭</div><div class="welcome-title">No channels yet</div><div class="welcome-desc">Create a channel to get started.</div></div>`;
+
+  attachChannelSidebarListeners(server);
+};
+
+window.showChannel = function(channelId, channelName, channelType) {
+  appState.currentChannel = channelId;
+  
+  // Update active state in sidebar
+  document.querySelectorAll('.channel-item').forEach(el => {
+    el.classList.toggle('active', el.dataset.channelId === channelId);
+  });
+
+  if (channelType === 'voice') {
+    document.getElementById('main-view').innerHTML = renderVoiceChannel(channelName);
+    return;
+  }
+
+  document.getElementById('main-view').innerHTML = renderChannelView(channelId, channelName, channelType);
+  attachChannelListeners(channelId);
+  scrollToBottom();
+};
+
+window.showNitro = function() {
+  appState.currentView = 'nitro';
+  updateServerSidebarActive(null);
+  document.getElementById('left-sidebar').innerHTML = '';
+  document.getElementById('right-sidebar').innerHTML = '';
+  document.getElementById('main-view').innerHTML = renderNitroView();
+};
+
+window.showShop = function() {
+  appState.currentView = 'shop';
+  updateServerSidebarActive(null);
+  document.getElementById('left-sidebar').innerHTML = '';
+  document.getElementById('right-sidebar').innerHTML = '';
+  document.getElementById('main-view').innerHTML = renderShopView();
+};
+
+function updateServerSidebarActive(serverId) {
+  document.querySelectorAll('#servers-list .server-icon').forEach(el => {
+    el.classList.toggle('active', el.dataset.serverId === serverId);
+  });
+  document.querySelector('.dm-icon')?.classList.toggle('active-dm', !serverId);
+}
+
+// ===========================
+// RENDER: DM SIDEBAR
+// ===========================
+function renderDMSidebar() {
+  const u = appState.user;
+  const dms = Object.values(appState.dms);
+  return `
+  <div id="dm-sidebar">
+    <div class="dm-header">
+      <input class="dm-search" placeholder="Find or start a conversation">
+    </div>
+    <div style="padding:8px;margin:8px">
+      <div onclick="openModal('add-friend-modal')" style="background:var(--bg-accent);border-radius:4px;padding:8px 12px;cursor:pointer;color:var(--text-muted);font-size:14px;display:flex;align-items:center;gap:8px">
+        <span style="font-size:18px">➕</span> Add Friend
       </div>
-      <div class="c-info">
-        <div class="c-name">${c.name}</div>
-        <div class="c-preview">${c.preview}</div>
+    </div>
+    <div class="dm-section-title">Direct Messages</div>
+    ${dms.length === 0 ? `<div style="padding:16px;color:var(--text-muted);font-size:13px;text-align:center">No DMs yet. Add a friend!</div>` : ''}
+    ${dms.map(dm => `
+      <div class="dm-item ${appState.currentDM === dm.userId ? 'active' : ''}" onclick="openDM('${dm.userId}')">
+        <div class="dm-avatar" style="background:${dm.color || 'var(--brand)'}">
+          ${dm.avatar ? `<img src="${dm.avatar}">` : dm.name.charAt(0).toUpperCase()}
+          <div class="member-status ${dm.status === 'online' ? 'status-online' : 'status-offline'}"></div>
+        </div>
+        <div class="dm-info">
+          <div class="dm-name">${dm.name}</div>
+          <div class="dm-preview">${dm.lastMessage || 'No messages yet'}</div>
+        </div>
       </div>
-      <div class="c-meta">
-        <span class="c-time">${c.time}</span>
-        ${c.unread?`<span class="c-unread">${c.unread}</span>`:''}
+    `).join('')}
+    <div class="dm-section-title">Active Now</div>
+    ${appState.friends.slice(0,3).map(f => `
+      <div class="dm-item" onclick="openDM('${f.id}')">
+        <div class="dm-avatar" style="background:${f.color || 'var(--brand)'}">
+          ${f.avatar ? `<img src="${f.avatar}">` : f.name.charAt(0).toUpperCase()}
+          <div class="member-status status-online"></div>
+        </div>
+        <div class="dm-info">
+          <div class="dm-name">${f.name}</div>
+          <div class="dm-preview">Online</div>
+        </div>
+      </div>
+    `).join('')}
+    <div style="flex:1"></div>
+    ${renderUserPanel()}
+  </div>`;
+}
+
+function renderUserPanel() {
+  const u = appState.user;
+  const name = u.displayName || 'User';
+  const tag = '#' + Math.floor(1000 + Math.random()*9000);
+  return `
+  <div class="user-panel">
+    <div class="user-avatar-sm" onclick="openMyProfile()" style="cursor:pointer">
+      ${u.photoURL ? `<img src="${u.photoURL}">` : `<div style="width:100%;height:100%;background:var(--brand);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">${name.charAt(0).toUpperCase()}</div>`}
+      <div class="user-status-dot"></div>
+    </div>
+    <div class="user-info-sm">
+      <div class="user-name-sm">${name}</div>
+      <div class="user-tag-sm">${appState.hasNitro ? '✨ Nitro' : 'Online'}</div>
+    </div>
+    <div class="user-controls">
+      <button class="user-ctrl-btn" title="Mute" onclick="toggleMute()">🎤</button>
+      <button class="user-ctrl-btn" title="Deafen" onclick="toggleDeafen()">🎧</button>
+      <button class="user-ctrl-btn" title="Settings" onclick="openModal('settings-modal');showSettingsPage('profile')">⚙️</button>
+    </div>
+  </div>`;
+}
+
+// ===========================
+// RENDER: CHANNEL SIDEBAR
+// ===========================
+function renderChannelSidebar(server) {
+  return `
+  <div id="channel-sidebar">
+    <div class="server-header" onclick="openServerSettings('${server.id}')">
+      ${server.name}
+      <span style="color:var(--text-muted)">✕</span>
+    </div>
+    <div style="padding:12px 8px 8px;background:var(--bg-secondary)">
+      <div class="boost-bar-wrap">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+          <span style="font-size:12px;color:var(--nitro);font-weight:600">⚡ ${server.boosts || 0} Boosts · Level ${server.boostLevel || 0}</span>
+          <span style="font-size:11px;color:var(--text-muted)">Boost</span>
+        </div>
+        <div class="boost-bar-bg"><div class="boost-bar-fill" style="width:${Math.min(100,(server.boosts||0)/14*100)}%"></div></div>
+      </div>
+    </div>
+    <div class="channels-list">
+      ${server.categories.map(cat => `
+        <div class="channel-category" onclick="toggleCategory(this)">
+          ▾ ${cat.name}
+          <span onclick="event.stopPropagation();openCreateChannelModal('${server.id}','${cat.name}')" style="margin-left:auto;font-size:18px;opacity:0">＋</span>
+        </div>
+        ${cat.channels.map(ch => `
+          <div class="channel-item ${appState.currentChannel === ch.id ? 'active' : ''}" 
+               data-channel-id="${ch.id}" 
+               onclick="showChannel('${ch.id}','${ch.name}','${ch.type}')"
+               oncontextmenu="showChannelContextMenu(event,'${ch.id}','${ch.name}')">
+            <span class="channel-icon">${ch.type === 'voice' ? '🔊' : ch.type === 'announce' ? '📣' : '#'}</span>
+            <span class="channel-name">${ch.name}</span>
+            ${ch.type !== 'voice' ? `<span style="margin-left:auto;opacity:0;font-size:14px" class="ch-invite-btn" data-ch="${ch.name}">👤+</span>` : ''}
+          </div>
+        `).join('')}
+      `).join('')}
+      <div style="height:8px"></div>
+    </div>
+    ${renderUserPanel()}
+  </div>`;
+}
+
+// ===========================
+// RENDER: MEMBERS SIDEBAR
+// ===========================
+function renderMembersSidebar(server) {
+  const onlineMembers = server.members.filter(m => m.status !== 'offline');
+  const offlineMembers = server.members.filter(m => m.status === 'offline');
+  // Add current user if not present
+  const myUid = appState.user.uid;
+  if (!server.members.find(m => m.uid === myUid)) {
+    server.members.push({ uid: myUid, name: appState.user.displayName || 'User', avatar: appState.user.photoURL, role: 'member', status: 'online' });
+  }
+  const all = server.members;
+  return `
+  <div id="members-sidebar">
+    <div class="members-category">Online — ${all.filter(m=>m.status!=='offline').length}</div>
+    ${all.map(m => `
+      <div class="member-item" onclick="showProfileModal('${m.uid}','${m.name}','${m.avatar||''}','${m.role||'member'}')">
+        <div class="member-avatar" style="background:${m.color||'var(--brand)'}">
+          ${m.avatar ? `<img src="${m.avatar}">` : m.name.charAt(0).toUpperCase()}
+          <div class="member-status status-online"></div>
+        </div>
+        <div class="member-name">${m.name}${m.uid === myUid ? ' (you)' : ''}</div>
+        ${m.role === 'owner' ? `<span class="member-tag">Owner</span>` : m.role === 'admin' ? `<span class="member-tag">Admin</span>` : ''}
+      </div>
+    `).join('')}
+  </div>`;
+}
+
+// ===========================
+// RENDER: FRIENDS VIEW
+// ===========================
+function renderFriendsView() {
+  return `
+  <div id="friends-view">
+    <div class="friends-header">
+      <span class="friends-icon">👥</span>
+      <span class="friends-title">Friends</span>
+      <div class="friends-nav">
+        <button class="friends-nav-btn active" onclick="showFriendsTab('online',this)">Online</button>
+        <button class="friends-nav-btn" onclick="showFriendsTab('all',this)">All</button>
+        <button class="friends-nav-btn" onclick="showFriendsTab('pending',this)">Pending</button>
+        <button class="friends-nav-btn" onclick="showFriendsTab('blocked',this)">Blocked</button>
+        <button class="friends-nav-btn green" onclick="openModal('add-friend-modal')">Add Friend</button>
+      </div>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:16px">
+      <input class="friends-search" placeholder="Search" id="friends-search">
+      <div class="date-divider">Online — ${appState.friends.length} friends</div>
+      <div id="friends-list">
+        ${renderFriendsList()}
+      </div>
+      ${appState.friends.length === 0 ? `
+        <div class="welcome-screen" style="min-height:200px">
+          <div class="welcome-icon">🙂</div>
+          <div class="welcome-title">Wumpus is Waiting</div>
+          <div class="welcome-desc">Add a friend to start chatting. All you need is a username!</div>
+        </div>
+      ` : ''}
+    </div>
+  </div>`;
+}
+
+function renderFriendsList() {
+  const demoFriends = [
+    {id:'f1',name:'PixelWizard',tag:'#4729',status:'online',activity:'Playing Valorant'},
+    {id:'f2',name:'StarDust',tag:'#1337',status:'idle',activity:'Listening to Spotify'},
+    {id:'f3',name:'NeonByte',tag:'#9999',status:'dnd',activity:'Do Not Disturb'},
+    ...appState.friends
+  ];
+  return demoFriends.map(f => `
+    <div class="friend-item" onclick="openDM('${f.id}')">
+      <div class="friend-avatar" style="background:var(--brand)">
+        ${f.avatar ? `<img src="${f.avatar}">` : f.name.charAt(0)}
+        <div class="member-status status-${f.status}" style="position:absolute;bottom:-1px;right:-1px"></div>
+      </div>
+      <div class="friend-info">
+        <div class="friend-name">${f.name}<span style="color:var(--text-muted);font-weight:400">${f.tag||''}</span></div>
+        <div class="friend-status">${f.activity||f.status}</div>
+      </div>
+      <div class="friend-actions">
+        <button class="friend-btn" title="Message" onclick="event.stopPropagation();openDM('${f.id}')">💬</button>
+        <button class="friend-btn" title="More" onclick="event.stopPropagation()">⋯</button>
       </div>
     </div>
   `).join('');
 }
-renderContacts(CONTACTS);
 
-function filterContacts(q){
-  renderContacts(CONTACTS.filter(c=>c.name.toLowerCase().includes(q.toLowerCase())));
-}
-
-let activeTab = 'all';
-function switchTab(el, tab){
-  document.querySelectorAll('.ct-tab').forEach(t=>t.classList.remove('on'));
-  el.classList.add('on'); activeTab = tab;
-  let list = CONTACTS;
-  if(tab==='unread') list = CONTACTS.filter(c=>c.unread>0);
-  if(tab==='groups') list = CONTACTS.filter(c=>c.group);
-  renderContacts(list);
-}
-
-/* ───────── OPEN CHAT ───────── */
-function openChat(id){
-  activeId = id;
-  const c = CONTACTS.find(x=>x.id===id);
-  c.unread = 0;
-  renderContacts(CONTACTS);
-
-  document.getElementById('no-chat').style.display   = 'none';
-  document.getElementById('chat-inner').style.display = 'flex';
-  document.getElementById('chat-name').textContent    = c.name;
-  document.getElementById('chat-av').textContent      = c.init;
-  document.getElementById('chat-av').style.background = c.color;
-  document.getElementById('chat-typing').textContent  =
-    c.status==='online'?'Online': c.status==='away'?'Away':'Last seen recently';
-
-  renderMsgs(id);
-
-  // show typing indicator briefly if online
-  if(c.status==='online'){
-    clearTimeout(typingTimer);
-    typingTimer = setTimeout(()=>{
-      showTyping(); setTimeout(hideTyping, 2200);
-    }, 800);
-  }
-
-  // mobile
-  if(window.innerWidth<=700){
-    document.getElementById('contacts').classList.add('hidden');
-    document.getElementById('mob-overlay').classList.add('on');
-  }
-}
-
-function backToContacts(){
-  document.getElementById('contacts').classList.remove('hidden');
-  document.getElementById('mob-overlay').classList.remove('on');
-}
-
-/* ───────── RENDER MESSAGES ───────── */
-function renderMsgs(id){
-  const msgs = MSGS[id] || [];
-  const container = document.getElementById('msgs');
-  container.innerHTML = `<div class="date-sep">Today</div>`;
-
-  let prevFrom = null;
-  msgs.forEach((m,i)=>{
-    const showAv = m.from==='them' && prevFrom!=='them';
-    const row = document.createElement('div');
-    row.className = `msg-row ${m.from==='me'?'sent':'recv'}`;
-    row.innerHTML = `
-      ${m.from==='them'?`<div class="msg-av" style="${showAv?`background:${CONTACTS.find(c=>c.id===id).color}`:'opacity:0'}">${showAv?CONTACTS.find(c=>c.id===id).init:''}</div>`:''}
-      <div>
-        <div class="bubble" style="animation-delay:${i*.04}s">${escHtml(m.text)}
-          ${m.reactions?`<div class="reactions">${m.reactions.map(r=>`<span class="react" onclick="this.classList.toggle('on')">${r.e}<span class="react-count">${r.n}</span></span>`).join('')}</div>`:''}
-        </div>
-        <div class="msg-time">
-          ${m.time}
-          ${m.from==='me'?`<span class="read-tick">✓✓</span>`:''}
+function renderActivitySidebar() {
+  const activities = [
+    {name:'PixelWizard',avatar:null,game:'Valorant',time:'1 hr'},
+    {name:'StarDust',avatar:null,game:'Listening to: Lo-fi Chill',time:'32 min'},
+    {name:'NeonByte',avatar:null,game:'VS Code',time:'3 hr'},
+  ];
+  return `
+  <div id="activity-sidebar">
+    <div class="activity-title">Active Now</div>
+    ${activities.map(a => `
+      <div class="activity-item">
+        <div class="activity-avatar">${a.name.charAt(0)}</div>
+        <div class="activity-info">
+          <div class="activity-name">${a.name}</div>
+          <div class="activity-game">${a.game}</div>
+          <div class="activity-time">${a.time}</div>
         </div>
       </div>
-    `;
-    container.appendChild(row);
-    prevFrom = m.from;
-  });
-  container.scrollTop = container.scrollHeight;
+    `).join('')}
+  </div>`;
 }
 
-function showTyping(){
-  const container = document.getElementById('msgs');
-  const id = activeId;
-  const c = CONTACTS.find(x=>x.id===id);
-  const div = document.createElement('div');
-  div.id = 'typing-indicator';
-  div.className = 'typing-bubble';
-  div.innerHTML = `
-    <div class="msg-av" style="background:${c.color}">${c.init}</div>
-    <div class="typing-dots">
-      <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+// ===========================
+// RENDER: CHANNEL VIEW
+// ===========================
+function renderChannelView(channelId, channelName, channelType) {
+  const msgs = appState.messages[channelId] || [];
+  return `
+  <div id="main-content">
+    <div id="channel-header">
+      <span class="channel-header-icon">${channelType === 'announce' ? '📣' : '#'}</span>
+      <span class="channel-header-name">${channelName}</span>
+      <div class="channel-header-divider"></div>
+      <span class="channel-header-topic" id="ch-topic">Welcome to #${channelName}! Be kind and respectful.</span>
+      <div class="header-actions">
+        <button class="header-action-btn" title="Threads" onclick="showToast('Threads coming soon!')">🧵</button>
+        <button class="header-action-btn" title="Notification Settings" onclick="showToast('Notifications configured!')">🔔</button>
+        <button class="header-action-btn" title="Pinned Messages" onclick="showPinned('${channelId}')">📌</button>
+        <button class="header-action-btn" title="Member List" onclick="toggleMemberSidebar()">👥</button>
+        <button class="header-action-btn" title="Search" onclick="focusSearch()">🔍</button>
+        <button class="header-action-btn" title="Inbox" onclick="showToast('No new mentions!')">📥</button>
+        <button class="header-action-btn" title="Help" onclick="showToast('Help center opened!')">❓</button>
+      </div>
     </div>
-  `;
-  container.appendChild(div);
-  container.scrollTop = container.scrollHeight;
-  document.getElementById('chat-typing').textContent = 'typing…';
+    <div id="messages-container">
+      <div class="welcome-screen" style="min-height:auto;padding:32px 16px">
+        <div style="font-size:48px;background:var(--brand);width:72px;height:72px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:16px">#</div>
+        <div class="welcome-title" style="font-size:28px">Welcome to #${channelName}!</div>
+        <div class="welcome-desc">This is the start of the #${channelName} channel.</div>
+      </div>
+      <div class="date-divider">Today</div>
+      <div id="messages-list">
+        ${renderMessages(msgs)}
+      </div>
+    </div>
+    <div class="typing-indicator"><span id="typing-text"></span></div>
+    <div id="message-input-area">
+      <div class="message-input-wrap" style="position:relative">
+        <div class="input-add-btn" onclick="toggleEmojiPicker()" title="Upload file">➕</div>
+        <textarea id="message-input" rows="1" placeholder="Message #${channelName}" 
+          onkeydown="handleMessageKeydown(event,'${channelId}')"
+          oninput="autoResizeTextarea(this)"></textarea>
+        <div class="input-actions">
+          <div class="input-action-btn" onclick="triggerGifPicker()" title="GIF">GIF</div>
+          <div class="input-action-btn" onclick="triggerStickerPicker()" title="Stickers">🗒️</div>
+          <div class="input-action-btn" onclick="toggleEmojiPicker()" title="Emoji">😀</div>
+        </div>
+        <div class="emoji-picker" id="emoji-picker">
+          <div style="font-size:13px;font-weight:700;color:var(--text-muted);margin-bottom:8px;text-transform:uppercase">FREQUENTLY USED</div>
+          <div class="emoji-grid">
+            ${EMOJIS.map(e => `<div class="emoji-btn" onclick="insertEmoji('${e}')">${e}</div>`).join('')}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>`;
 }
-function hideTyping(){
-  const t = document.getElementById('typing-indicator');
-  if(t) t.remove();
-  if(activeId){
-    const c = CONTACTS.find(x=>x.id===activeId);
-    document.getElementById('chat-typing').textContent = c&&c.status==='online'?'Online':'Last seen recently';
+
+function renderMessages(msgs) {
+  if (!msgs.length) return '';
+  return msgs.map((msg, i) => {
+    const prev = msgs[i-1];
+    const sameAuthor = prev && prev.author === msg.author && (msg.timestamp - prev.timestamp) < 300000;
+    const time = new Date(msg.timestamp).toLocaleTimeString('en-US', {hour:'2-digit',minute:'2-digit'});
+    
+    if (sameAuthor) {
+      return `
+      <div class="message-group message-continued" data-msg-id="${msg.id}">
+        <div class="message-text" style="padding-left:0">${msg.content}</div>
+        ${msg.reactions?.length ? `<div class="reactions">${msg.reactions.map(r=>`<div class="reaction" onclick="toggleReaction('${msg.id}','${r.emoji}')">${r.emoji} <span class="reaction-count">${r.count}</span></div>`).join('')}</div>` : ''}
+        <div class="msg-hover-actions">
+          <div class="msg-action-btn" onclick="addReactionQuick('${msg.id}','👍')" title="React">👍</div>
+          <div class="msg-action-btn" onclick="toggleEmojiPickerForMsg('${msg.id}')" title="Add Reaction">😀</div>
+          <div class="msg-action-btn" onclick="replyToMessage('${msg.id}','${msg.author}')" title="Reply">↩️</div>
+          <div class="msg-action-btn" onclick="showMsgContextMenu(event,'${msg.id}')" title="More">⋯</div>
+        </div>
+      </div>`;
+    }
+    
+    const initials = msg.author.charAt(0).toUpperCase();
+    const colors = ['#5865f2','#57f287','#eb459e','#fee75c','#ed4245','#00b0f4'];
+    const color = colors[msg.author.charCodeAt(0) % colors.length];
+    return `
+    <div class="message-group" data-msg-id="${msg.id}">
+      <div class="message-avatar" onclick="showProfileModal('${msg.authorId||''}','${msg.author}','${msg.avatar||''}','member')" style="background:${color}">
+        ${msg.avatar ? `<img src="${msg.avatar}">` : initials}
+      </div>
+      <div class="message-content-wrap">
+        <div class="message-header">
+          <span class="message-author" style="color:${color}">${msg.author}</span>
+          ${msg.authorId === appState.user.uid && appState.hasNitro ? `<span class="badge nitro" style="font-size:10px">Nitro</span>` : ''}
+          <span class="message-timestamp">${time}</span>
+        </div>
+        <div class="message-text">${msg.content}</div>
+        ${msg.reactions?.length ? `<div class="reactions">${msg.reactions.map(r=>`<div class="reaction" onclick="toggleReaction('${msg.id}','${r.emoji}')">${r.emoji} <span class="reaction-count">${r.count}</span></div>`).join('')}</div>` : ''}
+      </div>
+      <div class="msg-hover-actions">
+        <div class="msg-action-btn" onclick="addReactionQuick('${msg.id}','👍')" title="React">👍</div>
+        <div class="msg-action-btn" onclick="toggleEmojiPickerForMsg('${msg.id}')" title="Add Reaction">😀</div>
+        <div class="msg-action-btn" onclick="replyToMessage('${msg.id}','${msg.author}')" title="Reply">↩️</div>
+        <div class="msg-action-btn" onclick="showMsgContextMenu(event,'${msg.id}')" title="More">⋯</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===========================
+// RENDER: VOICE CHANNEL
+// ===========================
+function renderVoiceChannel(channelName) {
+  return `
+  <div id="main-content">
+    <div id="channel-header">
+      <span class="channel-header-icon">🔊</span>
+      <span class="channel-header-name">${channelName}</span>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px">
+      <div style="font-size:72px">🎙️</div>
+      <div style="font-size:24px;font-weight:700;color:var(--text-normal)">Voice: ${channelName}</div>
+      <div style="color:var(--text-muted)">You are connected to the voice channel</div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+        <div style="background:var(--bg-secondary);border-radius:8px;padding:24px;text-align:center;width:120px">
+          <div style="font-size:40px;background:var(--brand);width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">${(appState.user.displayName||'U').charAt(0)}</div>
+          <div style="font-size:13px;color:var(--text-normal)">${appState.user.displayName||'User'}</div>
+          <div style="color:var(--green);font-size:12px">🎙️ Speaking</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:16px">
+        <button onclick="toggleMute()" style="background:var(--bg-secondary);border:none;color:var(--text-normal);padding:12px 24px;border-radius:8px;cursor:pointer;font-size:16px">🎤 Mute</button>
+        <button onclick="toggleDeafen()" style="background:var(--bg-secondary);border:none;color:var(--text-normal);padding:12px 24px;border-radius:8px;cursor:pointer;font-size:16px">🎧 Deafen</button>
+        <button onclick="shareScreen()" style="background:var(--bg-secondary);border:none;color:var(--text-normal);padding:12px 24px;border-radius:8px;cursor:pointer;font-size:16px">🖥️ Share Screen</button>
+        <button onclick="leaveVoice()" style="background:var(--red);border:none;color:#fff;padding:12px 24px;border-radius:8px;cursor:pointer;font-size:16px">📞 Leave</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===========================
+// RENDER: NITRO VIEW
+// ===========================
+function renderNitroView() {
+  return `
+  <div id="nitro-view">
+    <div class="nitro-hero">
+      <div class="nitro-title">✨ AxonCord Nitro</div>
+      <div class="nitro-subtitle">Level up your communication with exclusive features</div>
+      <div class="nitro-plans">
+        <div class="nitro-plan">
+          <div class="plan-icon">🌙</div>
+          <div class="plan-name">Nitro Basic</div>
+          <div class="plan-price">$2.99<span>/mo</span></div>
+          <ul class="plan-features">
+            <li>Custom emoji anywhere</li>
+            <li>Animated profile picture</li>
+            <li>Custom profile banner</li>
+            <li>2x Nitro Sticker slots</li>
+            <li>Super Reactions</li>
+          </ul>
+          <button class="nitro-btn" onclick="openModal('nitro-purchase-modal')">Subscribe</button>
+        </div>
+        <div class="nitro-plan featured">
+          <div class="plan-icon">⚡</div>
+          <div class="plan-name">Nitro</div>
+          <div class="plan-price">$9.99<span>/mo</span></div>
+          <ul class="plan-features">
+            <li>Everything in Basic</li>
+            <li>HD video & screenshare</li>
+            <li>100MB file uploads</li>
+            <li>2 Server Boosts</li>
+            <li>Custom tag</li>
+            <li>Profile effects</li>
+            <li>Nitro badge</li>
+          </ul>
+          <button class="nitro-btn" onclick="openModal('nitro-purchase-modal')">Subscribe</button>
+        </div>
+        <div class="nitro-plan">
+          <div class="plan-icon">👑</div>
+          <div class="plan-name">Nitro Yearly</div>
+          <div class="plan-price">$99.99<span>/yr</span></div>
+          <ul class="plan-features">
+            <li>Everything in Nitro</li>
+            <li>Save 16% vs monthly</li>
+            <li>4 Server Boosts</li>
+            <li>Exclusive yearly badge</li>
+            <li>Early access features</li>
+          </ul>
+          <button class="nitro-btn" onclick="openModal('nitro-purchase-modal')">Subscribe</button>
+        </div>
+      </div>
+      <div style="text-align:center;margin-top:32px">
+        <div style="font-size:24px;font-weight:700;color:#fff;margin-bottom:24px">Gift Nitro to a Friend</div>
+        <div style="display:flex;gap:16px;justify-content:center;flex-wrap:wrap">
+          ${[1,3,6,12].map(m => `
+            <div onclick="openModal('nitro-purchase-modal')" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,115,250,0.3);border-radius:12px;padding:20px 32px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.background='rgba(255,115,250,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">
+              <div style="font-size:24px">🎁</div>
+              <div style="color:#fff;font-weight:700;margin-top:8px">${m} Month${m>1?'s':''}</div>
+              <div style="color:var(--nitro)">${m===1?'$9.99':m===3?'$27.99':m===6?'$53.99':'$99.99'}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ===========================
+// RENDER: SHOP VIEW
+// ===========================
+function renderShopView() {
+  return `
+  <div id="shop-view">
+    <div class="shop-header">🛒 AxonCord Shop</div>
+    <div class="shop-subtitle">Personalize your experience with exclusive items</div>
+    <div style="background:linear-gradient(135deg,rgba(88,101,242,0.2),rgba(255,115,250,0.2));border:1px solid rgba(88,101,242,0.3);border-radius:12px;padding:20px;margin-bottom:24px;display:flex;align-items:center;gap:16px">
+      <div style="font-size:48px">🪙</div>
+      <div>
+        <div style="font-size:18px;font-weight:700;color:#fff">AxonCord Tokens</div>
+        <div style="color:var(--text-muted)">Your balance: <span style="color:var(--nitro);font-weight:700">0 Tokens</span></div>
+        <button onclick="openModal('nitro-purchase-modal')" style="margin-top:8px;background:var(--brand);color:#fff;border:none;border-radius:4px;padding:6px 16px;cursor:pointer;font-size:14px;font-weight:600">Get Tokens</button>
+      </div>
+    </div>
+    <div class="shop-categories">
+      <button class="shop-category-btn active" onclick="filterShop(this,'all')">All</button>
+      <button class="shop-category-btn" onclick="filterShop(this,'Profile Theme')">Profile Themes</button>
+      <button class="shop-category-btn" onclick="filterShop(this,'Avatar Decoration')">Avatar Deco</button>
+      <button class="shop-category-btn" onclick="filterShop(this,'Sticker Pack')">Sticker Packs</button>
+      <button class="shop-category-btn" onclick="filterShop(this,'Sound Pack')">Sound Packs</button>
+      <button class="shop-category-btn" onclick="filterShop(this,'Profile Effect')">Profile Effects</button>
+    </div>
+    <div class="shop-grid" id="shop-grid">
+      ${SHOP_ITEMS.map(item => `
+        <div class="shop-item" onclick="buyShopItem('${item.name}','${item.price}')">
+          <div class="shop-item-preview" style="background:${item.gradient}">${item.emoji}</div>
+          <div class="shop-item-info">
+            <div class="shop-item-type">${item.type}</div>
+            <div class="shop-item-name">${item.name}</div>
+            <div class="shop-item-price">${item.price}</div>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>`;
+}
+
+// ===========================
+// MESSAGE HANDLING
+// ===========================
+function handleMessageKeydown(event, channelId) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    sendMessage(channelId);
   }
 }
+window.handleMessageKeydown = handleMessageKeydown;
 
-/* ───────── SEND MESSAGE ───────── */
-const EMOJIS = ['😊','🔥','👍','💯','⚡','🚀','❤️','😂'];
-let emojiIdx = 0;
-function insertEmoji(){
-  const ta = document.getElementById('msg-input');
-  ta.value += EMOJIS[emojiIdx++ % EMOJIS.length];
-  ta.focus();
-}
-
-function autoResize(ta){
-  ta.style.height='auto';
-  ta.style.height=Math.min(ta.scrollHeight,120)+'px';
-}
-function handleKey(e){
-  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMessage();}
-}
-
-function sendMessage(){
-  if(!activeId) return;
-  const ta = document.getElementById('msg-input');
-  const text = ta.value.trim();
-  if(!text) return;
-
-  const msgs = MSGS[activeId] = MSGS[activeId] || [];
-  const now = new Date();
-  const time = now.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-  msgs.push({from:'me', text, time});
-  CONTACTS.find(c=>c.id===activeId).preview = text;
-
-  ta.value=''; ta.style.height='auto';
-  renderMsgs(activeId);
-  renderContacts(CONTACTS);
-
-  // simulate reply
-  if(Math.random()>.3){
-    clearTimeout(typingTimer);
-    typingTimer = setTimeout(()=>{
-      showTyping();
-      setTimeout(()=>{
-        hideTyping();
-        const replies = [
-          'Got it! 👍', 'That makes sense.', 'On it!', 'Interesting…',
-          'Can you share more details?', 'Love it 🔥', 'Makes sense, let\'s do it.',
-        ];
-        const reply = replies[Math.floor(Math.random()*replies.length)];
-        msgs.push({from:'them', text:reply, time:new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})});
-        renderMsgs(activeId);
-      }, 2000+Math.random()*1500);
-    }, 800);
+function sendMessage(channelId) {
+  const input = document.getElementById('message-input');
+  const text = input?.value.trim();
+  if (!text) return;
+  
+  const msg = {
+    id: 'msg_' + Date.now(),
+    author: appState.user.displayName || 'User',
+    authorId: appState.user.uid,
+    avatar: appState.user.photoURL,
+    content: formatMessageContent(text),
+    timestamp: Date.now(),
+    reactions: [],
+  };
+  
+  if (!appState.messages[channelId]) appState.messages[channelId] = [];
+  appState.messages[channelId].push(msg);
+  saveMessages();
+  
+  input.value = '';
+  input.style.height = 'auto';
+  
+  // Append message to DOM
+  const list = document.getElementById('messages-list');
+  if (list) {
+    list.insertAdjacentHTML('beforeend', renderMessages([msg]));
+    scrollToBottom();
   }
 }
+window.sendMessage = sendMessage;
 
-function escHtml(s){
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+function formatMessageContent(text) {
+  // Format mentions, bold, italics, code
+  return text
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/@(\w+)/g, '<span class="mention">@$1</span>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/`(.+?)`/g, '<code style="background:var(--bg-tertiary);padding:2px 4px;border-radius:3px;font-family:monospace;font-size:13px">$1</code>')
+    .replace(/~~(.+?)~~/g, '<s>$1</s>');
 }
 
-function setNav(el){
-  document.querySelectorAll('.nav-i').forEach(n=>n.classList.remove('on'));
-  el.classList.add('on');
+function autoResizeTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 300) + 'px';
 }
+window.autoResizeTextarea = autoResizeTextarea;
+
+function scrollToBottom() {
+  const c = document.getElementById('messages-container');
+  if (c) c.scrollTop = c.scrollHeight;
+}
+
+// ===========================
+// EMOJI
+// ===========================
+window.toggleEmojiPicker = function() {
+  const picker = document.getElementById('emoji-picker');
+  if (picker) picker.classList.toggle('open');
+};
+
+window.insertEmoji = function(emoji) {
+  const input = document.getElementById('message-input');
+  if (input) {
+    input.value += emoji;
+    input.focus();
+  }
+  const picker = document.getElementById('emoji-picker');
+  if (picker) picker.classList.remove('open');
+};
+
+window.addReactionQuick = function(msgId, emoji) {
+  // Add reaction to message
+  for (const chId in appState.messages) {
+    const msg = appState.messages[chId].find(m => m.id === msgId);
+    if (msg) {
+      const existing = msg.reactions.find(r => r.emoji === emoji);
+      if (existing) existing.count++;
+      else msg.reactions.push({emoji, count: 1});
+      saveMessages();
+      // Re-render reactions
+      const msgEl = document.querySelector(`[data-msg-id="${msgId}"] .reactions`);
+      break;
+    }
+  }
+  showToast(`Reacted with ${emoji}`);
+};
+window.addReactionQuick = window.addReactionQuick;
+
+window.toggleReaction = function(msgId, emoji) { window.addReactionQuick(msgId, emoji); };
+window.toggleEmojiPickerForMsg = function(msgId) { showToast('Emoji picker for message'); };
+
+window.replyToMessage = function(msgId, author) {
+  const input = document.getElementById('message-input');
+  if (input) { input.value = `@${author} `; input.focus(); }
+};
+
+// ===========================
+// DM
+// ===========================
+window.openDM = function(userId) {
+  // Simulate DM
+  const knownUsers = {
+    f1: {name:'PixelWizard',color:'#57f287'},
+    f2: {name:'StarDust',color:'#eb459e'},
+    f3: {name:'NeonByte',color:'#fee75c'},
+  };
+  const u = knownUsers[userId] || {name:'User '+userId, color:'var(--brand)'};
+  
+  if (!appState.dms[userId]) {
+    appState.dms[userId] = { userId, name: u.name, color: u.color, lastMessage: '', messages: [] };
+    saveDMs();
+  }
+  
+  appState.currentDM = userId;
+  appState.currentView = 'dm';
+  
+  const dm = appState.dms[userId];
+  
+  document.getElementById('main-view').innerHTML = `
+  <div id="main-content">
+    <div id="channel-header">
+      <div style="width:32px;height:32px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700">${u.name.charAt(0)}</div>
+      <span class="channel-header-name" style="margin-left:8px">${u.name}</span>
+      <div class="header-actions">
+        <button class="header-action-btn" onclick="startCall('${userId}')" title="Start Call">📞</button>
+        <button class="header-action-btn" onclick="startVideoCall('${userId}')" title="Video Call">📹</button>
+        <button class="header-action-btn" onclick="showProfile('${userId}')" title="Profile">👤</button>
+      </div>
+    </div>
+    <div id="messages-container" style="flex:1;overflow-y:auto;padding:16px">
+      <div style="text-align:center;padding:32px">
+        <div style="width:72px;height:72px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;color:#fff;font-size:32px;font-weight:700;margin:0 auto 16px">${u.name.charAt(0)}</div>
+        <div style="font-size:24px;font-weight:700;color:var(--text-normal)">${u.name}</div>
+        <div style="color:var(--text-muted);margin-top:8px">This is the beginning of your direct message history with ${u.name}.</div>
+      </div>
+      <div id="messages-list">${renderMessages(dm.messages || [])}</div>
+    </div>
+    <div class="typing-indicator"></div>
+    <div id="message-input-area">
+      <div class="message-input-wrap">
+        <div class="input-add-btn">➕</div>
+        <textarea id="message-input" rows="1" placeholder="Message @${u.name}" 
+          onkeydown="handleDMKeydown(event,'${userId}')"
+          oninput="autoResizeTextarea(this)"></textarea>
+        <div class="input-actions">
+          <div class="input-action-btn">GIF</div>
+          <div class="input-action-btn">🗒️</div>
+          <div class="input-action-btn" onclick="toggleEmojiPicker()">😀</div>
+        </div>
+        <div class="emoji-picker" id="emoji-picker">
+          <div class="emoji-grid">${EMOJIS.map(e=>`<div class="emoji-btn" onclick="insertEmoji('${e}')">${e}</div>`).join('')}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+};
+
+window.handleDMKeydown = function(event, userId) {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    const input = document.getElementById('message-input');
+    const text = input?.value.trim();
+    if (!text) return;
+    
+    const msg = {
+      id: 'dm_' + Date.now(),
+      author: appState.user.displayName || 'User',
+      authorId: appState.user.uid,
+      avatar: appState.user.photoURL,
+      content: formatMessageContent(text),
+      timestamp: Date.now(),
+      reactions: [],
+    };
+    
+    if (!appState.dms[userId]) appState.dms[userId] = { messages: [] };
+    if (!appState.dms[userId].messages) appState.dms[userId].messages = [];
+    appState.dms[userId].messages.push(msg);
+    appState.dms[userId].lastMessage = text;
+    saveDMs();
+    
+    input.value = '';
+    const list = document.getElementById('messages-list');
+    if (list) { list.insertAdjacentHTML('beforeend', renderMessages([msg])); scrollToBottom(); }
+    
+    // Simulate reply after 1.5s
+    setTimeout(() => {
+      const replies = ['Sounds good!', 'Interesting...', 'Lol 😂', 'Agreed!', 'Tell me more!', '👍'];
+      const reply = {
+        id: 'dm_r_' + Date.now(),
+        author: appState.dms[userId]?.name || 'User',
+        authorId: userId,
+        content: replies[Math.floor(Math.random()*replies.length)],
+        timestamp: Date.now(),
+        reactions: [],
+      };
+      appState.dms[userId].messages.push(reply);
+      saveDMs();
+      const list2 = document.getElementById('messages-list');
+      if (list2) { list2.insertAdjacentHTML('beforeend', renderMessages([reply])); scrollToBottom(); }
+    }, 1500);
+  }
+};
+
+// ===========================
+// FRIENDS
+// ===========================
+window.showFriendsTab = function(tab, btn) {
+  document.querySelectorAll('.friends-nav-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  // In a real app, filter friends list. For demo, just show same list.
+};
+
+window.sendFriendRequest = function() {
+  const input = document.getElementById('add-friend-input');
+  const username = input?.value.trim();
+  if (!username) return;
+  showToast(`Friend request sent to ${username}!`);
+  closeModal('add-friend-modal');
+  if (input) input.value = '';
+};
+
+// ===========================
+// SERVER MANAGEMENT
+// ===========================
+window.showServerForm = function(type) {
+  closeModal('create-server-modal');
+  const nameMap = {community:'My Server',gaming:'Gaming Lounge',school:'Study Group',art:'Art Corner'};
+  document.getElementById('new-server-name').value = nameMap[type] || '';
+  openModal('server-form-modal');
+};
+
+window.previewServerIcon = function(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    const el = document.getElementById('server-icon-upload');
+    el.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:cover">`;
+    el._iconUrl = e.target.result;
+  };
+  reader.readAsDataURL(file);
+};
+
+window.createServer = function() {
+  const name = document.getElementById('new-server-name').value.trim();
+  if (!name) return;
+  const iconEl = document.getElementById('server-icon-upload');
+  const server = {
+    id: 'server_' + Date.now(),
+    name,
+    icon: name.charAt(0).toUpperCase(),
+    iconUrl: iconEl._iconUrl || null,
+    color: '#5865f2',
+    categories: [
+      { name: 'Text Channels', channels: [{id:'ch_'+Date.now(),name:'general',type:'text'}] },
+      { name: 'Voice Channels', channels: [{id:'chv_'+Date.now(),name:'General',type:'voice'}] },
+    ],
+    members: [{uid: appState.user.uid, name: appState.user.displayName||'User', avatar: appState.user.photoURL, role:'owner', status:'online'}],
+    boosts: 0, boostLevel: 0,
+  };
+  appState.servers.push(server);
+  saveServers();
+  renderServerSidebar();
+  closeModal('server-form-modal');
+  showServer(server.id);
+  showToast(`Server "${name}" created!`);
+};
+
+window.joinServerPrompt = function() {
+  closeModal('create-server-modal');
+  openModal('join-server-modal');
+};
+
+window.joinServer = function() {
+  const link = document.getElementById('invite-input').value.trim();
+  if (!link) return;
+  showToast('Invalid or expired invite link (demo mode)');
+  closeModal('join-server-modal');
+};
+
+// ===========================
+// CHANNEL MANAGEMENT
+// ===========================
+window.openCreateChannelModal = function(serverId, category) {
+  window._createChannelTarget = {serverId, category};
+  openModal('create-channel-modal');
+};
+
+window.selectChannelType = function(type) {
+  appState.selectedChannelType = type;
+  ['text','voice','announce'].forEach(t => {
+    const el = document.getElementById('ch-type-'+t);
+    if (el) el.style.borderColor = t === type ? 'var(--brand)' : 'transparent';
+  });
+};
+
+window.createChannel = function() {
+  const name = document.getElementById('new-channel-name').value.trim().toLowerCase().replace(/\s+/g,'-');
+  if (!name) return;
+  const {serverId, category} = window._createChannelTarget || {};
+  const server = appState.servers.find(s => s.id === serverId);
+  if (!server) return;
+  const cat = server.categories.find(c => c.name === category) || server.categories[0];
+  cat.channels.push({ id: 'ch_' + Date.now(), name, type: appState.selectedChannelType });
+  saveServers();
+  closeModal('create-channel-modal');
+  showServer(serverId);
+  showToast(`Channel #${name} created!`);
+};
+
+// ===========================
+// INVITE
+// ===========================
+window.openInviteModal = function(channelName) {
+  document.getElementById('invite-modal-title').textContent = `Invite people to #${channelName}`;
+  const code = Math.random().toString(36).substring(2,8);
+  document.getElementById('invite-link-text').textContent = `https://axoncord.gg/${code}`;
+  openModal('invite-modal');
+};
+
+window.copyInviteLink = function() {
+  const text = document.getElementById('invite-link-text').textContent;
+  navigator.clipboard.writeText(text).catch(()=>{});
+  showToast('Invite link copied!');
+};
+
+// ===========================
+// PROFILE
+// ===========================
+window.showProfileModal = function(uid, name, avatar, role) {
+  window.currentProfileUser = {uid, name, avatar, role};
+  document.getElementById('profile-modal-name').textContent = name;
+  document.getElementById('profile-modal-tag').textContent = '#' + Math.floor(1000+Math.random()*9000);
+  document.getElementById('profile-since').textContent = 'Jan 1, 2024';
+  const avatarEl = document.getElementById('profile-avatar-lg');
+  avatarEl.innerHTML = avatar ? `<img src="${avatar}">` : name.charAt(0).toUpperCase();
+  const badges = document.getElementById('profile-badges');
+  badges.innerHTML = '';
+  if (role === 'owner') badges.innerHTML += `<span class="badge staff">Server Owner</span>`;
+  if (appState.hasNitro && uid === appState.user.uid) badges.innerHTML += `<span class="badge nitro">✨ Nitro</span>`;
+  document.getElementById('profile-about').textContent = uid === appState.user.uid ? (appState.user.displayName ? `Hi, I'm ${appState.user.displayName}!` : 'No bio set.') : 'No bio set.';
+  openModal('profile-modal');
+};
+
+window.openMyProfile = function() {
+  const u = appState.user;
+  showProfileModal(u.uid, u.displayName||'User', u.photoURL, 'member');
+};
+
+// ===========================
+// SETTINGS
+// ===========================
+window.showSettingsPage = function(page) {
+  document.querySelectorAll('.settings-item').forEach(el => el.classList.remove('active'));
+  const content = document.getElementById('settings-content');
+  if (!content) return;
+  
+  const u = appState.user;
+  
+  if (page === 'profile') {
+    content.innerHTML = `
+    <div class="settings-title">My Account</div>
+    <div style="background:var(--bg-tertiary);border-radius:8px;overflow:hidden;margin-bottom:24px">
+      <div style="height:60px;background:linear-gradient(135deg,var(--brand),var(--nitro))"></div>
+      <div style="padding:0 16px 16px;display:flex;gap:16px;align-items:flex-end">
+        <div style="width:60px;height:60px;border-radius:50%;background:var(--brand);border:4px solid var(--bg-tertiary);margin-top:-30px;overflow:hidden;display:flex;align-items:center;justify-content:center;color:#fff;font-size:24px;font-weight:700;flex-shrink:0">
+          ${u.photoURL ? `<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover">` : (u.displayName||'U').charAt(0)}
+        </div>
+        <div style="flex:1;padding-bottom:4px">
+          <div style="font-size:16px;font-weight:700;color:var(--text-normal)">${u.displayName||'Unknown User'}</div>
+          <div style="font-size:13px;color:var(--text-muted)">${u.email||''}</div>
+        </div>
+        <button class="btn btn-primary" onclick="showToast('Profile editing coming soon!')">Edit User Profile</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-title">Display Name</div>
+        <div class="settings-row-desc">${u.displayName||'Not set'}</div>
+      </div>
+      <button class="btn" style="background:var(--bg-accent);color:var(--text-normal)" onclick="showToast('Edit display name')">Edit</button>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-title">Email</div>
+        <div class="settings-row-desc">${u.email ? u.email.replace(/(.{3}).*?(@)/, '$1***$2') : 'Not set'}</div>
+      </div>
+      <button class="btn" style="background:var(--bg-accent);color:var(--text-normal)" onclick="showToast('Edit email')">Edit</button>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-title">Phone Number</div>
+        <div class="settings-row-desc">Not added</div>
+      </div>
+      <button class="btn" style="background:var(--bg-accent);color:var(--text-normal)" onclick="showToast('Add phone number')">Add</button>
+    </div>
+    <div style="margin-top:32px;padding:16px;background:rgba(242,63,66,0.1);border:1px solid var(--red);border-radius:8px">
+      <div style="font-size:16px;font-weight:700;color:var(--text-normal);margin-bottom:8px">Account Removal</div>
+      <div style="color:var(--text-muted);font-size:14px;margin-bottom:12px">Disabling your account means you can come back any time.</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-danger" onclick="showToast('Account deletion requires confirmation.')">Delete Account</button>
+        <button class="btn" style="background:var(--bg-accent);color:var(--text-normal)" onclick="showToast('Account disabled')">Disable Account</button>
+      </div>
+    </div>`;
+  } else if (page === 'appearance') {
+    content.innerHTML = `
+    <div class="settings-title">Appearance</div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-title">Theme</div>
+        <div class="settings-row-desc">Choose your color theme</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <div onclick="setTheme('dark',this)" style="width:40px;height:40px;background:#313338;border-radius:8px;cursor:pointer;border:2px solid var(--brand);display:flex;align-items:center;justify-content:center;font-size:18px">🌙</div>
+        <div onclick="setTheme('light',this)" style="width:40px;height:40px;background:#fff;border-radius:8px;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:18px">☀️</div>
+        <div onclick="setTheme('amoled',this)" style="width:40px;height:40px;background:#000;border-radius:8px;cursor:pointer;border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:18px">⚫</div>
+      </div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-title">Message Display</div>
+        <div class="settings-row-desc">Cozy (Default) or Compact</div>
+      </div>
+      <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-info">
+        <div class="settings-row-title">Developer Mode</div>
+        <div class="settings-row-desc">Show IDs for debugging</div>
+      </div>
+      <div class="toggle" onclick="this.classList.toggle('on')"></div>
+    </div>`;
+  } else if (page === 'notifications') {
+    content.innerHTML = `
+    <div class="settings-title">Notifications</div>
+    ${['Enable Desktop Notifications','Enable Unread Message Badge','Enable Sounds','Mute AxonCord when fullscreen','Enable push-to-talk sound'].map(s=>`
+    <div class="settings-row">
+      <div class="settings-row-info"><div class="settings-row-title">${s}</div></div>
+      <div class="toggle on" onclick="this.classList.toggle('on')"></div>
+    </div>`).join('')}`;
+  } else if (page === 'nitro') {
+    content.innerHTML = renderNitroView();
+  } else if (page === 'shop') {
+    content.innerHTML = renderShopView();
+  } else {
+    content.innerHTML = `<div class="settings-title">${page.charAt(0).toUpperCase()+page.slice(1)}</div><div style="color:var(--text-muted)">This settings page is coming soon.</div>`;
+  }
+};
+
+window.setTheme = function(theme, el) {
+  document.querySelectorAll('.settings-content > .settings-row:first-child div[onclick]').forEach(d => d.style.borderColor = 'transparent');
+  el.style.borderColor = 'var(--brand)';
+  if (theme === 'light') { document.documentElement.style.filter = 'invert(1) hue-rotate(180deg)'; }
+  else { document.documentElement.style.filter = ''; }
+};
+
+// ===========================
+// SHOP
+// ===========================
+window.buyShopItem = function(name, price) {
+  if (price === 'Free') {
+    showToast(`Added "${name}" to your collection!`);
+  } else {
+    showToast(`You need ${price} to buy "${name}". Get tokens first!`);
+    openModal('nitro-purchase-modal');
+  }
+};
+
+window.filterShop = function(btn, type) {
+  document.querySelectorAll('.shop-category-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const grid = document.getElementById('shop-grid');
+  if (!grid) return;
+  const items = type === 'all' ? SHOP_ITEMS : SHOP_ITEMS.filter(i => i.type === type);
+  grid.innerHTML = items.map(item => `
+    <div class="shop-item" onclick="buyShopItem('${item.name}','${item.price}')">
+      <div class="shop-item-preview" style="background:${item.gradient}">${item.emoji}</div>
+      <div class="shop-item-info">
+        <div class="shop-item-type">${item.type}</div>
+        <div class="shop-item-name">${item.name}</div>
+        <div class="shop-item-price">${item.price}</div>
+      </div>
+    </div>
+  `).join('');
+};
+
+// ===========================
+// NITRO
+// ===========================
+window.giveNitro = function() {
+  appState.hasNitro = true;
+  localStorage.setItem('axoncord_nitro_' + appState.user.uid, '1');
+  closeModal('nitro-purchase-modal');
+  showToast('✨ Nitro activated! Enjoy your perks!');
+};
+
+// ===========================
+// EXPLORE
+// ===========================
+function renderExploreServers() {
+  const list = document.getElementById('explore-list');
+  if (!list) return;
+  list.innerHTML = EXPLORE_SERVERS.map(s => `
+    <div onclick="showToast('Joined ${s.name}!')" style="background:var(--bg-tertiary);border-radius:8px;padding:16px;cursor:pointer;display:flex;gap:12px;align-items:center;border:1px solid transparent;transition:all 0.2s" onmouseover="this.style.borderColor='var(--brand)'" onmouseout="this.style.borderColor='transparent'">
+      <div style="width:48px;height:48px;border-radius:50%;background:var(--brand);display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0">${s.icon}</div>
+      <div>
+        <div style="font-size:14px;font-weight:700;color:var(--text-normal)">${s.name}</div>
+        <div style="font-size:12px;color:var(--text-muted)">${s.members} members</div>
+        <div style="font-size:12px;color:var(--text-muted)">${s.desc}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ===========================
+// CONTEXT MENUS
+// ===========================
+window.showServerContextMenu = function(e, serverId) {
+  const server = appState.servers.find(s => s.id === serverId);
+  showContextMenu(e, [
+    {label:'📢 Invite People', action: () => openInviteModal('general')},
+    {label:'⚙️ Server Settings', action: () => showToast('Server settings')},
+    {label:'📋 Create Channel', action: () => { window._createChannelTarget = {serverId, category: server?.categories[0]?.name}; openModal('create-channel-modal'); }},
+    {divider: true},
+    {label:'🔔 Notification Settings', action: () => showToast('Notifications')},
+    {label:'🙈 Hide Muted Channels', action: () => showToast('Channels hidden')},
+    {divider: true},
+    {label:'📌 Copyserver ID', action: () => { navigator.clipboard.writeText(serverId).catch(()=>{}); showToast('ID copied!'); }},
+    {label:'🚪 Leave Server', action: () => leaveServer(serverId), danger: true},
+  ]);
+};
+
+window.showChannelContextMenu = function(e, channelId, channelName) {
+  e.preventDefault();
+  showContextMenu(e, [
+    {label:'👤 Invite People', action: () => openInviteModal(channelName)},
+    {label:'✏️ Edit Channel', action: () => showToast('Edit channel')},
+    {label:'🔔 Notification Settings', action: () => showToast('Notification settings')},
+    {divider: true},
+    {label:'📋 Copy Channel ID', action: () => { navigator.clipboard.writeText(channelId).catch(()=>{}); showToast('Copied!'); }},
+    {label:'🗑️ Delete Channel', action: () => deleteChannel(channelId), danger: true},
+  ]);
+};
+
+window.showMsgContextMenu = function(e, msgId) {
+  showContextMenu(e, [
+    {label:'➕ Add Reaction', action: () => showToast('Choose reaction')},
+    {label:'↩️ Reply', action: () => {}},
+    {label:'📌 Pin Message', action: () => showToast('Message pinned!')},
+    {label:'✏️ Edit Message', action: () => showToast('Edit message')},
+    {divider: true},
+    {label:'🗑️ Delete Message', action: () => showToast('Message deleted'), danger: true},
+  ]);
+};
+
+function showContextMenu(e, items) {
+  e.preventDefault();
+  const menu = document.getElementById('context-menu');
+  menu.innerHTML = items.map(item => 
+    item.divider ? `<div class="ctx-divider"></div>` :
+    `<div class="ctx-item ${item.danger?'danger':''}" onclick="closeContextMenu();(${item.action.toString()})()">${item.label}</div>`
+  ).join('');
+  menu.style.left = Math.min(e.clientX, window.innerWidth - 200) + 'px';
+  menu.style.top = Math.min(e.clientY, window.innerHeight - menu.offsetHeight - 20) + 'px';
+  menu.classList.add('open');
+}
+
+window.closeContextMenu = function() {
+  document.getElementById('context-menu').classList.remove('open');
+};
+
+document.addEventListener('click', e => {
+  const menu = document.getElementById('context-menu');
+  if (!menu.contains(e.target)) menu.classList.remove('open');
+  const picker = document.getElementById('emoji-picker');
+  if (picker && !picker.contains(e.target) && !e.target.classList.contains('input-action-btn')) {
+    picker.classList.remove('open');
+  }
+});
+
+// ===========================
+// SERVER/CHANNEL ACTIONS
+// ===========================
+window.leaveServer = function(serverId) {
+  appState.servers = appState.servers.filter(s => s.id !== serverId);
+  saveServers();
+  renderServerSidebar();
+  showDMView();
+  showToast('Left server');
+};
+
+window.deleteChannel = function(channelId) {
+  const server = appState.servers.find(s => s.id === appState.currentServer);
+  if (!server) return;
+  server.categories.forEach(cat => {
+    cat.channels = cat.channels.filter(c => c.id !== channelId);
+  });
+  saveServers();
+  showServer(appState.currentServer);
+  showToast('Channel deleted');
+};
+
+window.openServerSettings = function(serverId) {
+  openModal('settings-modal');
+  document.getElementById('settings-content').innerHTML = `
+    <div class="settings-title">Server Settings</div>
+    <div class="settings-row">
+      <div class="settings-row-info"><div class="settings-row-title">Server Name</div></div>
+      <button class="btn" style="background:var(--bg-accent);color:var(--text-normal)" onclick="showToast('Edit server name')">Edit</button>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-info"><div class="settings-row-title">Server Region</div><div class="settings-row-desc">Auto</div></div>
+      <button class="btn" style="background:var(--bg-accent);color:var(--text-normal)" onclick="showToast('Change region')">Change</button>
+    </div>`;
+};
+
+// ===========================
+// VOICE ACTIONS
+// ===========================
+window.toggleMute = function() { showToast('Microphone toggled'); };
+window.toggleDeafen = function() { showToast('Headphones toggled'); };
+window.shareScreen = function() { showToast('Screen sharing started'); };
+window.leaveVoice = function() { showToast('Left voice channel'); };
+window.startCall = function() { showToast('Starting voice call...'); };
+window.startVideoCall = function() { showToast('Starting video call...'); };
+
+// ===========================
+// MISC ACTIONS
+// ===========================
+window.showPinned = function(channelId) { showToast('No pinned messages in this channel'); };
+window.toggleMemberSidebar = function() {
+  const ms = document.getElementById('members-sidebar');
+  if (ms) ms.style.display = ms.style.display === 'none' ? '' : 'none';
+};
+window.focusSearch = function() { showToast('Search: Press Ctrl+F to search messages'); };
+window.triggerGifPicker = function() { showToast('GIF picker coming soon!'); };
+window.triggerStickerPicker = function() { showToast('Sticker picker coming soon!'); };
+window.toggleCategory = function(el) {
+  const icon = el.querySelector('span:first-child') || el.firstChild;
+  let next = el.nextElementSibling;
+  while (next && next.classList.contains('channel-item')) {
+    next.style.display = next.style.display === 'none' ? '' : 'none';
+    next = next.nextElementSibling;
+  }
+};
+
+// ===========================
+// MODAL
+// ===========================
+window.openModal = function(id) {
+  document.getElementById(id)?.classList.add('open');
+  if (id === 'explore-modal') setTimeout(renderExploreServers, 100);
+  if (id === 'settings-modal') showSettingsPage('profile');
+};
+window.closeModal = function(id) {
+  document.getElementById(id)?.classList.remove('open');
+};
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) overlay.classList.remove('open');
+  });
+});
+
+// ===========================
+// TOAST
+// ===========================
+window.showToast = function(msg) {
+  const existing = document.getElementById('toast');
+  if (existing) existing.remove();
+  const el = document.createElement('div');
+  el.id = 'toast';
+  el.textContent = msg;
+  el.style.cssText = `position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#23a55a;color:#fff;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;z-index:9999;animation:fadeInUp 0.3s ease;box-shadow:0 4px 12px rgba(0,0,0,0.4);`;
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+};
+
+// ===========================
+// ATTACH LISTENERS
+// ===========================
+function attachFriendsListeners() {}
+function attachChannelSidebarListeners(server) {
+  document.querySelectorAll('.channel-category').forEach(el => {
+    el.addEventListener('mouseenter', () => { const plus = el.querySelector('span:last-child'); if(plus) plus.style.opacity = '1'; });
+    el.addEventListener('mouseleave', () => { const plus = el.querySelector('span:last-child'); if(plus) plus.style.opacity = '0'; });
+  });
+  document.querySelectorAll('.ch-invite-btn').forEach(el => {
+    const parent = el.closest('.channel-item');
+    parent?.addEventListener('mouseenter', () => el.style.opacity = '1');
+    parent?.addEventListener('mouseleave', () => el.style.opacity = '0');
+    el.onclick = (e) => { e.stopPropagation(); openInviteModal(el.dataset.ch); };
+  });
+}
+
+function attachChannelListeners(channelId) {
+  const input = document.getElementById('message-input');
+  if (input) input.focus();
+}
+
+// Close modals with Escape
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    document.querySelectorAll('.modal-overlay.open').forEach(m => m.classList.remove('open'));
+  }
+});
+
+console.log('AxonCord loaded!');
 </script>
 </body>
 </html>
