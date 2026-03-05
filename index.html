@@ -1,1414 +1,467 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DO NOT ENTER</title>
-<link href="https://fonts.googleapis.com/css2?family=Creepster&family=Special+Elite&family=UnifrakturMaguntia&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sign In — NexusPanel</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
 <style>
-* { margin:0; padding:0; box-sizing:border-box; }
-html,body { width:100%; height:100%; overflow-x:hidden; background:#000; cursor:none; }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:        #03050d;
+    --bg2:       #080c18;
+    --panel:     rgba(10,15,30,0.85);
+    --border:    rgba(88,101,242,0.25);
+    --accent:    #5865F2;
+    --accent-h:  #7289da;
+    --glow:      rgba(88,101,242,0.55);
+    --cyan:      #00d4ff;
+    --cyan-glow: rgba(0,212,255,0.35);
+    --text:      #cdd6f4;
+    --muted:     #525a7a;
+    --font-main: 'Rajdhani', sans-serif;
+    --font-mono: 'Share Tech Mono', monospace;
+  }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: var(--font-main);
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    position: relative;
+  }
 
-:root {
-  --blood: #8b0000;
-  --red: #ff0000;
-  --dim: #1a0000;
-}
+  /* ── CANVAS BACKGROUND ── */
+  #bgCanvas {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none;
+  }
 
-/* ── CUSTOM CURSOR ── */
-#cursor {
-  width:14px; height:14px;
-  background: var(--red);
-  border-radius:50%;
-  position:fixed; pointer-events:none; z-index:999999;
-  transform:translate(-50%,-50%);
-  box-shadow: 0 0 10px var(--red), 0 0 30px rgba(255,0,0,0.4);
-  transition: width .15s, height .15s;
-}
+  /* ── SCAN LINE OVERLAY ── */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 1;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.07) 2px,
+      rgba(0,0,0,0.07) 4px
+    );
+    pointer-events: none;
+  }
 
-/* ── ENTER SCREEN ── */
-#enter-screen {
-  position:fixed; inset:0; z-index:50000;
-  background:#000;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-  transition: opacity .8s;
-}
-#enter-screen.gone { opacity:0; pointer-events:none; }
-.enter-title {
-  font-family:'UnifrakturMaguntia',cursive;
-  font-size:clamp(40px,8vw,100px);
-  color:#8b0000;
-  text-shadow:0 0 40px #ff0000, 0 0 80px rgba(255,0,0,0.3);
-  margin-bottom:16px;
-  animation: titleBreath 2s ease-in-out infinite alternate;
-  text-align:center; padding:0 20px;
-}
-@keyframes titleBreath {
-  from { text-shadow:0 0 20px #ff0000; letter-spacing:4px; }
-  to   { text-shadow:0 0 80px #ff0000, 0 0 160px rgba(255,0,0,0.4); letter-spacing:6px; }
-}
-.enter-sub {
-  font-family:'Special Elite',serif;
-  color:rgba(255,255,255,0.4);
-  font-size:14px; letter-spacing:6px;
-  text-transform:uppercase; margin-bottom:60px;
-}
-.enter-btn {
-  font-family:'Special Elite',serif;
-  font-size:18px; letter-spacing:8px;
-  text-transform:uppercase;
-  color:#000; background:#8b0000;
-  border:none; padding:18px 48px;
-  cursor:pointer;
-  clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);
-  transition:all .3s;
-  animation: btnPulse 1.5s infinite;
-  position:relative;
-}
-@keyframes btnPulse {
-  0%,100% { box-shadow:0 0 20px rgba(139,0,0,0.5); }
-  50%      { box-shadow:0 0 60px rgba(255,0,0,0.8), 0 0 100px rgba(255,0,0,0.3); }
-}
-.enter-btn:hover { background:#ff0000; transform:scale(1.05); }
-.enter-warning {
-  font-family:'Special Elite',serif;
-  color:rgba(139,0,0,0.5); font-size:11px;
-  letter-spacing:3px; margin-top:24px;
-  text-transform:uppercase;
-}
-#enter-canvas { position:absolute; inset:0; z-index:-1; opacity:.6; }
+  /* ── CORNER DECORATIONS ── */
+  .corner {
+    position: fixed;
+    width: 60px; height: 60px;
+    z-index: 2;
+  }
+  .corner::before, .corner::after {
+    content: '';
+    position: absolute;
+    background: var(--cyan);
+    opacity: 0.6;
+  }
+  .corner::before { width: 2px; height: 100%; }
+  .corner::after  { width: 100%; height: 2px; }
+  .corner.tl { top: 20px; left: 20px; }
+  .corner.tr { top: 20px; right: 20px; transform: scaleX(-1); }
+  .corner.bl { bottom: 20px; left: 20px; transform: scaleY(-1); }
+  .corner.br { bottom: 20px; right: 20px; transform: scale(-1); }
 
-/* ── MAIN CONTENT ── */
-#main { display:none; }
+  /* ── HUD TEXT ── */
+  .hud {
+    position: fixed;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    z-index: 2;
+    letter-spacing: 0.05em;
+  }
+  .hud.tl { top: 28px; left: 90px; }
+  .hud.tr { top: 28px; right: 90px; text-align: right; }
+  .hud.bl { bottom: 28px; left: 90px; }
+  .hud.br { bottom: 28px; right: 90px; text-align: right; }
 
-/* ── SCANLINES ── */
-body::after {
-  content:''; position:fixed; inset:0; pointer-events:none; z-index:99990;
-  background:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(0,0,0,0.08) 3px,rgba(0,0,0,0.08) 4px);
-}
+  /* ── MAIN CARD ── */
+  .card-wrap {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    animation: fadeUp 0.8s cubic-bezier(.22,1,.36,1) both;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
 
-/* ── NOISE ── */
-#noise-overlay {
-  position:fixed; inset:0; pointer-events:none; z-index:99989; opacity:0;
-  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.15'/%3E%3C/svg%3E");
-  transition: opacity .3s;
-}
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 52px 48px 44px;
+    width: 420px;
+    position: relative;
+    backdrop-filter: blur(20px);
+    box-shadow:
+      0 0 0 1px rgba(88,101,242,0.08),
+      0 8px 60px rgba(0,0,0,0.7),
+      inset 0 1px 0 rgba(255,255,255,0.04);
+  }
 
-/* ── SECTIONS ── */
-.horror-section {
-  min-height:100vh; position:relative;
-  display:flex; align-items:center; justify-content:center;
-  flex-direction:column; overflow:hidden;
-  border-bottom:1px solid rgba(139,0,0,0.2);
-}
+  /* card corner clips */
+  .card::before, .card::after {
+    content: '';
+    position: absolute;
+    width: 14px; height: 14px;
+    border-color: var(--cyan);
+    border-style: solid;
+    opacity: 0.8;
+  }
+  .card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+  .card::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
 
-/* ── HERO SECTION ── */
-#s-hero {
-  background:#000;
-  text-align:center;
-}
-#hero-3d { position:absolute; inset:0; }
-.hero-content { position:relative; z-index:2; padding:20px; }
-.hero-title {
-  font-family:'UnifrakturMaguntia',cursive;
-  font-size:clamp(48px,10vw,140px);
-  color:#8b0000;
-  text-shadow:0 0 60px #ff0000;
-  line-height:1;
-  animation:glitch 4s infinite;
-}
-@keyframes glitch {
-  0%,90%,100%{transform:none;filter:none}
-  91%{transform:skewX(-8deg) translateX(-6px);filter:hue-rotate(90deg)}
-  92%{transform:skewX(6deg) translateX(6px);color:#fff}
-  93%{transform:none;filter:none}
-  94%{transform:translateX(-10px);filter:brightness(3) saturate(0)}
-  95%{transform:translateX(10px)}
-  96%{transform:none;filter:none}
-}
-.hero-sub {
-  font-family:'Special Elite',serif;
-  color:rgba(255,100,100,0.6);
-  font-size:clamp(12px,2vw,18px);
-  letter-spacing:10px; text-transform:uppercase;
-  margin-top:16px;
-  animation:flicker 3s infinite;
-}
-@keyframes flicker {
-  0%,19%,21%,23%,25%,54%,56%,100%{opacity:1}
-  20%,22%,24%,55%{opacity:0}
-}
-.scroll-hint {
-  position:absolute; bottom:40px;
-  font-family:'Special Elite',serif;
-  color:rgba(139,0,0,0.5);
-  font-size:11px; letter-spacing:4px;
-  text-transform:uppercase;
-  animation:bounceDown 2s infinite;
-}
-@keyframes bounceDown {
-  0%,100%{transform:translateY(0)} 50%{transform:translateY(8px)}
-}
+  /* inner corner clips */
+  .card-tr, .card-bl {
+    position: absolute;
+    width: 14px; height: 14px;
+    border-color: var(--cyan);
+    border-style: solid;
+    opacity: 0.8;
+  }
+  .card-tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+  .card-bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
 
-/* ── SECTION HEADERS ── */
-.s-label {
-  font-family:'Special Elite',serif;
-  font-size:10px; letter-spacing:6px;
-  color:rgba(139,0,0,0.7);
-  text-transform:uppercase; margin-bottom:12px;
-}
-.s-title {
-  font-family:'UnifrakturMaguntia',cursive;
-  font-size:clamp(36px,6vw,80px);
-  color:#8b0000;
-  text-shadow:0 0 30px rgba(255,0,0,0.5);
-  margin-bottom:24px;
-  text-align:center;
-}
-.s-desc {
-  font-family:'Special Elite',serif;
-  font-size:15px; color:rgba(255,200,200,0.5);
-  max-width:500px; text-align:center;
-  line-height:1.8;
-}
+  /* ── LOGO AREA ── */
+  .logo-area {
+    text-align: center;
+    margin-bottom: 36px;
+  }
+  .logo-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px; height: 64px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    margin-bottom: 18px;
+    position: relative;
+    background: rgba(88,101,242,0.06);
+    animation: iconPulse 3s ease-in-out infinite;
+  }
+  @keyframes iconPulse {
+    0%,100% { box-shadow: 0 0 0 0 var(--glow); }
+    50%      { box-shadow: 0 0 20px 4px var(--glow); }
+  }
+  .logo-icon svg { width: 32px; height: 32px; }
 
-/* ── FACE GRID SECTION ── */
-#s-faces { background:#050000; }
-.faces-grid {
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:2px;
-  width:100%; max-width:900px;
-  margin-top:40px;
-}
-.face-cell {
-  aspect-ratio:1;
-  background:#0a0000;
-  border:1px solid rgba(139,0,0,0.15);
-  display:flex; align-items:center; justify-content:center;
-  position:relative; overflow:hidden;
-  cursor:pointer;
-}
-.face-cell canvas { position:absolute; inset:0; width:100%!important; height:100%!important; }
-.face-cell .cell-label {
-  position:absolute; bottom:8px; left:0; right:0;
-  font-family:'Special Elite',serif;
-  font-size:9px; letter-spacing:3px;
-  color:rgba(139,0,0,0.4); text-align:center;
-  text-transform:uppercase; z-index:2;
-}
-.face-cell:hover .cell-label { color:rgba(255,0,0,0.8); }
+  .logo-title {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: #fff;
+    line-height: 1;
+  }
+  .logo-sub {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-top: 6px;
+  }
 
-/* ── CORRIDOR SECTION ── */
-#s-corridor { background:#000; padding:0; }
-#corridor-canvas { position:absolute; inset:0; width:100%!important; height:100%!important; }
-.corridor-text {
-  position:relative; z-index:2; text-align:center;
-  padding:20px;
-}
-.corridor-text h2 {
-  font-family:'UnifrakturMaguntia',cursive;
-  font-size:clamp(32px,6vw,80px);
-  color:rgba(139,0,0,0.8);
-  text-shadow:0 0 40px #ff0000;
-  animation:flicker 4s infinite;
-}
-.corridor-text p {
-  font-family:'Special Elite',serif;
-  color:rgba(255,100,100,0.4);
-  font-size:13px; letter-spacing:4px;
-  margin-top:12px; text-transform:uppercase;
-}
+  /* ── DIVIDER ── */
+  .divider {
+    display: flex; align-items: center; gap: 12px;
+    margin-bottom: 28px;
+  }
+  .divider::before, .divider::after {
+    content: ''; flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--border), transparent);
+  }
+  .divider span {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    white-space: nowrap;
+  }
 
-/* ── EYE TRACK SECTION ── */
-#s-eyes { background:#020000; min-height:80vh; }
-.eyes-container {
-  display:flex; gap:40px;
-  justify-content:center; align-items:center;
-  flex-wrap:wrap; position:relative; z-index:2;
-}
-.eye-wrap {
-  width:180px; height:120px;
-  background:#0a0000;
-  border:1px solid rgba(139,0,0,0.3);
-  border-radius:50%;
-  position:relative; overflow:hidden;
-  cursor:none;
-}
-.eye-white {
-  width:100%; height:100%;
-  background:radial-gradient(ellipse, #fff 60%, #ddd 100%);
-  position:absolute; border-radius:50%;
-}
-.eye-iris {
-  width:72px; height:72px;
-  border-radius:50%;
-  background:radial-gradient(circle, #111 38%, #8b0000 50%, #3a0000 70%, #1a0000 100%);
-  position:absolute; top:50%; left:50%;
-  transform:translate(-50%,-50%);
-  transition:transform .06s;
-  box-shadow:0 0 20px rgba(139,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.8);
-}
-.eye-iris::after {
-  content:''; position:absolute; top:15px; left:15px;
-  width:12px; height:12px; border-radius:50%;
-  background:rgba(255,255,255,0.4);
-}
-.eye-iris::before {
-  content:''; position:absolute; inset:0; border-radius:50%;
-  background:radial-gradient(circle at 30% 30%, rgba(255,255,255,0.1), transparent);
-}
+  /* ── STATUS BADGE ── */
+  .status-bar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 8px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 28px;
+    letter-spacing: 0.1em;
+  }
+  .status-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: #22c55e;
+    box-shadow: 0 0 6px #22c55e;
+    animation: blink 2s step-end infinite;
+  }
+  @keyframes blink {
+    0%,100% { opacity: 1; } 50% { opacity: 0.3; }
+  }
 
-/* ── BLOOD DRIP ── */
-#s-blood { background:#000; min-height:60vh; position:relative; overflow:hidden; }
-.blood-text {
-  font-family:'UnifrakturMaguntia',cursive;
-  font-size:clamp(40px,8vw,100px);
-  color:#8b0000;
-  text-shadow:0 0 30px #ff0000;
-  position:relative; z-index:2; text-align:center; padding:20px;
-  animation: bloodDrip 3s ease-in-out infinite alternate;
-}
-@keyframes bloodDrip {
-  from { text-shadow:0 0 20px #8b0000; transform:scaleY(1); }
-  to   { text-shadow:0 0 60px #ff0000, 0 0 120px rgba(255,0,0,0.3); transform:scaleY(1.02) }
-}
-.drip {
-  position:absolute; top:0;
-  width:8px;
-  background:linear-gradient(180deg,#8b0000,#ff0000,#8b0000);
-  border-radius:0 0 50% 50%;
-  animation:dripFall linear infinite;
-  box-shadow:0 0 6px #ff0000;
-}
-@keyframes dripFall {
-  0%  { height:0px; opacity:1; }
-  80% { opacity:1; }
-  100%{ height:250px; opacity:0; }
-}
+  /* ── DISCORD BUTTON ── */
+  .btn-discord {
+    display: flex; align-items: center; justify-content: center; gap: 12px;
+    width: 100%;
+    padding: 15px 24px;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--font-main);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    border: none;
+    border-radius: 2px;
+    cursor: pointer;
+    text-decoration: none;
+    position: relative;
+    overflow: hidden;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
+    box-shadow: 0 0 20px rgba(88,101,242,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
+  }
+  .btn-discord::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .btn-discord::after {
+    content: '';
+    position: absolute;
+    top: 0; left: -100%; width: 60%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+    transition: left 0.5s ease;
+  }
+  .btn-discord:hover {
+    background: var(--accent-h);
+    box-shadow: 0 0 35px rgba(88,101,242,0.65), inset 0 1px 0 rgba(255,255,255,0.15);
+    transform: translateY(-1px);
+  }
+  .btn-discord:hover::after { left: 150%; }
+  .btn-discord:active { transform: translateY(0); }
+  .btn-discord svg { width: 22px; height: 22px; flex-shrink: 0; }
 
-/* ── JUMPSCARES overlay ── */
-#js-overlay {
-  position:fixed; inset:0; z-index:200000;
-  display:none;
-  align-items:center; justify-content:center;
-  background:rgba(0,0,0,0.98);
-  flex-direction:column;
-}
-#js-overlay.show { display:flex; }
-#js-canvas-main { position:absolute; inset:0; }
-.js-face-text {
-  position:relative; z-index:2; text-align:center;
-  pointer-events:none; width:100%; height:100%;
-  display:flex; flex-direction:column;
-  align-items:center; justify-content:center;
-}
-.js-emoji-big {
-  font-size:clamp(100px,28vw,320px);
-  animation:jsShake .04s infinite;
-  display:block; line-height:1;
-  filter:drop-shadow(0 0 60px #ff0000);
-}
-.js-scream-text {
-  font-family:'UnifrakturMaguntia',cursive;
-  font-size:clamp(40px,10vw,130px);
-  color:#ff0000;
-  text-shadow:0 0 60px #ff0000, 0 0 120px rgba(255,0,0,0.6);
-  animation:jsShake .04s infinite;
-  display:block; margin-top:12px;
-}
-@keyframes jsShake {
-  0%  {transform:translate(-8px,-5px) rotate(-1.5deg) scale(1.02)}
-  25% {transform:translate(8px,5px) rotate(1.5deg) scale(0.98)}
-  50% {transform:translate(-6px,8px) rotate(-.8deg) scale(1.03)}
-  75% {transform:translate(6px,-8px) rotate(.8deg) scale(0.97)}
-  100%{transform:translate(-8px,5px) rotate(-1.5deg) scale(1.01)}
-}
+  /* ── FOOTER NOTE ── */
+  .footer-note {
+    margin-top: 24px;
+    text-align: center;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    line-height: 1.8;
+  }
+  .footer-note span { color: var(--accent-h); }
 
-/* face rush — full screen face slam */
-#face-rush {
-  position:fixed; inset:0; z-index:210000;
-  display:none; align-items:center; justify-content:center;
-  pointer-events:none;
-}
-#face-rush.show { display:flex; }
-.rush-face {
-  font-size:0px;
-  animation: rushZoom .5s ease-out forwards;
-  filter:drop-shadow(0 0 80px #ff0000);
-}
-@keyframes rushZoom {
-  0%   { font-size:40px; opacity:1; transform:scale(0.1); }
-  60%  { font-size:clamp(200px,50vw,600px); opacity:1; transform:scale(1.1); }
-  100% { font-size:clamp(200px,50vw,600px); opacity:0; transform:scale(1.4); }
-}
-
-/* cursor stalker — red eyes that follow */
-.stalker-eye {
-  position:fixed; pointer-events:none; z-index:190000;
-  font-size:48px; opacity:0;
-  transition:opacity .3s;
-  filter:drop-shadow(0 0 20px #ff0000);
-  animation:eyePulse 0.8s infinite alternate;
-}
-@keyframes eyePulse {
-  from{filter:drop-shadow(0 0 10px #ff0000)}
-  to{filter:drop-shadow(0 0 40px #ff0000)}
-}
-
-/* red screen flash */
-#red-flash {
-  position:fixed; inset:0; pointer-events:none; z-index:199999;
-  background:#ff0000; opacity:0; transition:opacity .04s;
-}
-
-/* ── VIGNETTE ── */
-#vignette {
-  position:fixed; inset:0; pointer-events:none; z-index:99985;
-  background:radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%);
-}
-
-/* ── GLITCH FLASH ── */
-#flash {
-  position:fixed; inset:0; pointer-events:none; z-index:99999;
-  background:#fff; opacity:0; transition:opacity .05s;
-}
-
-/* ── BREATHING ROOM ── */
-#s-breathing { background:#000; min-height:100vh; }
-#breath-canvas { position:absolute; inset:0; width:100%!important; height:100%!important; }
-.breath-text { position:relative; z-index:2; text-align:center; padding:20px; }
-.breath-text h2 {
-  font-family:'UnifrakturMaguntia',cursive;
-  font-size:clamp(28px,5vw,64px);
-  color:rgba(139,0,0,0.7);
-  animation:breathe 4s ease-in-out infinite;
-}
-@keyframes breathe {
-  0%,100%{opacity:.4;transform:scale(1)}
-  50%{opacity:1;transform:scale(1.03)}
-}
-
-/* ── MIRROR SECTION ── */
-#s-mirror { background:#030000; min-height:100vh; }
-#mirror-canvas { position:absolute; inset:0; width:100%!important; height:100%!important; }
-.mirror-text { position:relative; z-index:2; text-align:center; padding:20px; }
-
-/* ── FOOTER ── */
-#s-end {
-  background:#000; min-height:50vh;
-  text-align:center; padding:60px 20px;
-}
-.end-title {
-  font-family:'UnifrakturMaguntia',cursive;
-  font-size:clamp(32px,6vw,80px);
-  color:rgba(139,0,0,0.3);
-  letter-spacing:4px; margin-bottom:20px;
-}
-.end-sub {
-  font-family:'Special Elite',serif;
-  color:rgba(255,255,255,0.1);
-  font-size:12px; letter-spacing:6px;
-  text-transform:uppercase;
-}
-
-/* Responsive */
-@media(max-width:600px){
-  .faces-grid{grid-template-columns:repeat(2,1fr)}
-  .eyes-container{gap:20px}
-  .eye-wrap{width:130px;height:86px}
-  .eye-iris{width:52px;height:52px}
-}
+  /* ── LOADING STATE ── */
+  .loading-overlay {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--bg);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .loading-overlay.active { opacity: 1; pointer-events: all; }
+  .loader-ring {
+    width: 48px; height: 48px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loader-text {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    animation: fadeText 1.5s ease infinite alternate;
+  }
+  @keyframes fadeText { from { opacity: 0.4; } to { opacity: 1; } }
 </style>
 </head>
 <body>
 
-<div id="cursor"></div>
-<div id="vignette"></div>
-<div id="flash"></div>
-<div id="red-flash"></div>
-<div id="noise-overlay"></div>
-<div id="face-rush"><div class="rush-face" id="rush-face">😱</div></div>
-<div class="stalker-eye" id="stalker-l">👁️</div>
-<div class="stalker-eye" id="stalker-r">👁️</div>
+<canvas id="bgCanvas"></canvas>
 
-<!-- ████ ENTER SCREEN ████ -->
-<div id="enter-screen">
-  <canvas id="enter-canvas"></canvas>
-  <div class="enter-title">ENTER IF YOU DARE</div>
-  <div class="enter-sub">// Warning: Extreme content ahead</div>
-  <button class="enter-btn" onclick="enterSite()">I AM NOT AFRAID</button>
-  <div class="enter-warning">⚠ Contains sudden loud sounds & disturbing imagery</div>
-</div>
+<div class="corner tl"></div>
+<div class="corner tr"></div>
+<div class="corner bl"></div>
+<div class="corner br"></div>
 
-<!-- ████ JUMPSCARE OVERLAY ████ -->
-<div id="js-overlay">
-  <canvas id="js-canvas-main"></canvas>
-  <div class="js-face-text">
-    <span class="js-emoji-big" id="js-emoji">💀</span>
-    <span class="js-scream-text" id="js-txt">BOO</span>
+<div class="hud tl" id="hudTime">SYS // 00:00:00 UTC</div>
+<div class="hud tr">AUTH_GATEWAY v2.4.1</div>
+<div class="hud bl">NODE: EU-WEST-01 // SECURE</div>
+<div class="hud br" id="hudDate">--/--/----</div>
+
+<div class="card-wrap">
+  <div class="card">
+    <div class="card-tr"></div>
+    <div class="card-bl"></div>
+
+    <div class="logo-area">
+      <div class="logo-icon">
+        <!-- Hexagon / panel icon -->
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <polygon points="16,2 28,9 28,23 16,30 4,23 4,9" stroke="#5865F2" stroke-width="1.5" fill="none"/>
+          <polygon points="16,8 22,11.5 22,20.5 16,24 10,20.5 10,11.5" stroke="#00d4ff" stroke-width="1" fill="rgba(88,101,242,0.15)"/>
+          <circle cx="16" cy="16" r="2.5" fill="#5865F2"/>
+        </svg>
+      </div>
+      <div class="logo-title">NexusPanel</div>
+      <div class="logo-sub">Secure Access Terminal</div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-dot"></div>
+      <span>AUTHENTICATION SERVER ONLINE</span>
+    </div>
+
+    <div class="divider"><span>IDENTITY VERIFICATION</span></div>
+
+    <a href="#" class="btn-discord" id="discordBtn">
+      <!-- Discord SVG logo -->
+      <svg viewBox="0 0 24 24" fill="white" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+      </svg>
+      Continue with Discord
+    </a>
+
+    <div class="footer-note">
+      By signing in, you agree to our terms of service.<br/>
+      Your data is <span>encrypted</span> and never shared.
+    </div>
   </div>
 </div>
 
-<!-- ████ MAIN ████ -->
-<div id="main">
-
-  <!-- HERO -->
-  <section class="horror-section" id="s-hero">
-    <canvas id="hero-3d"></canvas>
-    <div class="hero-content">
-      <div class="hero-title">THE VOID<br>WATCHES YOU</div>
-      <div class="hero-sub">You have made a terrible mistake</div>
-    </div>
-    <div class="scroll-hint">▼ scroll deeper ▼</div>
-  </section>
-
-  <!-- FACE GRID -->
-  <section class="horror-section" id="s-faces" style="padding:60px 20px">
-    <div class="s-label">// Specimen Archive</div>
-    <div class="s-title">They Are Always Here</div>
-    <div class="faces-grid" id="faces-grid"></div>
-  </section>
-
-  <!-- CORRIDOR -->
-  <section class="horror-section" id="s-corridor">
-    <canvas id="corridor-canvas"></canvas>
-    <div class="corridor-text">
-      <h2>something is behind you</h2>
-      <p>do not look back</p>
-    </div>
-  </section>
-
-  <!-- EYES FOLLOW -->
-  <section class="horror-section" id="s-eyes" style="padding:60px 20px">
-    <div class="s-label">// Ocular Surveillance</div>
-    <div class="s-title" style="margin-bottom:8px">They Are Watching</div>
-    <div class="s-desc" style="margin-bottom:40px">Move your cursor. The eyes will follow. They always follow.</div>
-    <div class="eyes-container" id="eyes-container"></div>
-  </section>
-
-  <!-- BLOOD DRIP -->
-  <section class="horror-section" id="s-blood">
-    <div class="blood-text">IT NEVER ENDS</div>
-    <div id="drips-container"></div>
-  </section>
-
-  <!-- BREATHING ROOM -->
-  <section class="horror-section" id="s-breathing">
-    <canvas id="breath-canvas"></canvas>
-    <div class="breath-text">
-      <div class="s-label">// Do Not Breathe</div>
-      <h2>Listen...</h2>
-      <p class="s-desc" style="margin-top:16px;font-size:13px">Can you hear it?<br>The breathing that isn't yours.</p>
-    </div>
-  </section>
-
-  <!-- MIRROR -->
-  <section class="horror-section" id="s-mirror">
-    <canvas id="mirror-canvas"></canvas>
-    <div class="mirror-text">
-      <div class="s-label">// Reflection Protocol</div>
-      <div class="s-title">What Looks Back</div>
-      <p class="s-desc">Your reflection moved before you did.</p>
-    </div>
-  </section>
-
-  <!-- END -->
-  <section id="s-end">
-    <div class="end-title">You Cannot Leave</div>
-    <div class="end-sub">The session has no end. Refresh and it starts again.</div>
-  </section>
-
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loader-ring"></div>
+  <div class="loader-text">AUTHENTICATING WITH DISCORD...</div>
 </div>
 
 <script>
-// ════════════════════════════════════════
-// AUDIO ENGINE — MAXIMUM HORROR
-// ════════════════════════════════════════
-let audioCtx = null;
-function initAudio() {
-  if (audioCtx) return;
-  audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-}
+  // ── CONFIG — REPLACE THESE ──────────────────────────────────────────
+  const DISCORD_CLIENT_ID  = 'YOUR_CLIENT_ID_HERE';
+  const REDIRECT_URI       = encodeURIComponent(window.location.origin + '/callback.html');
+  const SCOPES             = 'identify';
+  // ───────────────────────────────────────────────────────────────────
 
-// Compressor to keep loud sounds from clipping to nothing
-function getMaster(vol=1) {
-  const comp = audioCtx.createDynamicsCompressor();
-  comp.threshold.value = -6; comp.knee.value = 3;
-  comp.ratio.value = 4; comp.attack.value = 0.001; comp.release.value = 0.1;
-  const g = audioCtx.createGain();
-  g.gain.value = Math.min(vol, 3.0);
-  g.connect(comp); comp.connect(audioCtx.destination);
-  return g;
-}
-
-function playScream(intensity = 1) {
-  if (!audioCtx) return;
-  const master = getMaster(intensity * 2.5);
-  const now = audioCtx.currentTime;
-
-  // LAYER 1 — brutal high-pitched shriek × 10 voices
-  for (let h = 0; h < 10; h++) {
-    const osc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    osc.type = h % 3 === 0 ? 'sawtooth' : h % 3 === 1 ? 'square' : 'triangle';
-    const base = 600 + h * 180 + Math.random() * 500;
-    osc.frequency.setValueAtTime(base * 0.5, now);
-    osc.frequency.linearRampToValueAtTime(base * 3.5, now + 0.04);
-    osc.frequency.exponentialRampToValueAtTime(base * 1.8, now + 0.4);
-    osc.frequency.exponentialRampToValueAtTime(base * 0.3, now + 2.2);
-    g.gain.setValueAtTime(0, now);
-    g.gain.linearRampToValueAtTime(0.22 * intensity, now + 0.02);
-    g.gain.setValueAtTime(0.22 * intensity, now + 0.3);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 2.4);
-    osc.connect(g); g.connect(master);
-    osc.start(now); osc.stop(now + 2.5);
+  // Redirect to dashboard if already logged in
+  const saved = localStorage.getItem('discord_user');
+  if (saved) {
+    window.location.href = 'dashboard.html';
   }
 
-  // LAYER 2 — sub bass SLAM
-  for (let b = 0; b < 3; b++) {
-    const osc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    osc.type = 'sawtooth';
-    osc.frequency.setValueAtTime(120 - b*20, now);
-    osc.frequency.exponentialRampToValueAtTime(20, now + 1.5);
-    g.gain.setValueAtTime(0.6 * intensity, now);
-    g.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
-    osc.connect(g); g.connect(master);
-    osc.start(now); osc.stop(now + 2);
+  // HUD clock
+  function updateHUD() {
+    const now = new Date();
+    document.getElementById('hudTime').textContent =
+      `SYS // ${now.toUTCString().split(' ')[4]} UTC`;
+    document.getElementById('hudDate').textContent =
+      `${String(now.getDate()).padStart(2,'0')}/${String(now.getMonth()+1).padStart(2,'0')}/${now.getFullYear()}`;
   }
+  setInterval(updateHUD, 1000);
+  updateHUD();
 
-  // LAYER 3 — white noise ROAR
-  const bufLen = audioCtx.sampleRate * 2.5;
-  const buf = audioCtx.createBuffer(2, bufLen, audioCtx.sampleRate);
-  for (let ch=0; ch<2; ch++) {
-    const d = buf.getChannelData(ch);
-    for (let i=0; i<bufLen; i++) d[i] = (Math.random()*2-1);
-  }
-  const noise = audioCtx.createBufferSource();
-  noise.buffer = buf;
-  const nGain = audioCtx.createGain();
-  nGain.gain.setValueAtTime(0, now);
-  nGain.gain.linearRampToValueAtTime(1.2 * intensity, now + 0.01);
-  nGain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
-  const bandpass = audioCtx.createBiquadFilter();
-  bandpass.type = 'bandpass'; bandpass.frequency.value = 3000; bandpass.Q.value = 0.3;
-  noise.connect(bandpass); bandpass.connect(nGain); nGain.connect(master);
-  noise.start(now); noise.stop(now + 2.5);
+  // Discord OAuth URL
+  const OAUTH_URL =
+    `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}` +
+    `&redirect_uri=${REDIRECT_URI}&response_type=code&scope=${SCOPES}`;
 
-  // LAYER 4 — ultra-high pitch screech
-  const screech = audioCtx.createOscillator();
-  const sGain = audioCtx.createGain();
-  screech.type = 'square';
-  screech.frequency.setValueAtTime(4000, now);
-  screech.frequency.linearRampToValueAtTime(8000, now + 0.08);
-  screech.frequency.exponentialRampToValueAtTime(2000, now + 0.5);
-  sGain.gain.setValueAtTime(0, now);
-  sGain.gain.linearRampToValueAtTime(0.4*intensity, now+0.01);
-  sGain.gain.exponentialRampToValueAtTime(0.001, now+0.6);
-  screech.connect(sGain); sGain.connect(master);
-  screech.start(now); screech.stop(now+0.7);
-
-  // LAYER 5 — repeated stutter
-  for(let s=0; s<6; s++){
-    const st = audioCtx.createOscillator();
-    const sg = audioCtx.createGain();
-    st.type = 'sawtooth';
-    st.frequency.value = 300 + Math.random()*800;
-    const t2 = now + s*0.06;
-    sg.gain.setValueAtTime(0.3*intensity, t2);
-    sg.gain.exponentialRampToValueAtTime(0.001, t2+0.05);
-    st.connect(sg); sg.connect(master);
-    st.start(t2); st.stop(t2+0.06);
-  }
-}
-
-function playCreak() {
-  if (!audioCtx) return;
-  const master = getMaster(0.8);
-  const now = audioCtx.currentTime;
-  const osc = audioCtx.createOscillator();
-  const g = audioCtx.createGain();
-  osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(300+Math.random()*100, now);
-  osc.frequency.linearRampToValueAtTime(60+Math.random()*40, now+1.2);
-  g.gain.setValueAtTime(0.5, now);
-  g.gain.exponentialRampToValueAtTime(0.001, now+1.3);
-  osc.connect(g); g.connect(master);
-  osc.start(now); osc.stop(now+1.4);
-}
-
-function playHeartbeat() {
-  if (!audioCtx) return;
-  const master = getMaster(1.5);
-  const beat = (t, freq) => {
-    const osc = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    osc.frequency.value = freq; osc.type = 'sine';
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(1.0, t+0.03);
-    g.gain.exponentialRampToValueAtTime(0.001, t+0.3);
-    osc.connect(g); g.connect(master);
-    osc.start(t); osc.stop(t+0.35);
-  };
-  const now = audioCtx.currentTime;
-  beat(now, 90); beat(now+0.22, 65);
-  beat(now+0.9, 90); beat(now+1.12, 65);
-}
-
-function playWhisper() {
-  if (!audioCtx) return;
-  const master = getMaster(0.6);
-  const now = audioCtx.currentTime;
-  for (let i=0; i<8; i++) {
-    const bufLen = audioCtx.sampleRate * 0.4;
-    const buf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
-    const d = buf.getChannelData(0);
-    for(let j=0;j<bufLen;j++) d[j]=(Math.random()*2-1)*0.3;
-    const src = audioCtx.createBufferSource();
-    src.buffer = buf;
-    const g = audioCtx.createGain();
-    const t2 = now + i*0.12;
-    g.gain.setValueAtTime(0, t2);
-    g.gain.linearRampToValueAtTime(0.4, t2+0.05);
-    g.gain.exponentialRampToValueAtTime(0.001, t2+0.4);
-    const filt = audioCtx.createBiquadFilter();
-    filt.type='bandpass'; filt.frequency.value=400+Math.random()*600; filt.Q.value=2;
-    src.connect(filt); filt.connect(g); g.connect(master);
-    src.start(t2); src.stop(t2+0.5);
-  }
-}
-
-function playJumpscareStinger() {
-  if (!audioCtx) return;
-  // Extra loud instant attack stinger for jumpscares
-  const master = getMaster(3.0);
-  const now = audioCtx.currentTime;
-  // Instant impact
-  const impact = audioCtx.createOscillator();
-  const iGain = audioCtx.createGain();
-  impact.type = 'sawtooth';
-  impact.frequency.setValueAtTime(80, now);
-  impact.frequency.exponentialRampToValueAtTime(25, now+0.1);
-  iGain.gain.setValueAtTime(1.5, now);
-  iGain.gain.exponentialRampToValueAtTime(0.001, now+0.15);
-  impact.connect(iGain); iGain.connect(master);
-  impact.start(now); impact.stop(now+0.2);
-  // Then scream
-  setTimeout(() => playScream(2.0), 20);
-}
-
-// ════════════════════════════════════════
-// CURSOR
-// ════════════════════════════════════════
-const cur = document.getElementById('cursor');
-document.addEventListener('mousemove', e => {
-  cur.style.left = e.clientX + 'px';
-  cur.style.top  = e.clientY + 'px';
-});
-
-// ════════════════════════════════════════
-// ENTER SCREEN
-// ════════════════════════════════════════
-(function() {
-  const canvas = document.getElementById('enter-canvas');
-  const r = new THREE.WebGLRenderer({ canvas, alpha: true });
-  r.setSize(window.innerWidth, window.innerHeight);
-  const scene = new THREE.Scene();
-  const cam = new THREE.PerspectiveCamera(70, window.innerWidth/window.innerHeight, 0.1, 200);
-  cam.position.z = 30;
-
-  const skull = new THREE.Group();
-  // skull shape using spheres+boxes wireframe
-  const mat = new THREE.MeshBasicMaterial({ color: 0x8b0000, wireframe: true, transparent: true, opacity: 0.6 });
-  const head = new THREE.Mesh(new THREE.SphereGeometry(6, 12, 12), mat);
-  skull.add(head);
-  const jaw = new THREE.Mesh(new THREE.BoxGeometry(10, 3, 7), mat.clone());
-  jaw.position.y = -6; skull.add(jaw);
-  const eyeL = new THREE.Mesh(new THREE.SphereGeometry(1.5, 8, 8), new THREE.MeshBasicMaterial({color:0xff0000}));
-  eyeL.position.set(-2, 1, 5); skull.add(eyeL);
-  const eyeR = eyeL.clone(); eyeR.position.x = 2; skull.add(eyeR);
-  scene.add(skull);
-
-  const particles = [];
-  const pgeo = new THREE.BufferGeometry();
-  const ppos = new Float32Array(1500*3);
-  for(let i=0;i<1500;i++){ppos[i*3]=(Math.random()-.5)*80;ppos[i*3+1]=(Math.random()-.5)*80;ppos[i*3+2]=(Math.random()-.5)*80;}
-  pgeo.setAttribute('position',new THREE.BufferAttribute(ppos,3));
-  scene.add(new THREE.Points(pgeo, new THREE.PointsMaterial({color:0x8b0000,size:0.15,transparent:true,opacity:0.7})));
-
-  let t=0;
-  (function loop(){requestAnimationFrame(loop);t+=0.01;skull.rotation.y=Math.sin(t)*0.5;skull.rotation.x=Math.sin(t*0.7)*0.2;skull.position.y=Math.sin(t*0.5)*0.5;eyeL.material.color.setHSL(0,1,0.3+Math.sin(t*3)*0.2);eyeR.material.color.copy(eyeL.material.color);r.render(scene,cam);})();
-  window.addEventListener('resize',()=>{r.setSize(window.innerWidth,window.innerHeight);cam.aspect=window.innerWidth/window.innerHeight;cam.updateProjectionMatrix();});
-})();
-
-function enterSite() {
-  initAudio();
-  playCreak();
-  document.getElementById('enter-screen').classList.add('gone');
-  document.getElementById('main').style.display = 'block';
-  setTimeout(() => {
-    document.getElementById('enter-screen').style.display = 'none';
-    initHero3D();
-    initCorridorCanvas();
-    initBreathCanvas();
-    initMirrorCanvas();
-    buildFaceGrid();
-    buildEyes();
-    buildDrips();
-    startAmbience();
-    scheduleJumpscares();
-    // FIRST JUMPSCARE — hits fast
-    setTimeout(()=>triggerFaceRush(), 3000);
-    setTimeout(()=>triggerJumpscare('intro'), 7000);
-  }, 900);
-}
-
-// ════════════════════════════════════════
-// HERO 3D — floating skull army
-// ════════════════════════════════════════
-function initHero3D() {
-  const canvas = document.getElementById('hero-3d');
-  const r = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-  r.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
-
-  const scene = new THREE.Scene();
-  const cam = new THREE.PerspectiveCamera(60, canvas.parentElement.clientWidth/canvas.parentElement.clientHeight, 0.1, 500);
-  cam.position.z = 40;
-
-  const skullMats = [
-    new THREE.MeshBasicMaterial({color:0x8b0000, wireframe:true, transparent:true, opacity:0.7}),
-    new THREE.MeshBasicMaterial({color:0xff0000, wireframe:true, transparent:true, opacity:0.5}),
-    new THREE.MeshBasicMaterial({color:0xff3300, wireframe:true, transparent:true, opacity:0.4}),
-  ];
-
-  const skullMeshes = [];
-  for (let i = 0; i < 20; i++) {
-    const g = new THREE.Group();
-    const matIdx = i % 3;
-    const head = new THREE.Mesh(new THREE.IcosahedronGeometry(1.5 + Math.random(), 1), skullMats[matIdx]);
-    g.add(head);
-    const eyeGeo = new THREE.SphereGeometry(0.3, 6, 6);
-    const eyeMat = new THREE.MeshBasicMaterial({color: 0xff0000});
-    const eL = new THREE.Mesh(eyeGeo, eyeMat); eL.position.set(-0.5, 0.2, 1.3); g.add(eL);
-    const eR = new THREE.Mesh(eyeGeo, eyeMat.clone()); eR.position.set(0.5, 0.2, 1.3); g.add(eR);
-    g.position.set((Math.random()-0.5)*80, (Math.random()-0.5)*50, (Math.random()-0.5)*60);
-    g.userData = {
-      ry: (Math.random()-.5)*0.015,
-      rx: (Math.random()-.5)*0.01,
-      vy: (Math.random()-.5)*0.02,
-      phase: Math.random()*Math.PI*2,
-      eL, eR
-    };
-    scene.add(g);
-    skullMeshes.push(g);
-  }
-
-  // Particle cloud
-  const pg = new THREE.BufferGeometry();
-  const pp = new Float32Array(3000*3);
-  for(let i=0;i<3000;i++){pp[i*3]=(Math.random()-.5)*200;pp[i*3+1]=(Math.random()-.5)*200;pp[i*3+2]=(Math.random()-.5)*200;}
-  pg.setAttribute('position',new THREE.BufferAttribute(pp,3));
-  scene.add(new THREE.Points(pg, new THREE.PointsMaterial({color:0x330000,size:0.2,transparent:true,opacity:0.5})));
-
-  let mx=0,my=0,t=0;
-  document.addEventListener('mousemove',e=>{mx=(e.clientX/window.innerWidth-.5)*2;my=(e.clientY/window.innerHeight-.5)*2;});
-
-  (function loop(){
-    requestAnimationFrame(loop); t+=0.008;
-    skullMeshes.forEach((g,i)=>{
-      g.rotation.y += g.userData.ry;
-      g.rotation.x += g.userData.rx;
-      g.position.y += Math.sin(t + g.userData.phase) * 0.02;
-      // eyes pulse
-      const bri = 0.3 + Math.abs(Math.sin(t*2+i))*0.7;
-      g.userData.eL.material.color.setHSL(0,1,bri);
-      g.userData.eR.material.color.copy(g.userData.eL.material.color);
-    });
-    cam.position.x += (mx*8 - cam.position.x)*0.02;
-    cam.position.y += (-my*5 - cam.position.y)*0.02;
-    cam.lookAt(0,0,0);
-    r.render(scene,cam);
-  })();
-
-  window.addEventListener('resize',()=>{
-    r.setSize(canvas.parentElement.clientWidth,canvas.parentElement.clientHeight);
-    cam.aspect=canvas.parentElement.clientWidth/canvas.parentElement.clientHeight;
-    cam.updateProjectionMatrix();
-  });
-}
-
-// ════════════════════════════════════════
-// FACE GRID — 9 interactive 3D cells
-// ════════════════════════════════════════
-const FACE_DATA = [
-  {color:0x8b0000,label:'PATIENT ZERO',shape:'ico'},
-  {color:0xff2200,label:'THE HOLLOW',shape:'oct'},
-  {color:0x550000,label:'SPECIMEN 7',shape:'box'},
-  {color:0xff0066,label:'ENTITY X',shape:'tor'},
-  {color:0xaa0000,label:'THE WATCHER',shape:'ico'},
-  {color:0xff3300,label:'VOID BORN',shape:'oct'},
-  {color:0x660000,label:'UNNAMED',shape:'box'},
-  {color:0xff1100,label:'ECHO',shape:'tor'},
-  {color:0x990000,label:'THE LAST',shape:'ico'},
-];
-
-function buildFaceGrid() {
-  const grid = document.getElementById('faces-grid');
-  grid.innerHTML = FACE_DATA.map((f,i) => `
-    <div class="face-cell" id="fc-${i}" onclick="cellJumpscare(${i})">
-      <canvas id="fc-c-${i}"></canvas>
-      <div class="cell-label">${f.label}</div>
-    </div>`).join('');
-
-  FACE_DATA.forEach((f,i) => {
-    const canvas = document.getElementById(`fc-c-${i}`);
-    const parent = canvas.parentElement;
-    const W = parent.clientWidth, H = parent.clientHeight;
-    const r = new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
-    r.setSize(W,H);
-    const scene = new THREE.Scene();
-    const cam = new THREE.PerspectiveCamera(50, W/H, 0.1, 100);
-    cam.position.z = 4;
-
-    let mainGeo;
-    if(f.shape==='ico')   mainGeo = new THREE.IcosahedronGeometry(1.4,2);
-    else if(f.shape==='oct') mainGeo = new THREE.OctahedronGeometry(1.5);
-    else if(f.shape==='box') mainGeo = new THREE.BoxGeometry(2,2,2);
-    else                   mainGeo = new THREE.TorusGeometry(1,0.4,8,20);
-
-    const mesh = new THREE.Mesh(mainGeo, new THREE.MeshBasicMaterial({color:f.color,wireframe:true,transparent:true,opacity:0.8}));
-    scene.add(mesh);
-
-    // eyes
-    const eyeMat = new THREE.MeshBasicMaterial({color:0xff0000});
-    const eL = new THREE.Mesh(new THREE.SphereGeometry(0.2,8,8), eyeMat);
-    const eR = eL.clone();
-    eL.position.set(-0.4,0.3,1.3); eR.position.set(0.4,0.3,1.3);
-    scene.add(eL,eR);
-
-    let isHover = false;
-    parent.addEventListener('mouseenter',()=>{isHover=true; playWhisper();});
-    parent.addEventListener('mouseleave',()=>isHover=false);
-
-    let t = i*0.3;
-    (function loop(){
-      requestAnimationFrame(loop); t+=0.012;
-      mesh.rotation.y += isHover ? 0.03 : 0.008;
-      mesh.rotation.x += 0.004;
-      const bri = 0.3+Math.abs(Math.sin(t*2))*0.7;
-      eL.material.color.setHSL(0,1,bri);
-      eR.material.color.copy(eL.material.color);
-      r.render(scene,cam);
-    })();
-  });
-}
-
-function cellJumpscare(idx) {
-  if(Math.random()>0.5) triggerFaceRush();
-  else triggerJumpscare('cell');
-}
-
-// ════════════════════════════════════════
-// CORRIDOR — 3D infinite hallway
-// ════════════════════════════════════════
-function initCorridorCanvas() {
-  const canvas = document.getElementById('corridor-canvas');
-  const parent = canvas.parentElement;
-  const r = new THREE.WebGLRenderer({canvas,alpha:false,antialias:true});
-  r.setSize(parent.clientWidth, parent.clientHeight);
-  r.setClearColor(0x000000);
-
-  const scene = new THREE.Scene();
-  scene.fog = new THREE.Fog(0x000000, 5, 40);
-  const cam = new THREE.PerspectiveCamera(80, parent.clientWidth/parent.clientHeight, 0.1, 100);
-  cam.position.set(0, 0, 0);
-
-  // corridor panels
-  const wallMat = new THREE.MeshBasicMaterial({color:0x1a0000,side:THREE.BackSide});
-  const floorMat = new THREE.MeshBasicMaterial({color:0x0d0000});
-  for(let z=0; z>-100; z-=4) {
-    // walls
-    const boxGeo = new THREE.BoxGeometry(6, 4, 4);
-    const box = new THREE.Mesh(boxGeo, wallMat);
-    box.position.z = z - 2;
-    scene.add(box);
-    // blood lines on walls
-    if(Math.random()>.6) {
-      const lineGeo = new THREE.BoxGeometry(0.05, 0.5+Math.random()*1.5, 0.01);
-      const lineMesh = new THREE.Mesh(lineGeo, new THREE.MeshBasicMaterial({color:0x8b0000}));
-      lineMesh.position.set((Math.random()-.5)*5, -0.5+Math.random()*2, z-0.01);
-      scene.add(lineMesh);
-    }
-  }
-
-  // shadow figure at the end
-  const figGeo = new THREE.CylinderGeometry(0.4, 0.6, 3.5, 8);
-  const figMat = new THREE.MeshBasicMaterial({color:0x000000});
-  const figure = new THREE.Mesh(figGeo, figMat);
-  figure.position.set(0, -0.5, -60);
-  scene.add(figure);
-  const figHead = new THREE.Mesh(new THREE.SphereGeometry(0.5,8,8), figMat.clone());
-  figHead.position.set(0, 2.5, 0);
-  figure.add(figHead);
-
-  // red eyes on figure
-  const figEyeL = new THREE.Mesh(new THREE.SphereGeometry(0.08,6,6), new THREE.MeshBasicMaterial({color:0xff0000}));
-  const figEyeR = figEyeL.clone();
-  figEyeL.position.set(-0.18, 2.5, 0.45); figEyeR.position.set(0.18, 2.5, 0.45);
-  figure.add(figEyeL, figEyeR);
-
-  let t=0, figDir=1, figZ=-60;
-  (function loop(){
-    requestAnimationFrame(loop); t+=0.005;
-    cam.position.z = -t*2 % 80;
-    cam.rotation.z = Math.sin(t*2)*0.01;
-
-    figZ += 0.12 * figDir;
-    if(figZ > -5) { figDir = -1; playCreak(); }
-    if(figZ < -80) { figDir = 1; }
-    figure.position.z = figZ;
-
-    const bri = 0.3 + Math.sin(t*4)*0.2;
-    figEyeL.material.color.setHSL(0,1,bri);
-    figEyeR.material.color.copy(figEyeL.material.color);
-
-    r.render(scene,cam);
-  })();
-}
-
-// ════════════════════════════════════════
-// EYES FOLLOW CURSOR
-// ════════════════════════════════════════
-function buildEyes() {
-  const container = document.getElementById('eyes-container');
-  container.innerHTML = Array.from({length:6},(_,i)=>`
-    <div class="eye-wrap" id="eye-${i}">
-      <div class="eye-white"></div>
-      <div class="eye-iris" id="iris-${i}"></div>
-    </div>`).join('');
-
-  document.addEventListener('mousemove', e => {
-    for(let i=0;i<6;i++){
-      const wrap = document.getElementById(`eye-${i}`);
-      const iris = document.getElementById(`iris-${i}`);
-      if(!wrap || !iris) continue;
-      const rect = wrap.getBoundingClientRect();
-      const cx = rect.left + rect.width/2;
-      const cy = rect.top + rect.height/2;
-      const dx = e.clientX - cx, dy = e.clientY - cy;
-      const dist = Math.sqrt(dx*dx+dy*dy);
-      const maxMove = rect.width * 0.22;
-      const norm = Math.min(dist, maxMove*4) / (maxMove*4);
-      const ix = dx * norm * maxMove / dist || 0;
-      const iy = dy * norm * maxMove / dist || 0;
-      iris.style.transform = `translate(calc(-50% + ${ix}px), calc(-50% + ${iy}px))`;
-    }
+  document.getElementById('discordBtn').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('loadingOverlay').classList.add('active');
+    setTimeout(() => { window.location.href = OAUTH_URL; }, 600);
   });
 
-  // random blink
-  setInterval(()=>{
-    const idx = Math.floor(Math.random()*6);
-    const iris = document.getElementById(`iris-${idx}`);
-    if(iris){ iris.style.transform+=' scaleY(0.05)'; setTimeout(()=>iris.style.transform=iris.style.transform.replace(' scaleY(0.05)',''),150); }
-  }, 2000);
-}
+  // ── ANIMATED PARTICLE GRID BACKGROUND ──
+  const canvas = document.getElementById('bgCanvas');
+  const ctx    = canvas.getContext('2d');
+  let W, H, dots = [];
 
-// ════════════════════════════════════════
-// BLOOD DRIPS
-// ════════════════════════════════════════
-function buildDrips() {
-  const container = document.getElementById('drips-container');
-  for(let i=0;i<18;i++){
-    const d = document.createElement('div');
-    d.className = 'drip';
-    const left = Math.random()*100;
-    const dur = 3 + Math.random()*5;
-    const delay = Math.random()*8;
-    const w = 4 + Math.random()*8;
-    d.style.cssText = `left:${left}%;width:${w}px;animation-duration:${dur}s;animation-delay:${delay}s;opacity:.8;`;
-    container.appendChild(d);
-  }
-}
-
-// ════════════════════════════════════════
-// BREATHING 3D — pulsing entity
-// ════════════════════════════════════════
-function initBreathCanvas() {
-  const canvas = document.getElementById('breath-canvas');
-  const parent = canvas.parentElement;
-  const r = new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
-  r.setSize(parent.clientWidth, parent.clientHeight);
-  const scene = new THREE.Scene();
-  const cam = new THREE.PerspectiveCamera(50, parent.clientWidth/parent.clientHeight, 0.1, 100);
-  cam.position.z = 8;
-
-  const rings = [];
-  for(let i=0;i<8;i++){
-    const geo = new THREE.TorusGeometry(1+i*0.6, 0.03, 4, 48);
-    const mat = new THREE.MeshBasicMaterial({color:0x8b0000,transparent:true,opacity:0.6-i*0.06});
-    const ring = new THREE.Mesh(geo, mat);
-    ring.rotation.x = Math.random()*Math.PI;
-    ring.rotation.y = Math.random()*Math.PI;
-    scene.add(ring);
-    rings.push({mesh:ring, phase:i*0.8, ry:(Math.random()-.5)*0.008, rx:(Math.random()-.5)*0.005});
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    initDots();
   }
 
-  const core = new THREE.Mesh(new THREE.IcosahedronGeometry(0.8,2),
-    new THREE.MeshBasicMaterial({color:0xff0000,wireframe:true,transparent:true,opacity:0.9}));
-  scene.add(core);
-
-  let t=0;
-  (function loop(){
-    requestAnimationFrame(loop); t+=0.012;
-    const breath = 1 + Math.sin(t)*0.15;
-    rings.forEach(({mesh,phase,ry,rx})=>{
-      mesh.rotation.y += ry;
-      mesh.rotation.x += rx;
-      mesh.scale.setScalar(breath + Math.sin(t+phase)*0.05);
-    });
-    core.scale.setScalar(breath);
-    core.rotation.y += 0.01; core.rotation.x += 0.006;
-    r.render(scene,cam);
-  })();
-}
-
-// ════════════════════════════════════════
-// MIRROR 3D — distorted reflection
-// ════════════════════════════════════════
-function initMirrorCanvas() {
-  const canvas = document.getElementById('mirror-canvas');
-  const parent = canvas.parentElement;
-  const r = new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
-  r.setSize(parent.clientWidth, parent.clientHeight);
-  const scene = new THREE.Scene();
-  const cam = new THREE.PerspectiveCamera(55, parent.clientWidth/parent.clientHeight, 0.1, 100);
-  cam.position.z = 12;
-
-  // shattered mirror panels
-  const panelMat = new THREE.MeshBasicMaterial({color:0x2a0000,transparent:true,opacity:0.7,side:THREE.DoubleSide});
-  const shards = [];
-  for(let i=0;i<30;i++){
-    const geo = new THREE.PlaneGeometry(1+Math.random()*2, 1+Math.random()*2);
-    const shard = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({color:0x1a0a0a,transparent:true,opacity:0.4+Math.random()*0.4,side:THREE.DoubleSide}));
-    shard.position.set((Math.random()-.5)*14, (Math.random()-.5)*10, (Math.random()-.5)*4);
-    shard.rotation.set(Math.random()*Math.PI, Math.random()*Math.PI, Math.random()*Math.PI);
-    scene.add(shard);
-    shards.push({mesh:shard, rx:(Math.random()-.5)*0.003, ry:(Math.random()-.5)*0.004});
-  }
-
-  // reflection figure
-  const figGroup = new THREE.Group();
-  const fMat = new THREE.MeshBasicMaterial({color:0x8b0000,wireframe:true,transparent:true,opacity:0.6});
-  figGroup.add(new THREE.Mesh(new THREE.SphereGeometry(1,10,10), fMat));
-  const body = new THREE.Mesh(new THREE.CylinderGeometry(0.6,0.8,2.5,8), fMat.clone());
-  body.position.y = -2; figGroup.add(body);
-  for(let s=0;s<3;s++){
-    const spike = new THREE.Mesh(new THREE.ConeGeometry(0.3,2,6), new THREE.MeshBasicMaterial({color:0xff0000,wireframe:true,transparent:true,opacity:0.5}));
-    spike.position.set((s-1)*1.2, 0.5, 0);
-    spike.rotation.z = (s-1)*0.5;
-    figGroup.add(spike);
-  }
-  scene.add(figGroup);
-
-  let t=0;
-  (function loop(){
-    requestAnimationFrame(loop); t+=0.01;
-    shards.forEach(({mesh,rx,ry})=>{mesh.rotation.x+=rx;mesh.rotation.y+=ry;});
-    figGroup.rotation.y += 0.008;
-    figGroup.position.y = Math.sin(t*0.7)*0.5;
-    figGroup.scale.setScalar(1+Math.sin(t)*0.05);
-    r.render(scene,cam);
-  })();
-}
-
-// ════════════════════════════════════════
-// AMBIENCE — continuous dread sound
-// ════════════════════════════════════════
-function startAmbience() {
-  if(!audioCtx) return;
-  // Low drone
-  const drone = audioCtx.createOscillator();
-  const dGain = audioCtx.createGain();
-  drone.type = 'sawtooth';
-  drone.frequency.value = 40;
-  dGain.gain.value = 0.04;
-  drone.connect(dGain); dGain.connect(audioCtx.destination);
-  drone.start();
-
-  // Slowly drift pitch for unease
-  let dp = 40;
-  setInterval(()=>{
-    dp += (Math.random()-.5)*5;
-    dp = Math.max(30, Math.min(70, dp));
-    drone.frequency.setTargetAtTime(dp, audioCtx.currentTime, 2);
-  }, 3000);
-
-  // Random heartbeat
-  setInterval(()=>{ if(Math.random()>0.5) playHeartbeat(); }, 6000);
-
-  // Random creaks
-  setInterval(()=>{ if(Math.random()>0.6) playCreak(); }, 5000);
-}
-
-// ════════════════════════════════════════
-// JUMPSCARE SYSTEM — MAXIMUM TERROR
-// ════════════════════════════════════════
-const JUMPSCARES = [
-  {emoji:'💀',text:'YOU ARE DEAD',dur:1800},
-  {emoji:'👁️',text:'I SEE YOU',dur:1600},
-  {emoji:'🕷️',text:'IT FOUND YOU',dur:1500},
-  {emoji:'👻',text:'GET OUT NOW',dur:2000},
-  {emoji:'😱',text:'RUN.',dur:1400},
-  {emoji:'🩸',text:'NO ESCAPE',dur:1700},
-  {emoji:'💀',text:'HAHAHAHAHA',dur:1600},
-  {emoji:'👁️',text:'BEHIND YOU',dur:1500},
-  {emoji:'🦷',text:'IT SMELLS YOU',dur:1800},
-  {emoji:'🖤',text:'TOO LATE',dur:1400},
-];
-
-const RUSH_FACES = ['😱','💀','👁️','🕷️','👻','🩸'];
-
-let jsActive = false;
-const jsOverlay = document.getElementById('js-overlay');
-const jsCanvasMain = document.getElementById('js-canvas-main');
-let jsRenderer = null;
-
-function triggerJumpscare(source='auto') {
-  if(jsActive) return;
-  jsActive = true;
-  initAudio();
-
-  const js = JUMPSCARES[Math.floor(Math.random()*JUMPSCARES.length)];
-  document.getElementById('js-emoji').textContent = js.emoji;
-  document.getElementById('js-txt').textContent = js.text;
-
-  // ── triple white flash
-  const flash = document.getElementById('flash');
-  const redFlash = document.getElementById('red-flash');
-  flash.style.opacity='1'; setTimeout(()=>flash.style.opacity='0',50);
-  setTimeout(()=>{flash.style.opacity='1';},100);
-  setTimeout(()=>{flash.style.opacity='0';},160);
-  setTimeout(()=>{flash.style.opacity='1';},220);
-  setTimeout(()=>{flash.style.opacity='0';},280);
-  // red flash
-  setTimeout(()=>{redFlash.style.opacity='0.7';},300);
-  setTimeout(()=>{redFlash.style.opacity='0';},600);
-
-  // noise
-  const noise = document.getElementById('noise-overlay');
-  noise.style.opacity='1';
-  setTimeout(()=>noise.style.opacity='0', 1000);
-
-  // screen shake
-  document.body.style.animation='screenShake .08s infinite';
-
-  // LOUD SOUND
-  playJumpscareStinger();
-
-  // show overlay
-  jsOverlay.classList.add('show');
-
-  // 3D explosion in overlay
-  if(jsRenderer){jsRenderer.dispose();jsRenderer=null;}
-  const W=window.innerWidth, H=window.innerHeight;
-  jsRenderer=new THREE.WebGLRenderer({canvas:jsCanvasMain,alpha:true,antialias:true});
-  jsRenderer.setSize(W,H);
-  const sc=new THREE.Scene();
-  const cam=new THREE.PerspectiveCamera(80,W/H,.1,100);
-  cam.position.z=5;
-
-  const shapes=[];
-  for(let i=0;i<50;i++){
-    const gList=[new THREE.IcosahedronGeometry(.4+Math.random()*.8,0),new THREE.OctahedronGeometry(.5+Math.random()*.6),new THREE.BoxGeometry(.4+Math.random()*.7,.4+Math.random()*.7,.3)];
-    const g=gList[i%3];
-    const m=new THREE.MeshBasicMaterial({color:i%2===0?0xff0000:0x8b0000,wireframe:true,transparent:true,opacity:1});
-    const mesh=new THREE.Mesh(g,m);
-    const angle=Math.random()*Math.PI*2;
-    const speed=3+Math.random()*4;
-    mesh.position.set(0,0,0);
-    mesh.userData={vx:Math.cos(angle)*speed*.1,vy:Math.sin(angle)*speed*.1,vz:(Math.random()-.5)*speed*.1};
-    sc.add(mesh); shapes.push(mesh);
-  }
-  // Central face geometry
-  const faceGeo=new THREE.IcosahedronGeometry(2.5,2);
-  const faceMesh=new THREE.Mesh(faceGeo,new THREE.MeshBasicMaterial({color:0xff0000,wireframe:true,transparent:true,opacity:0.7}));
-  sc.add(faceMesh);
-  const eyeL=new THREE.Mesh(new THREE.SphereGeometry(.4,8,8),new THREE.MeshBasicMaterial({color:0xffffff}));
-  const eyeR=eyeL.clone();
-  eyeL.position.set(-0.8,.5,2.3); eyeR.position.set(.8,.5,2.3); sc.add(eyeL,eyeR);
-
-  let jt=0;
-  (function jloop(){
-    if(!jsActive) return;
-    requestAnimationFrame(jloop); jt+=0.05;
-    shapes.forEach(m=>{
-      m.position.x+=m.userData.vx;
-      m.position.y+=m.userData.vy;
-      m.position.z+=m.userData.vz;
-      m.rotation.x+=0.08; m.rotation.y+=0.1;
-      if(m.material.opacity>0) m.material.opacity-=0.008;
-    });
-    faceMesh.rotation.y+=0.04; faceMesh.rotation.x+=0.02;
-    faceMesh.scale.setScalar(1+Math.sin(jt*8)*0.06);
-    eyeL.material.color.setHSL(0,1,.4+Math.sin(jt*10)*.5);
-    eyeR.material.color.copy(eyeL.material.color);
-    jsRenderer.render(sc,cam);
-  })();
-
-  setTimeout(()=>{
-    jsOverlay.classList.remove('show');
-    document.body.style.animation='';
-    jsActive=false;
-    if(jsRenderer){jsRenderer.dispose();jsRenderer=null;}
-  }, js.dur);
-}
-
-// Face rush — emoji SLAMS toward screen
-function triggerFaceRush() {
-  if(jsActive) return;
-  const rush=document.getElementById('face-rush');
-  const face=document.getElementById('rush-face');
-  face.textContent=RUSH_FACES[Math.floor(Math.random()*RUSH_FACES.length)];
-  rush.classList.add('show');
-  // rebuild animation
-  face.classList.remove('rush-anim');
-  void face.offsetWidth;
-  face.style.animation='none';
-  void face.offsetWidth;
-  face.style.animation='rushZoom .55s ease-out forwards';
-  initAudio(); playScream(1.8);
-  const flash=document.getElementById('flash');
-  flash.style.opacity='1'; setTimeout(()=>flash.style.opacity='0',80);
-  setTimeout(()=>rush.classList.remove('show'), 700);
-}
-
-// Cursor stalker — ghost eyes drift toward cursor
-let stalkerActive=false, stalkerX=window.innerWidth/2, stalkerY=window.innerHeight/2;
-let csX=window.innerWidth*0.3, csY=window.innerHeight*0.3;
-let csX2=window.innerWidth*0.7, csY2=window.innerHeight*0.6;
-function activateStalker() {
-  stalkerActive=true;
-  const eL=document.getElementById('stalker-l');
-  const eR=document.getElementById('stalker-r');
-  eL.style.opacity='1'; eR.style.opacity='1';
-  initAudio(); playWhisper();
-  setTimeout(()=>{ eL.style.opacity='0'; eR.style.opacity='0'; stalkerActive=false; }, 4000);
-}
-document.addEventListener('mousemove',e=>{ stalkerX=e.clientX; stalkerY=e.clientY; });
-(function stalkerLoop(){
-  requestAnimationFrame(stalkerLoop);
-  if(!stalkerActive) return;
-  const eL=document.getElementById('stalker-l');
-  const eR=document.getElementById('stalker-r');
-  csX+=(stalkerX-48-csX)*0.02;
-  csY+=(stalkerY-48-csY)*0.02;
-  csX2+=(stalkerX+48-csX2)*0.025;
-  csY2+=(stalkerY+48-csY2)*0.025;
-  eL.style.left=csX+'px'; eL.style.top=csY+'px';
-  eR.style.left=csX2+'px'; eR.style.top=csY2+'px';
-})();
-
-// ════════════════════════════════════════
-// IDLE DETECTION — scare when user stops
-// ════════════════════════════════════════
-let lastMove=Date.now(), idleWarned=false;
-document.addEventListener('mousemove',()=>{ lastMove=Date.now(); idleWarned=false; });
-setInterval(()=>{
-  const idle=Date.now()-lastMove;
-  if(idle>8000 && !idleWarned && !jsActive){
-    idleWarned=true;
-    activateStalker();
-    setTimeout(()=>{ if(!jsActive) triggerJumpscare('idle'); }, 2500);
-  }
-},1000);
-
-// ════════════════════════════════════════
-// SCROLL-BASED JUMPSCARES — every section
-// ════════════════════════════════════════
-function scheduleJumpscares() {
-  const triggered=new Set();
-  // Rapid scroll detection — jumpscare on EVERY section enter
-  const io=new IntersectionObserver(entries=>{
-    entries.forEach(e=>{
-      if(e.isIntersecting && !triggered.has(e.target.id)){
-        triggered.add(e.target.id);
-        // Random type: full jumpscare OR face rush
-        const delay=400+Math.random()*1200;
-        setTimeout(()=>{
-          if(Math.random()>.4) triggerJumpscare('scroll');
-          else triggerFaceRush();
-        }, delay);
+  function initDots() {
+    dots = [];
+    const cols = Math.ceil(W / 80);
+    const rows = Math.ceil(H / 80);
+    for (let x = 0; x <= cols; x++) {
+      for (let y = 0; y <= rows; y++) {
+        dots.push({
+          x: x * 80, y: y * 80,
+          ox: x * 80, oy: y * 80,
+          vx: (Math.random()-0.5)*0.3,
+          vy: (Math.random()-0.5)*0.3,
+          r: Math.random() * 1.5 + 0.5,
+          a: Math.random() * 0.5 + 0.1,
+        });
       }
-    });
-  },{threshold:0.3});
-  ['s-faces','s-corridor','s-eyes','s-blood','s-breathing','s-mirror','s-end']
-    .forEach(id=>{ const el=document.getElementById(id); if(el) io.observe(el); });
+    }
+  }
 
-  // Frequent random jumpscares — every 8–15 seconds
-  const randomJs = () => {
-    const delay = 8000+Math.random()*7000;
-    setTimeout(()=>{
-      if(!jsActive){
-        const roll=Math.random();
-        if(roll<0.33) triggerJumpscare('timer');
-        else if(roll<0.66) triggerFaceRush();
-        else activateStalker();
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+
+    // Lines between nearby dots
+    for (let i = 0; i < dots.length; i++) {
+      for (let j = i+1; j < dots.length; j++) {
+        const dx = dots[i].x - dots[j].x;
+        const dy = dots[i].y - dots[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 110) {
+          ctx.beginPath();
+          ctx.moveTo(dots[i].x, dots[i].y);
+          ctx.lineTo(dots[j].x, dots[j].y);
+          ctx.strokeStyle = `rgba(88,101,242,${0.06 * (1 - dist/110)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
       }
-      randomJs(); // reschedule
-    }, delay);
-  };
-  randomJs();
-
-  // Extra: jumpscare on click anywhere (30% chance)
-  document.addEventListener('click',()=>{
-    if(!jsActive && Math.random()<0.3) {
-      setTimeout(()=>triggerFaceRush(), 300+Math.random()*800);
     }
-  });
 
-  // Jumpscare when tab becomes visible again
-  document.addEventListener('visibilitychange',()=>{
-    if(!document.hidden && !jsActive) {
-      setTimeout(()=>triggerJumpscare('tab'), 600);
-    }
-  });
-}
+    // Dots
+    dots.forEach(d => {
+      d.x += d.vx;
+      d.y += d.vy;
+      // gentle return to origin
+      d.vx += (d.ox - d.x) * 0.0005;
+      d.vy += (d.oy - d.y) * 0.0005;
+      if (Math.abs(d.x - d.ox) > 30) d.vx *= -1;
+      if (Math.abs(d.y - d.oy) > 30) d.vy *= -1;
 
-// ════════════════════════════════════════
-// SCREEN SHAKE KEYFRAMES (inject)
-// ════════════════════════════════════════
-const styleTag = document.createElement('style');
-styleTag.textContent = `
-@keyframes screenShake {
-  0%{transform:translate(-6px,-4px) rotate(-.5deg)}
-  20%{transform:translate(6px,4px) rotate(.5deg)}
-  40%{transform:translate(-5px,6px) rotate(-.3deg)}
-  60%{transform:translate(5px,-6px) rotate(.3deg)}
-  80%{transform:translate(-6px,4px) rotate(-.5deg)}
-  100%{transform:translate(0,0) rotate(0)}
-}`;
-document.head.appendChild(styleTag);
+      ctx.beginPath();
+      ctx.arc(d.x, d.y, d.r, 0, Math.PI*2);
+      ctx.fillStyle = `rgba(88,101,242,${d.a})`;
+      ctx.fill();
+    });
 
-// ════════════════════════════════════════
-// CURSOR SIZE ON HOVER
-// ════════════════════════════════════════
-document.querySelectorAll('button,.face-cell,.eye-wrap').forEach(el=>{
-  el.addEventListener('mouseenter',()=>{cur.style.width='24px';cur.style.height='24px';});
-  el.addEventListener('mouseleave',()=>{cur.style.width='14px';cur.style.height='14px';});
-});
+    requestAnimationFrame(draw);
+  }
 
-// ════════════════════════════════════════
-// MOUSE MOVE SUBTLE EFFECTS
-// ════════════════════════════════════════
-document.addEventListener('mousemove',e=>{
-  const vx = document.getElementById('vignette');
-  const cx=(e.clientX/window.innerWidth-.5)*2;
-  const cy=(e.clientY/window.innerHeight-.5)*2;
-  vx.style.background=`radial-gradient(ellipse at ${50+cx*10}% ${50+cy*10}%, transparent 30%, rgba(0,0,0,.8) 100%)`;
-});
+  window.addEventListener('resize', resize);
+  resize();
+  draw();
 </script>
 </body>
 </html>
