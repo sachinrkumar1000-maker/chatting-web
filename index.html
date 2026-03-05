@@ -3,1103 +3,2141 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AxonCord — Gaming Tournaments</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+<title>VOIDEX — Future Fashion</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Rajdhani:wght@300;400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <style>
-:root {
-  --bg: #050508;
-  --bg2: #0a0a12;
-  --panel: #0d0d18;
-  --border: #1a1a2e;
-  --accent: #00f5ff;
-  --accent2: #ff2d55;
-  --accent3: #a855f7;
-  --gold: #ffd700;
-  --text: #e0e0f0;
-  --muted: #5a5a7a;
-  --green: #00ff88;
-  --mc: #62c154;
-  --val: #ff4655;
-  --rob: #00b2ff;
-}
+  :root {
+    --void: #000000;
+    --plasma: #00ffcc;
+    --acid: #ccff00;
+    --fire: #ff3300;
+    --deep: #050510;
+    --panel: rgba(0,255,204,0.04);
+    --border: rgba(0,255,204,0.15);
+    --text: #e0ffe8;
+    --muted: rgba(200,255,220,0.4);
+  }
 
-* { margin:0; padding:0; box-sizing:border-box; }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
 
-body {
-  font-family: 'Rajdhani', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-}
+  ::selection { background: var(--plasma); color: #000; }
 
-/* ── SCANLINE OVERLAY ── */
-body::before {
-  content:'';
-  position:fixed; inset:0;
-  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,245,255,0.015) 2px, rgba(0,245,255,0.015) 4px);
-  pointer-events:none; z-index:9999;
-}
+  html { scroll-behavior: smooth; }
 
-/* ── NOISE TEXTURE ── */
-body::after {
-  content:'';
-  position:fixed; inset:0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
-  pointer-events:none; z-index:9998; opacity:0.5;
-}
+  body {
+    background: var(--void);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    cursor: none;
+    overflow-x: hidden;
+  }
 
-/* ══════════════════════════════════
-   LOGIN SCREEN
-══════════════════════════════════ */
-#loginScreen {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(0,245,255,0.08) 0%, transparent 70%),
-              radial-gradient(ellipse 50% 40% at 80% 100%, rgba(168,85,247,0.06) 0%, transparent 60%),
-              var(--bg);
-}
+  /* CUSTOM CURSOR */
+  #cursor {
+    width: 12px; height: 12px;
+    background: var(--plasma);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 99999;
+    transform: translate(-50%,-50%);
+    transition: transform 0.1s, width 0.2s, height 0.2s, background 0.2s;
+    mix-blend-mode: exclusion;
+  }
+  #cursor-ring {
+    width: 40px; height: 40px;
+    border: 1px solid var(--plasma);
+    border-radius: 50%;
+    position: fixed;
+    pointer-events: none;
+    z-index: 99998;
+    transform: translate(-50%,-50%);
+    transition: all 0.15s ease;
+    opacity: 0.6;
+  }
+  body:hover #cursor { opacity: 1; }
 
-.login-grid {
-  position:absolute; inset:0;
-  background-image:
-    linear-gradient(rgba(0,245,255,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,245,255,0.04) 1px, transparent 1px);
-  background-size: 60px 60px;
-  mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 40%, transparent 100%);
-}
+  /* NOISE OVERLAY */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.035'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 9997;
+    opacity: 0.4;
+  }
 
-.login-box {
-  position:relative; z-index:10;
-  width: min(420px, 92vw);
-  background: linear-gradient(135deg, rgba(13,13,24,0.95) 0%, rgba(10,10,18,0.98) 100%);
-  border: 1px solid rgba(0,245,255,0.2);
-  border-radius: 2px;
-  padding: 48px 40px;
-  box-shadow: 0 0 60px rgba(0,245,255,0.08), 0 0 120px rgba(0,245,255,0.04), inset 0 1px 0 rgba(255,255,255,0.05);
-  animation: loginFadeIn 0.6s ease;
-}
+  /* SCANLINES */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,255,204,0.01) 2px, rgba(0,255,204,0.01) 4px);
+    pointer-events: none;
+    z-index: 9996;
+  }
 
-@keyframes loginFadeIn {
-  from { opacity:0; transform:translateY(24px) scale(0.98); }
-  to   { opacity:1; transform:translateY(0) scale(1); }
-}
+  /* NAV */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 48px;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
 
-.login-logo {
-  text-align:center; margin-bottom:32px;
-}
-.login-logo .wordmark {
-  font-family: 'Orbitron', monospace;
-  font-size: 28px; font-weight: 900;
-  letter-spacing: 4px;
-  background: linear-gradient(90deg, var(--accent), var(--accent3));
-  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-.login-logo .tagline {
-  font-size: 11px; letter-spacing: 3px;
-  color: var(--muted); text-transform:uppercase; margin-top:4px;
-  font-family:'Share Tech Mono', monospace;
-}
+  .nav-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 6px;
+    color: var(--plasma);
+    text-shadow: 0 0 30px var(--plasma), 0 0 60px rgba(0,255,204,0.3);
+    text-decoration: none;
+  }
 
-.login-title {
-  font-size:15px; letter-spacing:2px; text-transform:uppercase;
-  color: var(--muted); text-align:center; margin-bottom:28px;
-  font-family:'Share Tech Mono', monospace;
-}
+  .nav-links {
+    display: flex;
+    gap: 40px;
+    list-style: none;
+  }
 
-.corner { position:absolute; width:12px; height:12px; }
-.corner.tl { top:12px; left:12px; border-top:2px solid var(--accent); border-left:2px solid var(--accent); }
-.corner.tr { top:12px; right:12px; border-top:2px solid var(--accent); border-right:2px solid var(--accent); }
-.corner.bl { bottom:12px; left:12px; border-bottom:2px solid var(--accent); border-left:2px solid var(--accent); }
-.corner.br { bottom:12px; right:12px; border-bottom:2px solid var(--accent); border-right:2px solid var(--accent); }
+  .nav-links a {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.3s, text-shadow 0.3s;
+  }
 
-.google-btn {
-  width:100%; padding:14px;
-  background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 100%);
-  border: 1px solid rgba(255,255,255,0.15);
-  border-radius:2px; color:#fff;
-  font-family:'Rajdhani',sans-serif; font-size:15px; font-weight:600;
-  letter-spacing:1.5px; text-transform:uppercase;
-  cursor:pointer; transition:all 0.3s;
-  display:flex; align-items:center; justify-content:center; gap:12px;
-}
-.google-btn:hover {
-  border-color: var(--accent); background:rgba(0,245,255,0.08);
-  box-shadow:0 0 20px rgba(0,245,255,0.15);
-}
-.google-btn svg { width:20px; height:20px; }
+  .nav-links a:hover {
+    color: var(--plasma);
+    text-shadow: 0 0 20px var(--plasma);
+  }
 
-.login-divider {
-  display:flex; align-items:center; gap:12px;
-  margin:24px 0; color:var(--muted); font-size:12px; letter-spacing:2px;
-}
-.login-divider::before, .login-divider::after {
-  content:''; flex:1; height:1px; background:var(--border);
-}
+  .nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+  }
 
-.login-note {
-  text-align:center; font-size:12px; color:var(--muted);
-  letter-spacing:1px; margin-top:24px;
-  font-family:'Share Tech Mono', monospace;
-}
+  .discord-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    background: transparent;
+    border: 1px solid rgba(114,137,218,0.5);
+    color: #7289da;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: all 0.3s;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
 
-/* ══════════════════════════════════
-   MAIN APP
-══════════════════════════════════ */
-#mainApp { display:none; }
+  .discord-btn:hover {
+    background: rgba(114,137,218,0.15);
+    border-color: #7289da;
+    box-shadow: 0 0 20px rgba(114,137,218,0.3);
+  }
 
-/* NAV */
-.nav {
-  position:sticky; top:0; z-index:100;
-  background: rgba(5,5,8,0.92);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0,245,255,0.1);
-  padding:0 32px;
-  display:flex; align-items:center; justify-content:space-between;
-  height:64px;
-}
-.nav-logo {
-  font-family:'Orbitron',monospace; font-size:18px; font-weight:900;
-  letter-spacing:3px;
-  background:linear-gradient(90deg,var(--accent),var(--accent3));
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-}
-.nav-right { display:flex; align-items:center; gap:20px; }
-.user-chip {
-  display:flex; align-items:center; gap:10px;
-  background:rgba(0,245,255,0.06); border:1px solid rgba(0,245,255,0.15);
-  border-radius:2px; padding:6px 14px; font-size:13px; letter-spacing:1px;
-}
-.user-avatar {
-  width:28px; height:28px; border-radius:50%;
-  border:1px solid var(--accent); object-fit:cover;
-}
-.logout-btn {
-  background:none; border:1px solid rgba(255,45,85,0.3);
-  color:var(--accent2); padding:6px 14px; border-radius:2px;
-  cursor:pointer; font-family:'Rajdhani',sans-serif; font-size:13px;
-  letter-spacing:1px; transition:all 0.2s;
-}
-.logout-btn:hover { background:rgba(255,45,85,0.1); border-color:var(--accent2); }
+  .cart-btn {
+    position: relative;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--plasma);
+    padding: 10px 18px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    cursor: none;
+    transition: all 0.3s;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
 
-/* HERO */
-.hero {
-  padding:60px 32px 40px;
-  text-align:center;
-  background: radial-gradient(ellipse 70% 50% at 50% 0%, rgba(0,245,255,0.06) 0%, transparent 70%);
-}
-.hero h1 {
-  font-family:'Orbitron',monospace; font-size:clamp(28px,5vw,52px);
-  font-weight:900; letter-spacing:4px; line-height:1.1;
-  background:linear-gradient(180deg, #fff 0%, rgba(255,255,255,0.6) 100%);
-  -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
-}
-.hero-sub {
-  margin-top:12px; font-size:14px; letter-spacing:3px;
-  color:var(--muted); font-family:'Share Tech Mono',monospace;
-}
+  .cart-btn:hover {
+    background: var(--panel);
+    border-color: var(--plasma);
+    box-shadow: 0 0 25px rgba(0,255,204,0.2);
+  }
 
-/* GAME FILTER */
-.game-filter {
-  display:flex; justify-content:center; gap:12px;
-  padding:24px 32px; flex-wrap:wrap;
-}
-.filter-btn {
-  padding:8px 24px; border-radius:2px;
-  border:1px solid var(--border); background:transparent;
-  color:var(--muted); cursor:pointer; font-family:'Rajdhani',sans-serif;
-  font-size:13px; font-weight:600; letter-spacing:2px; text-transform:uppercase;
-  transition:all 0.2s;
-}
-.filter-btn.all.active, .filter-btn:hover { color:#fff; }
-.filter-btn.mc.active  { border-color:var(--mc); color:var(--mc); background:rgba(98,193,84,0.08); box-shadow:0 0 12px rgba(98,193,84,0.2); }
-.filter-btn.val.active { border-color:var(--val); color:var(--val); background:rgba(255,70,85,0.08); box-shadow:0 0 12px rgba(255,70,85,0.2); }
-.filter-btn.rob.active { border-color:var(--rob); color:var(--rob); background:rgba(0,178,255,0.08); box-shadow:0 0 12px rgba(0,178,255,0.2); }
-.filter-btn.all.active { border-color:var(--accent); color:var(--accent); background:rgba(0,245,255,0.08); box-shadow:0 0 12px rgba(0,245,255,0.2); }
+  .cart-count {
+    position: absolute;
+    top: -6px; right: -6px;
+    background: var(--fire);
+    color: #fff;
+    font-size: 10px;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Space Mono', monospace;
+  }
 
-/* CONTENT */
-.content { padding:0 32px 80px; max-width:1200px; margin:0 auto; }
+  /* HERO */
+  #hero {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+  }
 
-/* DATE SECTIONS */
-.date-section { margin-bottom:40px; }
-.date-header {
-  display:flex; align-items:center; gap:16px; margin-bottom:16px;
-}
-.date-label {
-  font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:3px;
-  color:var(--accent); padding:4px 12px; border:1px solid rgba(0,245,255,0.2);
-  background:rgba(0,245,255,0.04); white-space:nowrap;
-}
-.date-line { flex:1; height:1px; background:linear-gradient(90deg,rgba(0,245,255,0.2),transparent); }
+  #three-canvas {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+  }
 
-/* TOURNAMENT GRID */
-.tournament-grid {
-  display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:16px;
-}
+  .hero-content {
+    position: relative;
+    z-index: 2;
+    padding: 0 80px;
+    max-width: 800px;
+  }
 
-/* TOURNAMENT CARD */
-.t-card {
-  background:var(--panel);
-  border:1px solid var(--border); border-radius:2px;
-  padding:0; overflow:hidden;
-  transition:all 0.3s; cursor:pointer; position:relative;
-  animation: cardIn 0.4s ease both;
-}
-@keyframes cardIn {
-  from { opacity:0; transform:translateY(12px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-.t-card:hover { border-color:rgba(255,255,255,0.2); transform:translateY(-3px); box-shadow:0 12px 40px rgba(0,0,0,0.4); }
-.t-card.mc:hover  { border-color:rgba(98,193,84,0.5); box-shadow:0 12px 40px rgba(98,193,84,0.1); }
-.t-card.val:hover { border-color:rgba(255,70,85,0.5); box-shadow:0 12px 40px rgba(255,70,85,0.1); }
-.t-card.rob:hover { border-color:rgba(0,178,255,0.5); box-shadow:0 12px 40px rgba(0,178,255,0.1); }
+  .hero-tag {
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 5px;
+    color: var(--plasma);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    opacity: 0;
+    animation: fadeUp 1s 0.3s forwards;
+  }
 
-.t-card-banner {
-  height:6px;
-}
-.t-card.mc  .t-card-banner { background:linear-gradient(90deg,#3a7d44,#62c154); }
-.t-card.val .t-card-banner { background:linear-gradient(90deg,#8b0000,#ff4655); }
-.t-card.rob .t-card-banner { background:linear-gradient(90deg,#004d80,#00b2ff); }
+  .hero-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(80px, 12vw, 160px);
+    line-height: 0.9;
+    letter-spacing: 2px;
+    margin-bottom: 32px;
+    opacity: 0;
+    animation: fadeUp 1s 0.5s forwards;
+  }
 
-.t-card-body { padding:20px; }
-.t-game-tag {
-  display:inline-flex; align-items:center; gap:6px;
-  font-size:10px; letter-spacing:2px; font-weight:700; text-transform:uppercase;
-  font-family:'Share Tech Mono',monospace; padding:3px 8px; border-radius:2px; margin-bottom:10px;
-}
-.t-card.mc  .t-game-tag { color:var(--mc); background:rgba(98,193,84,0.1); border:1px solid rgba(98,193,84,0.2); }
-.t-card.val .t-game-tag { color:var(--val); background:rgba(255,70,85,0.1); border:1px solid rgba(255,70,85,0.2); }
-.t-card.rob .t-game-tag { color:var(--rob); background:rgba(0,178,255,0.1); border:1px solid rgba(0,178,255,0.2); }
+  .hero-title .accent { color: var(--plasma); text-shadow: 0 0 40px var(--plasma); }
+  .hero-title .dim { color: rgba(255,255,255,0.2); }
 
-.t-card-name {
-  font-family:'Orbitron',monospace; font-size:14px; font-weight:700;
-  letter-spacing:1px; line-height:1.3; margin-bottom:12px; color:#fff;
-}
+  .hero-sub {
+    font-size: 18px;
+    font-weight: 300;
+    color: var(--muted);
+    line-height: 1.6;
+    max-width: 480px;
+    margin-bottom: 48px;
+    letter-spacing: 1px;
+    opacity: 0;
+    animation: fadeUp 1s 0.7s forwards;
+  }
 
-.t-meta { display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
-.t-meta-row {
-  display:flex; align-items:center; gap:8px;
-  font-size:12px; color:var(--muted); letter-spacing:1px;
-  font-family:'Share Tech Mono',monospace;
-}
-.t-meta-row svg { width:12px; height:12px; flex-shrink:0; }
+  .hero-ctas {
+    display: flex;
+    gap: 20px;
+    opacity: 0;
+    animation: fadeUp 1s 0.9s forwards;
+  }
 
-.t-card-footer {
-  display:flex; align-items:center; justify-content:space-between;
-  padding-top:14px; border-top:1px solid var(--border);
-}
-.t-prize {
-  font-family:'Orbitron',monospace; font-size:13px; font-weight:700; color:var(--gold);
-  letter-spacing:1px;
-}
-.t-spots {
-  font-size:11px; color:var(--muted); letter-spacing:1px;
-  font-family:'Share Tech Mono',monospace;
-}
+  .btn-primary {
+    padding: 16px 40px;
+    background: var(--plasma);
+    color: #000;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border: none;
+    cursor: none;
+    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
 
-.t-register-btn {
-  padding:7px 16px; border-radius:2px;
-  font-family:'Rajdhani',sans-serif; font-size:12px; font-weight:700;
-  letter-spacing:2px; text-transform:uppercase;
-  cursor:pointer; border:none; transition:all 0.2s;
-}
-.t-card.mc  .t-register-btn { background:linear-gradient(135deg,#3a7d44,#62c154); color:#000; }
-.t-card.val .t-register-btn { background:linear-gradient(135deg,#8b0000,#ff4655); color:#fff; }
-.t-card.rob .t-register-btn { background:linear-gradient(135deg,#004d80,#00b2ff); color:#fff; }
-.t-register-btn:hover { filter:brightness(1.2); transform:scale(1.02); }
+  .btn-primary:hover {
+    background: var(--acid);
+    box-shadow: 0 0 40px rgba(0,255,204,0.5);
+    transform: translateY(-2px);
+  }
 
-/* ══════════════════════════════════
-   MODAL
-══════════════════════════════════ */
-.modal-overlay {
-  position:fixed; inset:0; z-index:500;
-  background:rgba(0,0,0,0.85); backdrop-filter:blur(8px);
-  display:none; align-items:center; justify-content:center; padding:16px;
-}
-.modal-overlay.open { display:flex; }
+  .btn-ghost {
+    padding: 16px 40px;
+    background: transparent;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    border: 1px solid var(--border);
+    cursor: none;
+    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+    transition: all 0.3s;
+    text-decoration: none;
+    display: inline-block;
+  }
 
-.modal {
-  background:var(--panel);
-  border:1px solid rgba(0,245,255,0.15);
-  border-radius:2px; width:min(560px,100%);
-  max-height:90vh; overflow-y:auto;
-  position:relative;
-  box-shadow:0 0 80px rgba(0,245,255,0.08);
-  animation: modalIn 0.3s ease;
-}
-@keyframes modalIn {
-  from { opacity:0; transform:scale(0.95) translateY(20px); }
-  to   { opacity:1; transform:scale(1) translateY(0); }
-}
-.modal::-webkit-scrollbar { width:4px; }
-.modal::-webkit-scrollbar-track { background:var(--bg); }
-.modal::-webkit-scrollbar-thumb { background:rgba(0,245,255,0.2); border-radius:2px; }
+  .btn-ghost:hover {
+    border-color: var(--plasma);
+    color: var(--plasma);
+    box-shadow: 0 0 30px rgba(0,255,204,0.15);
+  }
 
-.modal-banner { height:8px; }
-.modal.mc  .modal-banner { background:linear-gradient(90deg,#3a7d44,#62c154); }
-.modal.val .modal-banner { background:linear-gradient(90deg,#8b0000,#ff4655); }
-.modal.rob .modal-banner { background:linear-gradient(90deg,#004d80,#00b2ff); }
+  .hero-scroll {
+    position: absolute;
+    bottom: 48px;
+    left: 80px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--muted);
+    text-transform: uppercase;
+    z-index: 2;
+    animation: fadeUp 1s 1.2s both;
+  }
 
-.modal-header {
-  padding:24px 28px 16px;
-  border-bottom:1px solid var(--border);
-  display:flex; justify-content:space-between; align-items:flex-start;
-}
-.modal-title { font-family:'Orbitron',monospace; font-size:16px; font-weight:700; letter-spacing:1px; }
-.modal-close {
-  background:none; border:1px solid var(--border); color:var(--muted);
-  width:32px; height:32px; border-radius:2px; cursor:pointer; font-size:18px;
-  display:flex; align-items:center; justify-content:center; transition:all 0.2s; flex-shrink:0;
-}
-.modal-close:hover { border-color:var(--accent2); color:var(--accent2); }
+  .scroll-line {
+    width: 40px;
+    height: 1px;
+    background: var(--plasma);
+    animation: expandLine 2s 1.5s infinite;
+  }
 
-.modal-body { padding:24px 28px; }
+  @keyframes expandLine {
+    0%, 100% { width: 40px; opacity: 1; }
+    50% { width: 80px; opacity: 0.4; }
+  }
 
-.modal-info-grid {
-  display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:24px;
-  padding:16px; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:2px;
-}
-.modal-info-item { font-size:12px; font-family:'Share Tech Mono',monospace; }
-.modal-info-label { color:var(--muted); letter-spacing:1px; margin-bottom:3px; }
-.modal-info-value { color:#fff; font-size:13px; }
+  /* TICKER */
+  .ticker {
+    background: var(--plasma);
+    color: #000;
+    padding: 10px 0;
+    overflow: hidden;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    position: relative;
+    z-index: 10;
+  }
 
-.form-group { margin-bottom:16px; }
-.form-label {
-  display:block; font-size:11px; letter-spacing:2px; color:var(--muted);
-  text-transform:uppercase; margin-bottom:6px; font-family:'Share Tech Mono',monospace;
-}
-.form-input {
-  width:100%; padding:11px 14px;
-  background:rgba(0,0,0,0.4); border:1px solid var(--border);
-  border-radius:2px; color:#fff; font-family:'Rajdhani',sans-serif; font-size:15px;
-  outline:none; transition:all 0.2s; letter-spacing:0.5px;
-}
-.form-input:focus { border-color:rgba(0,245,255,0.4); box-shadow:0 0 0 2px rgba(0,245,255,0.05); }
-.form-input::placeholder { color:var(--muted); }
-.form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .ticker-inner {
+    display: flex;
+    animation: ticker 20s linear infinite;
+    white-space: nowrap;
+  }
 
-.form-section-title {
-  font-size:11px; letter-spacing:3px; color:var(--accent); text-transform:uppercase;
-  font-family:'Share Tech Mono',monospace; margin:20px 0 12px;
-  display:flex; align-items:center; gap:8px;
-}
-.form-section-title::after {
-  content:''; flex:1; height:1px; background:rgba(0,245,255,0.1);
-}
+  .ticker-item {
+    padding: 0 48px;
+    flex-shrink: 0;
+  }
 
-/* PAYMENT */
-.payment-box {
-  background:rgba(0,0,0,0.3); border:1px solid rgba(255,215,0,0.2);
-  border-radius:2px; padding:20px; margin:20px 0;
-}
-.payment-box-title {
-  font-family:'Orbitron',monospace; font-size:13px; font-weight:700;
-  color:var(--gold); letter-spacing:2px; margin-bottom:12px;
-}
-.payment-amount {
-  font-family:'Orbitron',monospace; font-size:28px; font-weight:900;
-  color:#fff; letter-spacing:2px;
-}
-.payment-amount span { font-size:14px; color:var(--muted); margin-left:4px; }
-.upi-display {
-  margin-top:12px; padding:10px 14px;
-  background:rgba(0,0,0,0.4); border:1px solid rgba(255,215,0,0.15);
-  border-radius:2px; font-family:'Share Tech Mono',monospace; font-size:12px; color:var(--muted);
-}
-.upi-id { color:var(--gold); font-size:14px; letter-spacing:1px; }
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
 
-.submit-btn {
-  width:100%; padding:14px;
-  background:linear-gradient(135deg, var(--accent) 0%, #00b8cc 100%);
-  border:none; border-radius:2px; color:#000;
-  font-family:'Orbitron',monospace; font-size:14px; font-weight:700; letter-spacing:3px;
-  cursor:pointer; transition:all 0.3s; text-transform:uppercase;
-}
-.submit-btn:hover { filter:brightness(1.1); box-shadow:0 0 30px rgba(0,245,255,0.3); }
-.submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
+  /* SECTIONS */
+  section { position: relative; }
 
-/* ══════════════════════════════════
-   PAYMENT PROCESSING
-══════════════════════════════════ */
-#paymentModal {
-  position:fixed; inset:0; z-index:600;
-  background:rgba(0,0,0,0.95); backdrop-filter:blur(12px);
-  display:none; flex-direction:column; align-items:center; justify-content:center;
-  text-align:center; padding:32px;
-}
-#paymentModal.open { display:flex; }
+  .section-header {
+    padding: 80px 80px 48px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+  }
 
-.payment-screen { animation: fadeUp 0.4s ease; }
-@keyframes fadeUp {
-  from { opacity:0; transform:translateY(20px); }
-  to   { opacity:1; transform:translateY(0); }
-}
+  .section-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 5px;
+    color: var(--plasma);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
 
-.payment-icon { font-size:64px; margin-bottom:24px; }
+  .section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(48px, 6vw, 80px);
+    letter-spacing: 2px;
+    line-height: 1;
+  }
 
-.payment-title {
-  font-family:'Orbitron',monospace; font-size:20px; font-weight:900;
-  letter-spacing:3px; margin-bottom:8px;
-}
-.payment-sub { color:var(--muted); font-size:14px; letter-spacing:1px; font-family:'Share Tech Mono',monospace; }
+  .section-count {
+    font-family: 'Space Mono', monospace;
+    font-size: 64px;
+    color: rgba(0,255,204,0.08);
+    line-height: 1;
+  }
 
-.payment-progress-bar {
-  width: min(400px, 100%); height:4px;
-  background:var(--border); border-radius:2px; margin:24px auto;
-  overflow:hidden;
-}
-.payment-progress-fill {
-  height:100%; width:0%;
-  background:linear-gradient(90deg, var(--accent), var(--accent3));
-  border-radius:2px; transition:width 1s linear;
-}
+  /* PRODUCTS GRID */
+  #products { background: var(--deep); }
 
-.payment-steps { margin:16px 0; display:flex; flex-direction:column; gap:8px; }
-.p-step {
-  font-size:12px; letter-spacing:1px; color:var(--muted); font-family:'Share Tech Mono',monospace;
-  opacity:0; transition:opacity 0.3s;
-}
-.p-step.done { color:var(--green); opacity:1; }
+  .products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1px;
+    background: var(--border);
+  }
 
-.upi-animation {
-  font-family:'Share Tech Mono',monospace; font-size:24px;
-  color:var(--gold); letter-spacing:3px;
-  animation: pulse 1s ease-in-out infinite;
-  margin:16px 0;
-}
-@keyframes pulse { 0%,100%{opacity:1;} 50%{opacity:0.3;} }
+  .product-card {
+    background: var(--void);
+    position: relative;
+    overflow: hidden;
+    cursor: none;
+    transition: transform 0.4s;
+  }
 
-/* ══════════════════════════════════
-   REGISTRATION COMPLETE / TICKET
-══════════════════════════════════ */
-#ticketModal {
-  position:fixed; inset:0; z-index:700;
-  background:rgba(0,0,0,0.92); backdrop-filter:blur(12px);
-  display:none; align-items:center; justify-content:center; padding:16px;
-  overflow-y:auto;
-}
-#ticketModal.open { display:flex; }
+  .product-card:hover { z-index: 2; }
 
-.ticket {
-  background:var(--panel);
-  border:1px solid rgba(0,245,255,0.25);
-  border-radius:2px; width:min(580px,100%);
-  position:relative;
-  box-shadow:0 0 100px rgba(0,245,255,0.1);
-  animation: ticketReveal 0.5s ease;
-  margin:auto;
-}
-@keyframes ticketReveal {
-  from { opacity:0; transform:scale(0.9) rotateX(10deg); }
-  to   { opacity:1; transform:scale(1) rotateX(0); }
-}
+  .product-3d-viewer {
+    width: 100%;
+    height: 320px;
+    position: relative;
+    overflow: hidden;
+    background: var(--deep);
+  }
 
-.ticket-top {
-  padding:28px 32px 20px;
-  background:linear-gradient(135deg, rgba(0,245,255,0.08) 0%, rgba(168,85,247,0.04) 100%);
-  border-bottom:2px dashed rgba(0,245,255,0.15);
-  text-align:center;
-}
-.ticket-success-icon { font-size:48px; margin-bottom:12px; }
-.ticket-confirmed {
-  font-family:'Orbitron',monospace; font-size:13px; letter-spacing:4px;
-  color:var(--green); text-transform:uppercase; margin-bottom:8px;
-}
-.ticket-tournament-name {
-  font-family:'Orbitron',monospace; font-size:18px; font-weight:900;
-  letter-spacing:2px; color:#fff; line-height:1.2;
-}
+  .product-3d-canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
 
-.ticket-id-section {
-  padding:16px 32px;
-  border-bottom:1px solid var(--border);
-  display:flex; align-items:center; justify-content:space-between;
-  background:rgba(0,0,0,0.3);
-}
-.ticket-id-label { font-size:10px; letter-spacing:3px; color:var(--muted); font-family:'Share Tech Mono',monospace; }
-.ticket-id-value {
-  font-family:'Orbitron',monospace; font-size:16px; font-weight:900;
-  color:var(--accent); letter-spacing:2px;
-}
+  .product-badge {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    padding: 5px 12px;
+    text-transform: uppercase;
+    z-index: 5;
+    clip-path: polygon(6px 0%, 100% 0%, calc(100% - 6px) 100%, 0% 100%);
+  }
 
-.ticket-url {
-  padding:10px 32px; background:rgba(0,0,0,0.5);
-  border-bottom:1px solid var(--border);
-  font-family:'Share Tech Mono',monospace; font-size:11px; color:var(--muted);
-  word-break:break-all;
-}
-.ticket-url-link { color:var(--accent3); }
+  .badge-new { background: var(--plasma); color: #000; }
+  .badge-hot { background: var(--fire); color: #fff; }
+  .badge-ltd { background: var(--acid); color: #000; }
+  .badge-sold { background: #333; color: #888; }
 
-.ticket-body { padding:24px 32px; }
-.ticket-grid {
-  display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:20px;
-}
-.ticket-field { padding:12px; background:rgba(0,0,0,0.3); border:1px solid var(--border); border-radius:2px; }
-.ticket-field-label { font-size:10px; letter-spacing:2px; color:var(--muted); font-family:'Share Tech Mono',monospace; margin-bottom:4px; }
-.ticket-field-value { font-size:14px; color:#fff; font-weight:600; letter-spacing:0.5px; }
+  .product-info {
+    padding: 24px;
+    border-top: 1px solid var(--border);
+  }
 
-.ticket-footer {
-  padding:16px 32px;
-  border-top:2px dashed rgba(0,245,255,0.15);
-  display:flex; align-items:center; justify-content:space-between;
-  background:rgba(0,0,0,0.3);
-}
-.ticket-paid { display:flex; align-items:center; gap:6px; color:var(--green); font-family:'Share Tech Mono',monospace; font-size:12px; letter-spacing:1px; }
-.ticket-game-badge {
-  font-family:'Orbitron',monospace; font-size:11px; letter-spacing:2px; font-weight:700;
-  padding:5px 12px; border-radius:2px; text-transform:uppercase;
-}
-.ticket-game-badge.mc  { background:rgba(98,193,84,0.15); color:var(--mc); border:1px solid rgba(98,193,84,0.3); }
-.ticket-game-badge.val { background:rgba(255,70,85,0.15); color:var(--val); border:1px solid rgba(255,70,85,0.3); }
-.ticket-game-badge.rob { background:rgba(0,178,255,0.15); color:var(--rob); border:1px solid rgba(0,178,255,0.3); }
+  .product-cat {
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 4px;
+    color: var(--plasma);
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
 
-.ticket-actions { padding:16px 32px 24px; display:flex; gap:10px; }
-.ticket-btn {
-  flex:1; padding:12px; border-radius:2px; cursor:pointer;
-  font-family:'Rajdhani',sans-serif; font-size:13px; font-weight:700; letter-spacing:2px;
-  text-transform:uppercase; border:none; transition:all 0.2s;
-}
-.ticket-btn.primary {
-  background:linear-gradient(135deg,var(--accent),#00b8cc); color:#000;
-}
-.ticket-btn.secondary {
-  background:transparent; border:1px solid var(--border); color:var(--muted);
-}
-.ticket-btn.secondary:hover { border-color:var(--accent); color:var(--accent); }
+  .product-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 2px;
+    margin-bottom: 6px;
+  }
 
-/* TOAST */
-.toast {
-  position:fixed; bottom:24px; right:24px; z-index:9000;
-  background:var(--panel); border:1px solid rgba(0,245,255,0.2);
-  border-radius:2px; padding:14px 20px;
-  font-size:13px; letter-spacing:1px; color:#fff;
-  font-family:'Share Tech Mono',monospace;
-  transform:translateY(100px); opacity:0;
-  transition:all 0.3s;
-  box-shadow:0 8px 32px rgba(0,0,0,0.5);
-}
-.toast.show { transform:translateY(0); opacity:1; }
+  .product-desc {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.5;
+    margin-bottom: 20px;
+    font-weight: 300;
+  }
 
-/* RESPONSIVE */
-@media(max-width:600px) {
-  .nav { padding:0 16px; }
-  .content { padding:0 16px 60px; }
-  .hero { padding:40px 16px 24px; }
-  .game-filter { padding:16px; gap:8px; }
-  .filter-btn { font-size:11px; padding:6px 14px; }
-  .modal-body, .modal-header { padding:16px 20px; }
-  .form-row { grid-template-columns:1fr; }
-  .ticket-grid { grid-template-columns:1fr; }
-  .ticket-body, .ticket-top, .ticket-id-section, .ticket-footer, .ticket-actions { padding-left:20px; padding-right:20px; }
-  .modal-info-grid { grid-template-columns:1fr; }
-}
+  .product-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
 
-/* Scrollbar */
-::-webkit-scrollbar { width:6px; }
-::-webkit-scrollbar-track { background:var(--bg); }
-::-webkit-scrollbar-thumb { background:rgba(0,245,255,0.15); border-radius:3px; }
+  .product-price {
+    font-family: 'Space Mono', monospace;
+    font-size: 20px;
+    color: var(--plasma);
+    font-weight: 700;
+  }
+
+  .product-price .orig {
+    font-size: 13px;
+    color: var(--muted);
+    text-decoration: line-through;
+    margin-right: 8px;
+  }
+
+  .add-to-cart {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    cursor: none;
+    text-transform: uppercase;
+    transition: all 0.3s;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+
+  .add-to-cart:hover {
+    background: var(--plasma);
+    border-color: var(--plasma);
+    color: #000;
+    box-shadow: 0 0 25px rgba(0,255,204,0.3);
+  }
+
+  .add-to-cart:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .product-sizes {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .size-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    width: 36px;
+    height: 36px;
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    cursor: none;
+    transition: all 0.2s;
+  }
+
+  .size-btn.active, .size-btn:hover {
+    border-color: var(--plasma);
+    color: var(--plasma);
+  }
+
+  /* CART SIDEBAR */
+  #cart-sidebar {
+    position: fixed;
+    right: -500px;
+    top: 0;
+    width: 480px;
+    height: 100vh;
+    background: rgba(0,0,0,0.97);
+    border-left: 1px solid var(--border);
+    z-index: 5000;
+    display: flex;
+    flex-direction: column;
+    transition: right 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(40px);
+  }
+
+  #cart-sidebar.open { right: 0; }
+
+  .cart-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 4999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.4s;
+    backdrop-filter: blur(4px);
+  }
+
+  .cart-overlay.visible {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .cart-header {
+    padding: 28px 32px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .cart-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 4px;
+    color: var(--plasma);
+  }
+
+  .close-cart {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    cursor: none;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+
+  .close-cart:hover {
+    border-color: var(--fire);
+    color: var(--fire);
+  }
+
+  .cart-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 32px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .cart-item {
+    display: flex;
+    gap: 16px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--border);
+    animation: fadeUp 0.3s ease;
+  }
+
+  .cart-item-img {
+    width: 80px;
+    height: 80px;
+    background: var(--deep);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    flex-shrink: 0;
+  }
+
+  .cart-item-details { flex: 1; }
+
+  .cart-item-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 2px;
+    margin-bottom: 4px;
+  }
+
+  .cart-item-size {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+    margin-bottom: 12px;
+  }
+
+  .cart-item-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .qty-btn {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 28px;
+    height: 28px;
+    cursor: none;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .qty-btn:hover {
+    border-color: var(--plasma);
+    color: var(--plasma);
+  }
+
+  .qty-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    min-width: 20px;
+    text-align: center;
+  }
+
+  .cart-item-price {
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    color: var(--plasma);
+    align-self: flex-start;
+    padding-top: 4px;
+  }
+
+  .remove-item {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: none;
+    font-size: 16px;
+    padding: 4px;
+    transition: color 0.2s;
+    align-self: flex-start;
+  }
+
+  .remove-item:hover { color: var(--fire); }
+
+  .cart-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+  }
+
+  .cart-empty-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.3;
+  }
+
+  .cart-empty p {
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+  }
+
+  .cart-footer {
+    padding: 24px 32px;
+    border-top: 1px solid var(--border);
+    background: rgba(0,0,0,0.5);
+  }
+
+  .cart-totals {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .cart-total-row {
+    display: flex;
+    justify-content: space-between;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .cart-total-row.grand {
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+    font-size: 16px;
+    margin-top: 4px;
+  }
+
+  .cart-total-row.grand span:last-child {
+    color: var(--plasma);
+    font-size: 18px;
+  }
+
+  .checkout-btn {
+    width: 100%;
+    padding: 18px;
+    background: var(--plasma);
+    color: #000;
+    border: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    cursor: none;
+    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+    transition: all 0.3s;
+  }
+
+  .checkout-btn:hover {
+    background: var(--acid);
+    box-shadow: 0 0 40px rgba(0,255,204,0.4);
+  }
+
+  /* CHECKOUT MODAL */
+  #checkout-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 6000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+    padding: 20px;
+  }
+
+  #checkout-modal.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .modal-bg {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.9);
+    backdrop-filter: blur(20px);
+  }
+
+  .modal-box {
+    position: relative;
+    width: 100%;
+    max-width: 640px;
+    max-height: 90vh;
+    background: #020a06;
+    border: 1px solid var(--border);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+    animation: scaleIn 0.3s ease;
+  }
+
+  @keyframes scaleIn {
+    from { transform: scale(0.95); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .modal-header {
+    padding: 32px 40px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .modal-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 32px;
+    letter-spacing: 4px;
+    color: var(--plasma);
+  }
+
+  .close-modal {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 36px;
+    height: 36px;
+    cursor: none;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+  }
+
+  .close-modal:hover { border-color: var(--fire); color: var(--fire); }
+
+  .modal-body { padding: 32px 40px; }
+
+  .form-section {
+    margin-bottom: 32px;
+  }
+
+  .form-section-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 4px;
+    color: var(--plasma);
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .form-group.full { grid-column: 1 / -1; }
+
+  .form-group label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .form-group input, .form-group select {
+    background: rgba(0,255,204,0.03);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 12px 16px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    -webkit-appearance: none;
+  }
+
+  .form-group input:focus, .form-group select:focus {
+    border-color: var(--plasma);
+    box-shadow: 0 0 20px rgba(0,255,204,0.1);
+  }
+
+  .form-group select option { background: #050510; }
+
+  .order-summary {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .order-summary-title {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--plasma);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+
+  .order-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(0,255,204,0.06);
+    color: var(--muted);
+  }
+
+  .order-item:last-child { border: none; }
+
+  .order-total {
+    display: flex;
+    justify-content: space-between;
+    padding-top: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 16px;
+    color: var(--text);
+  }
+
+  .order-total span:last-child { color: var(--plasma); }
+
+  .place-order-btn {
+    width: 100%;
+    padding: 20px;
+    background: var(--plasma);
+    color: #000;
+    border: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    cursor: none;
+    clip-path: polygon(12px 0%, 100% 0%, calc(100% - 12px) 100%, 0% 100%);
+    transition: all 0.3s;
+  }
+
+  .place-order-btn:hover {
+    background: var(--acid);
+    box-shadow: 0 0 50px rgba(0,255,204,0.5);
+  }
+
+  /* SUCCESS STATE */
+  #success-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 7000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+
+  #success-modal.open {
+    opacity: 1;
+    pointer-events: all;
+  }
+
+  .success-box {
+    position: relative;
+    background: #020a06;
+    border: 1px solid var(--plasma);
+    padding: 60px;
+    max-width: 520px;
+    text-align: center;
+    box-shadow: 0 0 80px rgba(0,255,204,0.2);
+    animation: scaleIn 0.4s ease;
+    z-index: 1;
+  }
+
+  .success-icon {
+    font-size: 64px;
+    margin-bottom: 24px;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { text-shadow: 0 0 20px var(--plasma); }
+    50% { text-shadow: 0 0 60px var(--plasma), 0 0 100px var(--plasma); }
+  }
+
+  .success-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    letter-spacing: 4px;
+    color: var(--plasma);
+    margin-bottom: 12px;
+  }
+
+  .success-sub {
+    font-size: 15px;
+    color: var(--muted);
+    margin-bottom: 32px;
+    line-height: 1.6;
+  }
+
+  .success-discord {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 16px 32px;
+    background: #7289da;
+    color: #fff;
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+    clip-path: polygon(10px 0%, 100% 0%, calc(100% - 10px) 100%, 0% 100%);
+  }
+
+  .success-discord:hover {
+    background: #8ea1e1;
+    box-shadow: 0 0 30px rgba(114,137,218,0.5);
+  }
+
+  /* BRAND STORY SECTION */
+  #story {
+    padding: 120px 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 80px;
+    align-items: center;
+    overflow: hidden;
+  }
+
+  .story-visual {
+    height: 500px;
+    border: 1px solid var(--border);
+    position: relative;
+    overflow: hidden;
+  }
+
+  #story-canvas { width: 100% !important; height: 100% !important; }
+
+  .story-text .section-label { margin-bottom: 16px; }
+
+  .story-text h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 64px;
+    letter-spacing: 2px;
+    line-height: 1;
+    margin-bottom: 24px;
+  }
+
+  .story-text p {
+    font-size: 16px;
+    color: var(--muted);
+    line-height: 1.8;
+    margin-bottom: 16px;
+    font-weight: 300;
+  }
+
+  .story-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-top: 40px;
+    padding-top: 40px;
+    border-top: 1px solid var(--border);
+  }
+
+  .stat-num {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 48px;
+    color: var(--plasma);
+    line-height: 1;
+    display: block;
+    text-shadow: 0 0 30px rgba(0,255,204,0.4);
+  }
+
+  .stat-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  /* DISCORD SECTION */
+  #discord-section {
+    padding: 100px 80px;
+    background: var(--deep);
+    border-top: 1px solid var(--border);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .discord-glow {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 600px;
+    height: 300px;
+    background: radial-gradient(ellipse, rgba(114,137,218,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .discord-logo {
+    font-size: 64px;
+    margin-bottom: 24px;
+  }
+
+  #discord-section h2 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 72px;
+    letter-spacing: 4px;
+    margin-bottom: 16px;
+  }
+
+  #discord-section p {
+    font-size: 16px;
+    color: var(--muted);
+    max-width: 500px;
+    margin: 0 auto 40px;
+    line-height: 1.6;
+  }
+
+  .discord-big-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 20px 48px;
+    background: #7289da;
+    color: #fff;
+    text-decoration: none;
+    font-family: 'Space Mono', monospace;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    transition: all 0.3s;
+    clip-path: polygon(16px 0%, 100% 0%, calc(100% - 16px) 100%, 0% 100%);
+    cursor: none;
+  }
+
+  .discord-big-btn:hover {
+    background: #8ea1e1;
+    box-shadow: 0 0 60px rgba(114,137,218,0.5);
+    transform: translateY(-3px);
+  }
+
+  /* FOOTER */
+  footer {
+    padding: 48px 80px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 24px;
+    letter-spacing: 6px;
+    color: var(--plasma);
+    opacity: 0.6;
+  }
+
+  .footer-copy {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 2px;
+  }
+
+  .footer-links {
+    display: flex;
+    gap: 32px;
+  }
+
+  .footer-links a {
+    font-family: 'Space Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-decoration: none;
+    text-transform: uppercase;
+    transition: color 0.3s;
+  }
+
+  .footer-links a:hover { color: var(--plasma); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* NOTIFICATIONS */
+  #notif {
+    position: fixed;
+    bottom: 32px;
+    left: 32px;
+    z-index: 9000;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .notif-item {
+    background: rgba(0,0,0,0.95);
+    border: 1px solid var(--plasma);
+    padding: 14px 20px;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--plasma);
+    box-shadow: 0 0 30px rgba(0,255,204,0.2);
+    animation: notifIn 0.4s ease;
+    max-width: 280px;
+    clip-path: polygon(8px 0%, 100% 0%, calc(100% - 8px) 100%, 0% 100%);
+  }
+
+  @keyframes notifIn {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  /* GLITCH effect */
+  .glitch {
+    position: relative;
+  }
+  .glitch::before, .glitch::after {
+    content: attr(data-text);
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+  }
+  .glitch::before {
+    color: var(--fire);
+    animation: glitch1 3s infinite;
+    clip-path: polygon(0 30%, 100% 30%, 100% 50%, 0 50%);
+    opacity: 0.7;
+  }
+  .glitch::after {
+    color: #0ff;
+    animation: glitch2 3s infinite;
+    clip-path: polygon(0 65%, 100% 65%, 100% 80%, 0 80%);
+    opacity: 0.5;
+  }
+
+  @keyframes glitch1 {
+    0%, 90%, 100% { transform: none; }
+    92% { transform: skewX(-5deg) translateX(-4px); }
+    94% { transform: skewX(3deg) translateX(4px); }
+    96% { transform: translateX(0); }
+  }
+
+  @keyframes glitch2 {
+    0%, 88%, 100% { transform: none; }
+    90% { transform: skewX(5deg) translateX(4px); }
+    93% { transform: skewX(-2deg) translateX(-4px); }
+    95% { transform: translateX(0); }
+  }
+
+  /* PROGRESS STEPS */
+  .checkout-steps {
+    display: flex;
+    gap: 0;
+    margin-bottom: 32px;
+  }
+
+  .step {
+    flex: 1;
+    text-align: center;
+    padding: 12px;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 2px solid var(--border);
+    transition: all 0.3s;
+  }
+
+  .step.active {
+    color: var(--plasma);
+    border-color: var(--plasma);
+  }
+
+  .step.done {
+    color: var(--plasma);
+    border-color: var(--plasma);
+    opacity: 0.5;
+  }
+
+  @media (max-width: 768px) {
+    nav { padding: 16px 24px; }
+    .nav-links { display: none; }
+    .hero-content { padding: 0 24px; }
+    .hero-scroll { left: 24px; }
+    #products { padding: 0; }
+    .section-header { padding: 48px 24px 32px; }
+    .products-grid { grid-template-columns: 1fr; }
+    #story { grid-template-columns: 1fr; padding: 60px 24px; }
+    .story-visual { height: 300px; }
+    #discord-section { padding: 80px 24px; }
+    footer { flex-direction: column; gap: 24px; text-align: center; }
+    .cart-sidebar { width: 100%; right: -100%; }
+    .modal-box { margin: 16px; }
+    .modal-body { padding: 24px; }
+    .form-grid { grid-template-columns: 1fr; }
+  }
 </style>
 </head>
 <body>
 
-<!-- ══════════ LOGIN SCREEN ══════════ -->
-<div id="loginScreen">
-  <div class="login-grid"></div>
-  <div class="login-box">
-    <div class="corner tl"></div><div class="corner tr"></div>
-    <div class="corner bl"></div><div class="corner br"></div>
-    <div class="login-logo">
-      <div class="wordmark">AXONCORD</div>
-      <div class="tagline">Gaming Tournament Platform</div>
-    </div>
-    <div class="login-title">// AUTHENTICATE TO ENTER</div>
-    <button class="google-btn" id="googleSignInBtn">
-      <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-      </svg>
-      Sign in with Google
+<!-- CUSTOM CURSOR -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">VOIDEX</a>
+  <ul class="nav-links">
+    <li><a href="#products">Collection</a></li>
+    <li><a href="#story">Manifesto</a></li>
+    <li><a href="#discord-section">Community</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="https://discord.gg/PwdhPmXY" target="_blank" class="discord-btn">
+      <svg width="14" height="11" viewBox="0 0 71 55" fill="currentColor"><path d="M60.1 4.9A58.5 58.5 0 0045.5 1a40 40 0 00-1.7 3.5 54 54 0 00-16.5 0A38 38 0 0025.6 1 58.8 58.8 0 0011 5C1.6 19.2-1 33 .3 46.6A59 59 0 0018 55a45 45 0 003.8-6.3 38.4 38.4 0 01-6-2.9l1.5-1.2a42 42 0 0036.4 0l1.5 1.2a38 38 0 01-6 2.9A44.7 44.7 0 0053 55a58.8 58.8 0 0017.7-8.4C72.6 33.3 68.7 19.6 60.1 4.9zM23.8 38.4c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2zm23.4 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2z"/></svg>
+      Discord
+    </a>
+    <button class="cart-btn" onclick="toggleCart()">
+      ⬡ CART
+      <span class="cart-count" id="cart-count">0</span>
     </button>
-    <div class="login-divider">SECURE AUTH</div>
-    <div class="login-note">New accounts auto-created on first sign in</div>
   </div>
-</div>
+</nav>
 
-<!-- ══════════ MAIN APP ══════════ -->
-<div id="mainApp">
-
-  <!-- NAV -->
-  <nav class="nav">
-    <div class="nav-logo">AXONCORD</div>
-    <div class="nav-right">
-      <div class="user-chip">
-        <img src="" alt="avatar" class="user-avatar" id="userAvatar">
-        <span id="userName">Player</span>
-      </div>
-      <button class="logout-btn" id="logoutBtn">LOGOUT</button>
+<!-- HERO -->
+<section id="hero">
+  <canvas id="three-canvas"></canvas>
+  <div class="hero-content">
+    <div class="hero-tag">// SS2025 DROP — QUANTUM SERIES</div>
+    <h1 class="hero-title glitch" data-text="WEAR THE VOID">
+      <span class="dim">WEAR</span><br>
+      <span class="accent">THE VOID</span>
+    </h1>
+    <p class="hero-sub">Fashion engineered at the intersection of technology and darkness. Garments for those who exist beyond the simulation.</p>
+    <div class="hero-ctas">
+      <a href="#products" class="btn-primary">Explore Collection</a>
+      <a href="https://discord.gg/PwdhPmXY" target="_blank" class="btn-ghost">Join Community</a>
     </div>
-  </nav>
-
-  <!-- HERO -->
-  <div class="hero">
-    <h1>TOURNAMENT<br>ARENA</h1>
-    <div class="hero-sub">// REGISTER · COMPETE · DOMINATE</div>
   </div>
-
-  <!-- GAME FILTER -->
-  <div class="game-filter">
-    <button class="filter-btn all active" data-filter="all">ALL</button>
-    <button class="filter-btn mc" data-filter="minecraft">⛏ MINECRAFT</button>
-    <button class="filter-btn val" data-filter="valorant">🔫 VALORANT</button>
-    <button class="filter-btn rob" data-filter="roblox">🟦 ROBLOX</button>
+  <div class="hero-scroll">
+    <div class="scroll-line"></div>
+    Scroll to enter
   </div>
+</section>
 
-  <!-- TOURNAMENT CONTENT -->
-  <div class="content" id="tournamentsContainer"></div>
-
+<!-- TICKER -->
+<div class="ticker">
+  <div class="ticker-inner" id="ticker-inner"></div>
 </div>
 
-<!-- ══════════ REGISTRATION MODAL ══════════ -->
-<div class="modal-overlay" id="regModalOverlay">
-  <div class="modal" id="regModal">
-    <div class="modal-banner"></div>
-    <div class="modal-header">
+<!-- PRODUCTS -->
+<section id="products">
+  <div class="section-header">
+    <div>
+      <div class="section-label">// Product Matrix</div>
+      <h2 class="section-title">THE COLLECTION</h2>
+    </div>
+    <div class="section-count">09</div>
+  </div>
+  <div class="products-grid" id="products-grid"></div>
+</section>
+
+<!-- STORY -->
+<section id="story">
+  <div class="story-visual">
+    <canvas id="story-canvas"></canvas>
+  </div>
+  <div class="story-text">
+    <div class="section-label">// Origin Protocol</div>
+    <h2>WE BUILD <span style="color:var(--plasma)">TOMORROW'S</span> UNIFORM</h2>
+    <p>VOIDEX was born from a rejection of the ordinary — fashion as a passive act, clothing as mere protection. We design for the post-human era.</p>
+    <p>Every thread is engineered with precision. Every silhouette is a statement of dominance over the mundane. Our materials are sourced from the edges of the possible.</p>
+    <div class="story-stats">
       <div>
-        <div class="modal-title" id="modalTournamentName"></div>
-        <div class="t-game-tag" id="modalGameTag" style="margin-top:6px;"></div>
+        <span class="stat-num">2019</span>
+        <div class="stat-label">Founded</div>
       </div>
-      <button class="modal-close" id="regModalClose">✕</button>
+      <div>
+        <span class="stat-num">50K+</span>
+        <div class="stat-label">Operators</div>
+      </div>
+      <div>
+        <span class="stat-num">∞</span>
+        <div class="stat-label">Iterations</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DISCORD -->
+<section id="discord-section">
+  <div class="discord-glow"></div>
+  <div class="discord-logo">
+    <svg width="64" height="49" viewBox="0 0 71 55" fill="#7289da"><path d="M60.1 4.9A58.5 58.5 0 0045.5 1a40 40 0 00-1.7 3.5 54 54 0 00-16.5 0A38 38 0 0025.6 1 58.8 58.8 0 0011 5C1.6 19.2-1 33 .3 46.6A59 59 0 0018 55a45 45 0 003.8-6.3 38.4 38.4 0 01-6-2.9l1.5-1.2a42 42 0 0036.4 0l1.5 1.2a38 38 0 01-6 2.9A44.7 44.7 0 0053 55a58.8 58.8 0 0017.7-8.4C72.6 33.3 68.7 19.6 60.1 4.9zM23.8 38.4c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2zm23.4 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2z"/></svg>
+  </div>
+  <h2>JOIN THE <span style="color:#7289da">SIGNAL</span></h2>
+  <p>Get early access to drops, exclusive discounts, and connect with the VOIDEX operator community.</p>
+  <a href="https://discord.gg/PwdhPmXY" target="_blank" class="discord-big-btn">
+    <svg width="20" height="16" viewBox="0 0 71 55" fill="currentColor"><path d="M60.1 4.9A58.5 58.5 0 0045.5 1a40 40 0 00-1.7 3.5 54 54 0 00-16.5 0A38 38 0 0025.6 1 58.8 58.8 0 0011 5C1.6 19.2-1 33 .3 46.6A59 59 0 0018 55a45 45 0 003.8-6.3 38.4 38.4 0 01-6-2.9l1.5-1.2a42 42 0 0036.4 0l1.5 1.2a38 38 0 01-6 2.9A44.7 44.7 0 0053 55a58.8 58.8 0 0017.7-8.4C72.6 33.3 68.7 19.6 60.1 4.9zM23.8 38.4c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2zm23.4 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2z"/></svg>
+    Enter The Server
+  </a>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-logo">VOIDEX</div>
+  <div class="footer-links">
+    <a href="#">Privacy</a>
+    <a href="#">Terms</a>
+    <a href="https://discord.gg/PwdhPmXY" target="_blank">Discord</a>
+  </div>
+  <div class="footer-copy">© 2025 VOIDEX — All Rights Reserved</div>
+</footer>
+
+<!-- CART SIDEBAR -->
+<div class="cart-overlay" id="cart-overlay" onclick="toggleCart()"></div>
+<div id="cart-sidebar">
+  <div class="cart-header">
+    <div class="cart-title">CART / <span id="cart-item-count">0</span> ITEMS</div>
+    <button class="close-cart" onclick="toggleCart()">✕</button>
+  </div>
+  <div class="cart-items" id="cart-items-list">
+    <div class="cart-empty">
+      <div class="cart-empty-icon">⬡</div>
+      <p>YOUR CART IS EMPTY</p>
+    </div>
+  </div>
+  <div class="cart-footer">
+    <div class="cart-totals">
+      <div class="cart-total-row">
+        <span>SUBTOTAL</span><span id="cart-subtotal">$0.00</span>
+      </div>
+      <div class="cart-total-row">
+        <span>SHIPPING</span><span id="cart-shipping">FREE</span>
+      </div>
+      <div class="cart-total-row grand">
+        <span>TOTAL</span><span id="cart-total">$0.00</span>
+      </div>
+    </div>
+    <button class="checkout-btn" onclick="openCheckout()">PROCEED TO CHECKOUT →</button>
+  </div>
+</div>
+
+<!-- CHECKOUT MODAL -->
+<div id="checkout-modal">
+  <div class="modal-bg" onclick="closeCheckout()"></div>
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">CHECKOUT</div>
+      <button class="close-modal" onclick="closeCheckout()">✕</button>
     </div>
     <div class="modal-body">
-      <div class="modal-info-grid" id="modalInfoGrid"></div>
-
-      <div class="form-section-title">PLAYER INFO</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Full Name</label>
-          <input class="form-input" id="f_name" placeholder="Your name" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Age</label>
-          <input class="form-input" id="f_age" type="number" placeholder="18" min="10" max="60" required>
-        </div>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">Email</label>
-          <input class="form-input" id="f_email" type="email" placeholder="you@example.com" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Phone Number</label>
-          <input class="form-input" id="f_phone" type="tel" placeholder="+91 00000 00000" required>
-        </div>
+      <div class="checkout-steps">
+        <div class="step active" id="step1">01 Info</div>
+        <div class="step" id="step2">02 Shipping</div>
+        <div class="step" id="step3">03 Payment</div>
       </div>
 
-      <div class="form-section-title">GAME IDENTITY</div>
-      <div class="form-row">
-        <div class="form-group">
-          <label class="form-label">In-Game Name</label>
-          <input class="form-input" id="f_ign" placeholder="YourIGN#1234" required>
+      <div id="checkout-step-1">
+        <div class="form-section">
+          <div class="form-section-title">Contact Information</div>
+          <div class="form-grid">
+            <div class="form-group">
+              <label>First Name</label>
+              <input type="text" id="fname" placeholder="JOHN">
+            </div>
+            <div class="form-group">
+              <label>Last Name</label>
+              <input type="text" id="lname" placeholder="DOE">
+            </div>
+            <div class="form-group full">
+              <label>Email Address</label>
+              <input type="email" id="email" placeholder="OPERATOR@VOIDEX.IO">
+            </div>
+            <div class="form-group full">
+              <label>Discord Username (Optional)</label>
+              <input type="text" id="discord-user" placeholder="username#0000">
+            </div>
+          </div>
         </div>
-        <div class="form-group">
-          <label class="form-label">Discord ID</label>
-          <input class="form-input" id="f_discord" placeholder="user#0000" required>
+        <button class="place-order-btn" onclick="nextStep(2)">CONTINUE →</button>
+      </div>
+
+      <div id="checkout-step-2" style="display:none">
+        <div class="form-section">
+          <div class="form-section-title">Shipping Address</div>
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Address Line 1</label>
+              <input type="text" id="addr1" placeholder="STREET ADDRESS">
+            </div>
+            <div class="form-group full">
+              <label>Address Line 2</label>
+              <input type="text" id="addr2" placeholder="APT, SUITE, FLOOR">
+            </div>
+            <div class="form-group">
+              <label>City</label>
+              <input type="text" id="city" placeholder="CITY">
+            </div>
+            <div class="form-group">
+              <label>Postal Code</label>
+              <input type="text" id="postal" placeholder="000000">
+            </div>
+            <div class="form-group full">
+              <label>Country</label>
+              <select id="country">
+                <option value="">Select Country</option>
+                <option>United States</option>
+                <option>United Kingdom</option>
+                <option>Germany</option>
+                <option>France</option>
+                <option>Japan</option>
+                <option>Australia</option>
+                <option>India</option>
+                <option>Canada</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div style="display:flex;gap:12px">
+          <button class="place-order-btn" style="background:transparent;border:1px solid var(--border);color:var(--text);flex:0 0 80px" onclick="nextStep(1)">← BACK</button>
+          <button class="place-order-btn" style="flex:1" onclick="nextStep(3)">CONTINUE →</button>
         </div>
       </div>
 
-      <div class="form-section-title">PAYMENT — ₹50 ENTRY FEE</div>
-      <div class="payment-box">
-        <div class="payment-box-title">⚡ UPI PAYMENT GATEWAY</div>
-        <div class="payment-amount">₹50 <span>entry fee</span></div>
-        <div class="upi-display">
-          <div style="margin-bottom:4px;">Send to UPI ID:</div>
-          <div class="upi-id">axoncord@upi</div>
+      <div id="checkout-step-3" style="display:none">
+        <div class="form-section">
+          <div class="form-section-title">Payment Details</div>
+          <div class="form-grid">
+            <div class="form-group full">
+              <label>Card Number</label>
+              <input type="text" id="card-num" placeholder="0000 0000 0000 0000" maxlength="19" oninput="formatCard(this)">
+            </div>
+            <div class="form-group">
+              <label>Expiry Date</label>
+              <input type="text" id="card-exp" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this)">
+            </div>
+            <div class="form-group">
+              <label>CVV</label>
+              <input type="text" id="card-cvv" placeholder="000" maxlength="4">
+            </div>
+            <div class="form-group full">
+              <label>Name on Card</label>
+              <input type="text" id="card-name" placeholder="JOHN DOE">
+            </div>
+          </div>
         </div>
-        <div style="margin-top:10px;font-size:11px;color:var(--muted);font-family:'Share Tech Mono',monospace;letter-spacing:1px;">
-          Payment will be auto-verified after submission
+
+        <div class="order-summary">
+          <div class="order-summary-title">Order Summary</div>
+          <div id="order-summary-items"></div>
+          <div class="order-total">
+            <span>TOTAL</span>
+            <span id="modal-total">$0.00</span>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px">
+          <button class="place-order-btn" style="background:transparent;border:1px solid var(--border);color:var(--text);flex:0 0 80px" onclick="nextStep(2)">← BACK</button>
+          <button class="place-order-btn" style="flex:1" onclick="placeOrder()">PLACE ORDER ⬡</button>
         </div>
       </div>
-
-      <button class="submit-btn" id="registerSubmitBtn">⚡ PAY ₹50 &amp; REGISTER</button>
     </div>
   </div>
 </div>
 
-<!-- ══════════ PAYMENT PROCESSING MODAL ══════════ -->
-<div id="paymentModal">
-  <div class="payment-screen" id="paymentProcessingScreen">
-    <div class="payment-icon">⚡</div>
-    <div class="payment-title">PROCESSING PAYMENT</div>
-    <div class="payment-sub">Connecting to UPI gateway...</div>
-    <div class="upi-animation" id="upiAnim">₹50 ▶ axoncord@upi</div>
-    <div class="payment-progress-bar">
-      <div class="payment-progress-fill" id="payProgress"></div>
-    </div>
-    <div class="payment-steps">
-      <div class="p-step" id="step1">[ ] Initiating secure connection...</div>
-      <div class="p-step" id="step2">[ ] Verifying UPI credentials...</div>
-      <div class="p-step" id="step3">[ ] Processing ₹50 debit...</div>
-      <div class="p-step" id="step4">[ ] Confirming transaction...</div>
-      <div class="p-step" id="step5">[ ] Generating registration token...</div>
-    </div>
+<!-- SUCCESS MODAL -->
+<div id="success-modal">
+  <div class="modal-bg"></div>
+  <div class="success-box">
+    <div class="success-icon">⬡</div>
+    <div class="success-title">ORDER CONFIRMED</div>
+    <p class="success-sub">Your order has been received and is being processed. Join our Discord for real-time updates and exclusive member perks.</p>
+    <a href="https://discord.gg/PwdhPmXY" target="_blank" class="success-discord">
+      <svg width="20" height="16" viewBox="0 0 71 55" fill="currentColor"><path d="M60.1 4.9A58.5 58.5 0 0045.5 1a40 40 0 00-1.7 3.5 54 54 0 00-16.5 0A38 38 0 0025.6 1 58.8 58.8 0 0011 5C1.6 19.2-1 33 .3 46.6A59 59 0 0018 55a45 45 0 003.8-6.3 38.4 38.4 0 01-6-2.9l1.5-1.2a42 42 0 0036.4 0l1.5 1.2a38 38 0 01-6 2.9A44.7 44.7 0 0053 55a58.8 58.8 0 0017.7-8.4C72.6 33.3 68.7 19.6 60.1 4.9zM23.8 38.4c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2zm23.4 0c-3.5 0-6.4-3.2-6.4-7.2s2.8-7.2 6.4-7.2c3.5 0 6.4 3.2 6.3 7.2 0 4-2.8 7.2-6.3 7.2z"/></svg>
+      Join VOIDEX Discord
+    </a>
   </div>
 </div>
 
-<!-- ══════════ TICKET MODAL ══════════ -->
-<div id="ticketModal">
-  <div class="ticket" id="ticketCard">
-    <div class="modal-banner ticket-banner"></div>
-    <div class="ticket-top">
-      <div class="ticket-success-icon">🏆</div>
-      <div class="ticket-confirmed">✓ Registration Confirmed</div>
-      <div class="ticket-tournament-name" id="ticketTName"></div>
-    </div>
-    <div class="ticket-id-section">
-      <div>
-        <div class="ticket-id-label">REGISTRATION ID</div>
-        <div class="ticket-id-value" id="ticketRegId"></div>
-      </div>
-      <div class="ticket-game-badge" id="ticketBadge"></div>
-    </div>
-    <div class="ticket-url" id="ticketUrl"></div>
-    <div class="ticket-body">
-      <div class="ticket-grid" id="ticketGrid"></div>
-    </div>
-    <div class="ticket-footer">
-      <div class="ticket-paid">✓ PAYMENT VERIFIED · ₹50</div>
-      <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:var(--muted);" id="ticketDate"></div>
-    </div>
-    <div class="ticket-actions">
-      <button class="ticket-btn primary" id="ticketClose">DONE</button>
-      <button class="ticket-btn secondary" onclick="copyTicketUrl()">COPY URL</button>
-    </div>
-  </div>
-</div>
+<!-- NOTIFICATIONS -->
+<div id="notif"></div>
 
-<!-- TOAST -->
-<div class="toast" id="toast"></div>
-
-<!-- ══════════ FIREBASE + APP LOGIC ══════════ -->
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/12.10.0/firebase-app.js";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
-  from "https://www.gstatic.com/firebasejs/12.10.0/firebase-auth.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyCVn1UZp3v-2X9v23o4jIot46TlaZZQ0jU",
-  authDomain: "axoncord-d8dcd.firebaseapp.com",
-  projectId: "axoncord-d8dcd",
-  storageBucket: "axoncord-d8dcd.firebasestorage.app",
-  messagingSenderId: "514941956089",
-  appId: "1:514941956089:web:4cd52e776a5844bc975728"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
-
-// ── AUTH STATE ──
-onAuthStateChanged(auth, user => {
-  if (user) {
-    document.getElementById('loginScreen').style.display = 'none';
-    document.getElementById('mainApp').style.display = 'block';
-    document.getElementById('userName').textContent = user.displayName?.split(' ')[0] || 'Player';
-    const av = document.getElementById('userAvatar');
-    av.src = user.photoURL || '';
-    av.style.display = user.photoURL ? 'block' : 'none';
-    renderTournaments();
-  } else {
-    document.getElementById('loginScreen').style.display = 'flex';
-    document.getElementById('mainApp').style.display = 'none';
+<script>
+// ===================== PRODUCTS DATA =====================
+const PRODUCTS = [
+  {
+    id: 1, name: "PHANTOM JACKET", cat: "Outerwear",
+    desc: "Graphene-infused shell with thermal regulation matrix. Photochromic panels adapt to ambient light.",
+    price: 299, orig: 380,
+    badge: "new", emoji: "🥋",
+    color: 0x00ffcc, shape: "box",
+    sizes: ["XS","S","M","L","XL"]
+  },
+  {
+    id: 2, name: "VOID CARGO", cat: "Bottoms",
+    desc: "16-pocket tactical trousers with nano-repellent coating. Articulated knees for unrestricted movement.",
+    price: 189, orig: null,
+    badge: "hot", emoji: "👖",
+    color: 0xccff00, shape: "cylinder",
+    sizes: ["XS","S","M","L","XL","XXL"]
+  },
+  {
+    id: 3, name: "SIGNAL TEE", cat: "Tops",
+    desc: "Bamboo-carbon blend base layer with EMF shielding weave. Anti-bacterial treatment lasts 200+ washes.",
+    price: 89, orig: 120,
+    badge: "ltd", emoji: "👕",
+    color: 0xff3300, shape: "torus",
+    sizes: ["XS","S","M","L","XL"]
+  },
+  {
+    id: 4, name: "NEURAL HOODIE", cat: "Tops",
+    desc: "Heavyweight 500gsm fleece with embedded conductive thread channels. Hidden panel construction.",
+    price: 219, orig: null,
+    badge: "new", emoji: "🧥",
+    color: 0x8844ff, shape: "box",
+    sizes: ["S","M","L","XL","XXL"]
+  },
+  {
+    id: 5, name: "DARK MATTER VEST", cat: "Outerwear",
+    desc: "Zero-gravity puffer with recycled aerogel fill. Packable to palm-size. Ultralight at 180g.",
+    price: 249, orig: 320,
+    badge: "hot", emoji: "🦺",
+    color: 0x00ccff, shape: "octahedron",
+    sizes: ["XS","S","M","L","XL"]
+  },
+  {
+    id: 6, name: "PROTOCOL SHORTS", cat: "Bottoms",
+    desc: "4-way stretch performance shorts with laser-cut ventilation zones. Compression liner included.",
+    price: 129, orig: null,
+    badge: "ltd", emoji: "🩳",
+    color: 0xffcc00, shape: "cylinder",
+    sizes: ["XS","S","M","L","XL","XXL"]
+  },
+  {
+    id: 7, name: "GHOST LONG-SLEEVE", cat: "Tops",
+    desc: "UV-reactive fabric shifts hue under sunlight. Seamless construction, zero stitch irritation.",
+    price: 109, orig: 140,
+    badge: "new", emoji: "👔",
+    color: 0xff00cc, shape: "torus",
+    sizes: ["XS","S","M","L","XL"]
+  },
+  {
+    id: 8, name: "ABYSS OVERCOAT", cat: "Outerwear",
+    desc: "Floor-length tech-wool blend with magnetic closure system. Asymmetric hem, oversized silhouette.",
+    price: 449, orig: 580,
+    badge: "ltd", emoji: "🧣",
+    color: 0x44ffaa, shape: "box",
+    sizes: ["S","M","L","XL"]
+  },
+  {
+    id: 9, name: "ECHO JOGGERS", cat: "Bottoms",
+    desc: "Lightweight woven trousers with elasticated cuffs. Moisture-wicking inner mesh keeps core dry.",
+    price: 159, orig: null,
+    badge: "hot", emoji: "🩲",
+    color: 0xff6600, shape: "cylinder",
+    sizes: ["XS","S","M","L","XL","XXL"]
   }
-});
-
-document.getElementById('googleSignInBtn').onclick = () => {
-  signInWithPopup(auth, provider).catch(e => showToast('Sign-in failed: ' + e.message));
-};
-document.getElementById('logoutBtn').onclick = () => signOut(auth);
-
-// ── TOURNAMENTS DATA ──
-const tournaments = [
-  // MARCH 2025
-  { id:'t1', game:'minecraft', name:'Bedwars Blitz Championship', date:'2026-03-10', time:'7:00 PM', prize:'₹2,000', slots:32, mode:'Solo', type:'Bedwars', region:'India' },
-  { id:'t2', game:'valorant',  name:'Iron Clash Open',            date:'2026-03-10', time:'6:00 PM', prize:'₹5,000', slots:16, mode:'5v5', type:'Competitive', region:'India' },
-  { id:'t3', game:'roblox',    name:'Adopt Me Trading Cup',       date:'2026-03-10', time:'4:00 PM', prize:'₹1,500', slots:64, mode:'Solo', type:'Trading', region:'Global' },
-  { id:'t4', game:'minecraft', name:'SkyWars Showdown',           date:'2026-03-15', time:'5:00 PM', prize:'₹3,000', slots:64, mode:'Solo', type:'Skywars', region:'India' },
-  { id:'t5', game:'valorant',  name:'Silver Storm Invitational',  date:'2026-03-15', time:'8:00 PM', prize:'₹8,000', slots:8,  mode:'5v5', type:'Competitive', region:'India' },
-  { id:'t6', game:'roblox',    name:'Arsenal FPS Rumble',         date:'2026-03-15', time:'3:00 PM', prize:'₹2,500', slots:32, mode:'Solo', type:'FPS', region:'Global' },
-  { id:'t7', game:'minecraft', name:'Survival Games Elite',       date:'2026-03-22', time:'6:00 PM', prize:'₹4,000', slots:48, mode:'Solo', type:'Survival', region:'India' },
-  { id:'t8', game:'valorant',  name:'Gold Rush Gauntlet',         date:'2026-03-22', time:'7:00 PM', prize:'₹12,000',slots:16, mode:'5v5', type:'Competitive', region:'India' },
-  { id:'t9', game:'roblox',    name:'Tower of Hell Speed Run',    date:'2026-03-22', time:'5:00 PM', prize:'₹1,000', slots:128,mode:'Solo', type:'Parkour', region:'Global' },
-  // APRIL 2026
-  { id:'t10',game:'minecraft', name:'Faction Wars Season 1',      date:'2026-04-05', time:'5:30 PM', prize:'₹6,000', slots:32, mode:'Team', type:'Factions', region:'India' },
-  { id:'t11',game:'valorant',  name:'Phantom League Finals',      date:'2026-04-05', time:'7:00 PM', prize:'₹20,000',slots:8,  mode:'5v5', type:'Competitive', region:'India' },
-  { id:'t12',game:'roblox',    name:'Brookhaven RP Championship', date:'2026-04-05', time:'4:00 PM', prize:'₹2,000', slots:48, mode:'Solo', type:'RP', region:'Global' },
-  { id:'t13',game:'minecraft', name:'UHC Masters Cup',            date:'2026-04-12', time:'6:00 PM', prize:'₹5,000', slots:32, mode:'Solo', type:'UHC', region:'India' },
-  { id:'t14',game:'valorant',  name:'Radiant Rush Open',          date:'2026-04-12', time:'9:00 PM', prize:'₹15,000',slots:16, mode:'5v5', type:'Competitive', region:'India' },
 ];
 
-const gameLabels = { minecraft:'⛏ MINECRAFT', valorant:'🔫 VALORANT', roblox:'🟦 ROBLOX' };
+// ===================== CART STATE =====================
+let cart = [];
+let selectedSizes = {};
 
-function groupByDate(list) {
-  return list.reduce((acc, t) => {
-    acc[t.date] = acc[t.date] || [];
-    acc[t.date].push(t);
-    return acc;
-  }, {});
+function getCartTotal() {
+  return cart.reduce((s, i) => s + i.price * i.qty, 0);
 }
 
-function formatDate(d) {
-  const dt = new Date(d + 'T00:00:00');
-  return dt.toLocaleDateString('en-IN', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+function getCartCount() {
+  return cart.reduce((s, i) => s + i.qty, 0);
 }
 
-function renderTournaments(filter='all') {
-  const container = document.getElementById('tournamentsContainer');
-  const filtered = filter === 'all' ? tournaments : tournaments.filter(t => t.game === filter);
-  const grouped = groupByDate(filtered);
-  const dates = Object.keys(grouped).sort();
+function updateCartUI() {
+  const count = getCartCount();
+  document.getElementById('cart-count').textContent = count;
+  document.getElementById('cart-item-count').textContent = count;
+  const total = getCartTotal();
+  document.getElementById('cart-subtotal').textContent = `$${total.toFixed(2)}`;
+  document.getElementById('cart-total').textContent = `$${total.toFixed(2)}`;
+  document.getElementById('modal-total').textContent = `$${total.toFixed(2)}`;
 
-  container.innerHTML = dates.map(date => `
-    <div class="date-section">
-      <div class="date-header">
-        <div class="date-label">${formatDate(date)}</div>
-        <div class="date-line"></div>
+  const list = document.getElementById('cart-items-list');
+  if (cart.length === 0) {
+    list.innerHTML = `<div class="cart-empty"><div class="cart-empty-icon">⬡</div><p>YOUR CART IS EMPTY</p></div>`;
+    return;
+  }
+
+  list.innerHTML = cart.map(item => `
+    <div class="cart-item" id="ci-${item.cartId}">
+      <div class="cart-item-img">${item.emoji}</div>
+      <div class="cart-item-details">
+        <div class="cart-item-name">${item.name}</div>
+        <div class="cart-item-size">SIZE: ${item.size}</div>
+        <div class="cart-item-controls">
+          <button class="qty-btn" onclick="changeQty(${item.cartId}, -1)">−</button>
+          <span class="qty-num">${item.qty}</span>
+          <button class="qty-btn" onclick="changeQty(${item.cartId}, 1)">+</button>
+        </div>
       </div>
-      <div class="tournament-grid">
-        ${grouped[date].map(renderCard).join('')}
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+        <div class="cart-item-price">$${(item.price * item.qty).toFixed(2)}</div>
+        <button class="remove-item" onclick="removeFromCart(${item.cartId})">✕</button>
       </div>
     </div>
   `).join('');
 
-  container.querySelectorAll('.t-register-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      openRegModal(btn.dataset.id);
-    });
-  });
-  container.querySelectorAll('.t-card').forEach(card => {
-    card.addEventListener('click', () => openRegModal(card.dataset.id));
+  // Order summary in checkout
+  document.getElementById('order-summary-items').innerHTML = cart.map(i =>
+    `<div class="order-item"><span>${i.name} × ${i.qty} (${i.size})</span><span>$${(i.price * i.qty).toFixed(2)}</span></div>`
+  ).join('');
+}
+
+let cartIdCounter = 0;
+
+function addToCart(id) {
+  const product = PRODUCTS.find(p => p.id === id);
+  const size = selectedSizes[id] || product.sizes[2] || 'M';
+  const existing = cart.find(i => i.id === id && i.size === size);
+  if (existing) {
+    existing.qty++;
+  } else {
+    cart.push({ ...product, size, qty: 1, cartId: ++cartIdCounter });
+  }
+  updateCartUI();
+  showNotif(`${product.emoji} ${product.name} added to cart`);
+}
+
+function changeQty(cartId, delta) {
+  const item = cart.find(i => i.cartId === cartId);
+  if (!item) return;
+  item.qty += delta;
+  if (item.qty <= 0) removeFromCart(cartId);
+  else updateCartUI();
+}
+
+function removeFromCart(cartId) {
+  cart = cart.filter(i => i.cartId !== cartId);
+  updateCartUI();
+}
+
+function selectSize(productId, size) {
+  selectedSizes[productId] = size;
+  document.querySelectorAll(`.size-group-${productId} .size-btn`).forEach(b => {
+    b.classList.toggle('active', b.dataset.size === size);
   });
 }
 
-function renderCard(t) {
-  return `
-  <div class="t-card ${t.game}" data-id="${t.id}">
-    <div class="t-card-banner"></div>
-    <div class="t-card-body">
-      <div class="t-game-tag">${gameLabels[t.game]}</div>
-      <div class="t-card-name">${t.name}</div>
-      <div class="t-meta">
-        <div class="t-meta-row">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-          ${formatDate(t.date)} · ${t.time}
-        </div>
-        <div class="t-meta-row">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-          ${t.mode} · ${t.slots} slots · ${t.region}
-        </div>
-        <div class="t-meta-row">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>
-          ${t.type} · Entry: ₹50
-        </div>
-      </div>
-      <div class="t-card-footer">
-        <div>
-          <div class="t-prize">${t.prize}</div>
-          <div class="t-spots">${t.slots} SPOTS</div>
-        </div>
-        <button class="t-register-btn" data-id="${t.id}">REGISTER</button>
-      </div>
-    </div>
-  </div>`;
+// ===================== CART TOGGLE =====================
+function toggleCart() {
+  document.getElementById('cart-sidebar').classList.toggle('open');
+  document.getElementById('cart-overlay').classList.toggle('visible');
 }
 
-// ── FILTER ──
-document.querySelectorAll('.filter-btn').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    renderTournaments(btn.dataset.filter);
+// ===================== CHECKOUT =====================
+let currentStep = 1;
+
+function openCheckout() {
+  if (cart.length === 0) { showNotif('⚠ Cart is empty'); return; }
+  toggleCart();
+  setTimeout(() => {
+    document.getElementById('checkout-modal').classList.add('open');
+    updateCartUI();
+  }, 300);
+}
+
+function closeCheckout() {
+  document.getElementById('checkout-modal').classList.remove('open');
+}
+
+function nextStep(step) {
+  if (step === 2) {
+    if (!document.getElementById('fname').value || !document.getElementById('email').value) {
+      showNotif('⚠ Please fill in required fields'); return;
+    }
+  }
+  if (step === 3) {
+    if (!document.getElementById('addr1').value || !document.getElementById('country').value) {
+      showNotif('⚠ Please fill in shipping details'); return;
+    }
+  }
+  currentStep = step;
+  ['1','2','3'].forEach(n => {
+    document.getElementById(`checkout-step-${n}`).style.display = n == step ? 'block' : 'none';
+    const stepEl = document.getElementById(`step${n}`);
+    stepEl.className = 'step' + (n < step ? ' done' : n == step ? ' active' : '');
+  });
+}
+
+function placeOrder() {
+  const cardNum = document.getElementById('card-num').value.replace(/\s/g,'');
+  if (cardNum.length < 16) { showNotif('⚠ Invalid card number'); return; }
+  closeCheckout();
+  cart = [];
+  updateCartUI();
+  setTimeout(() => {
+    document.getElementById('success-modal').classList.add('open');
+    document.getElementById('success-modal').querySelector('.modal-bg').onclick = () => {
+      document.getElementById('success-modal').classList.remove('open');
+    };
+  }, 200);
+}
+
+function formatCard(input) {
+  let v = input.value.replace(/\D/g,'').substring(0,16);
+  input.value = v.match(/.{1,4}/g)?.join(' ') || v;
+}
+
+function formatExpiry(input) {
+  let v = input.value.replace(/\D/g,'').substring(0,4);
+  if (v.length >= 2) v = v.substring(0,2) + ' / ' + v.substring(2);
+  input.value = v;
+}
+
+// ===================== NOTIFICATIONS =====================
+function showNotif(msg) {
+  const notif = document.createElement('div');
+  notif.className = 'notif-item';
+  notif.textContent = msg;
+  document.getElementById('notif').appendChild(notif);
+  setTimeout(() => notif.remove(), 3000);
+}
+
+// ===================== CUSTOM CURSOR =====================
+const cursor = document.getElementById('cursor');
+const cursorRing = document.getElementById('cursor-ring');
+let mx = 0, my = 0, rx = 0, ry = 0;
+
+document.addEventListener('mousemove', e => {
+  mx = e.clientX; my = e.clientY;
+  cursor.style.left = mx + 'px';
+  cursor.style.top = my + 'px';
+});
+
+function animRing() {
+  rx += (mx - rx) * 0.12;
+  ry += (my - ry) * 0.12;
+  cursorRing.style.left = rx + 'px';
+  cursorRing.style.top = ry + 'px';
+  requestAnimationFrame(animRing);
+}
+animRing();
+
+document.querySelectorAll('button, a, [onclick]').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    cursor.style.width = '20px';
+    cursor.style.height = '20px';
+    cursorRing.style.transform = 'translate(-50%,-50%) scale(1.5)';
+  });
+  el.addEventListener('mouseleave', () => {
+    cursor.style.width = '12px';
+    cursor.style.height = '12px';
+    cursorRing.style.transform = 'translate(-50%,-50%) scale(1)';
   });
 });
 
-// ── REGISTRATION MODAL ──
-let currentTournament = null;
+// ===================== TICKER =====================
+const tickerItems = ['VOIDEX SS2025', '⬡ FREE WORLDWIDE SHIPPING', 'NEW DROP LIVE', '⬡ GRAPHENE SERIES', 'JOIN DISCORD', '⬡ LIMITED STOCK', 'FUTURE IS NOW'];
+const ticker = document.getElementById('ticker-inner');
+const full = [...tickerItems, ...tickerItems].map(t => `<span class="ticker-item">${t}</span>`).join('');
+ticker.innerHTML = full + full;
 
-function openRegModal(id) {
-  currentTournament = tournaments.find(t => t.id === id);
-  if (!currentTournament) return;
-  const t = currentTournament;
-  const modal = document.getElementById('regModal');
-  modal.className = `modal ${t.game}`;
-  document.getElementById('modalTournamentName').textContent = t.name;
-  const tag = document.getElementById('modalGameTag');
-  tag.textContent = gameLabels[t.game];
-  tag.className = `t-game-tag`;
+// ===================== HERO THREE.JS =====================
+(function initHero() {
+  const canvas = document.getElementById('three-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
 
-  document.getElementById('modalInfoGrid').innerHTML = [
-    ['GAME', gameLabels[t.game]],
-    ['DATE', formatDate(t.date)],
-    ['TIME', t.time],
-    ['MODE', t.mode],
-    ['PRIZE POOL', t.prize],
-    ['REGION', t.region],
-    ['ENTRY FEE', '₹50'],
-    ['SLOTS', t.slots],
-  ].map(([l,v]) => `<div class="modal-info-item"><div class="modal-info-label">${l}</div><div class="modal-info-value">${v}</div></div>`).join('');
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+  camera.position.z = 20;
 
-  // Pre-fill email from firebase user
-  const user = auth.currentUser;
-  if (user) {
-    document.getElementById('f_email').value = user.email || '';
-    document.getElementById('f_name').value = user.displayName || '';
+  // Particle field
+  const geo = new THREE.BufferGeometry();
+  const count = 3000;
+  const pos = new Float32Array(count * 3);
+  const speeds = new Float32Array(count);
+  for (let i = 0; i < count; i++) {
+    pos[i*3] = (Math.random()-0.5)*80;
+    pos[i*3+1] = (Math.random()-0.5)*80;
+    pos[i*3+2] = (Math.random()-0.5)*80;
+    speeds[i] = 0.002 + Math.random() * 0.008;
   }
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  const mat = new THREE.PointsMaterial({ color: 0x00ffcc, size: 0.08, transparent: true, opacity: 0.6 });
+  const particles = new THREE.Points(geo, mat);
+  scene.add(particles);
 
-  document.getElementById('regModalOverlay').classList.add('open');
-}
-
-document.getElementById('regModalClose').onclick = () => {
-  document.getElementById('regModalOverlay').classList.remove('open');
-};
-document.getElementById('regModalOverlay').onclick = (e) => {
-  if (e.target === document.getElementById('regModalOverlay'))
-    document.getElementById('regModalOverlay').classList.remove('open');
-};
-
-// ── SUBMIT / PAYMENT ──
-document.getElementById('registerSubmitBtn').onclick = () => {
-  const name    = document.getElementById('f_name').value.trim();
-  const age     = document.getElementById('f_age').value.trim();
-  const email   = document.getElementById('f_email').value.trim();
-  const phone   = document.getElementById('f_phone').value.trim();
-  const ign     = document.getElementById('f_ign').value.trim();
-  const discord = document.getElementById('f_discord').value.trim();
-
-  if (!name||!age||!email||!phone||!ign||!discord) {
-    showToast('Please fill all fields'); return;
-  }
-  if (!/^\S+@\S+\.\S+$/.test(email)) { showToast('Invalid email'); return; }
-
-  document.getElementById('regModalOverlay').classList.remove('open');
-  startPayment({ name, age, email, phone, ign, discord });
-};
-
-function startPayment(formData) {
-  const pm = document.getElementById('paymentModal');
-  pm.classList.add('open');
-
-  // Reset
-  ['step1','step2','step3','step4','step5'].forEach(s => {
-    const el = document.getElementById(s);
-    el.classList.remove('done');
-    el.textContent = el.textContent.replace('✓','[ ]');
-  });
-  document.getElementById('payProgress').style.width = '0%';
-
-  const steps = [
-    { id:'step1', text:'✓ Secure connection established', delay:3000, progress:20 },
-    { id:'step2', text:'✓ UPI credentials verified', delay:6000, progress:45 },
-    { id:'step3', text:'✓ ₹50 debit processed', delay:9000, progress:65 },
-    { id:'step4', text:'✓ Transaction confirmed', delay:12000, progress:85 },
-    { id:'step5', text:'✓ Registration token generated', delay:15000, progress:100 },
+  // Floating geometric shapes
+  const shapes = [];
+  const geoms = [
+    new THREE.IcosahedronGeometry(1.5, 1),
+    new THREE.OctahedronGeometry(1.2),
+    new THREE.TetrahedronGeometry(1.4),
+    new THREE.IcosahedronGeometry(0.8, 0),
   ];
+  const wireMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, wireframe: true, transparent: true, opacity: 0.3 });
 
-  steps.forEach(({ id, text, delay, progress }) => {
-    setTimeout(() => {
-      const el = document.getElementById(id);
-      el.textContent = text;
-      el.classList.add('done');
-      document.getElementById('payProgress').style.width = progress + '%';
-    }, delay);
+  geoms.forEach((g, i) => {
+    const mesh = new THREE.Mesh(g, wireMat.clone());
+    mesh.position.set(
+      (i - 1.5) * 8 + (Math.random()-0.5)*4,
+      (Math.random()-0.5)*6,
+      -10 + Math.random()*5
+    );
+    scene.add(mesh);
+    shapes.push({ mesh, ry: Math.random()*0.01+0.003, rx: Math.random()*0.005 });
   });
 
-  setTimeout(() => {
-    pm.classList.remove('open');
-    showTicket(formData);
-  }, 17000);
+  // Grid
+  const gridGeo = new THREE.PlaneGeometry(100, 100, 30, 30);
+  const gridMat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, wireframe: true, transparent: true, opacity: 0.04 });
+  const grid = new THREE.Mesh(gridGeo, gridMat);
+  grid.rotation.x = -Math.PI/2;
+  grid.position.y = -10;
+  scene.add(grid);
+
+  let mouseX = 0, mouseY = 0;
+  document.addEventListener('mousemove', e => {
+    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+  });
+
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.005;
+
+    particles.rotation.y += 0.0005;
+    particles.rotation.x += 0.0002;
+
+    shapes.forEach(s => {
+      s.mesh.rotation.y += s.ry;
+      s.mesh.rotation.x += s.rx;
+      s.mesh.position.y += Math.sin(t + s.mesh.position.x) * 0.005;
+    });
+
+    camera.position.x += (mouseX * 3 - camera.position.x) * 0.02;
+    camera.position.y += (-mouseY * 2 - camera.position.y) * 0.02;
+    camera.lookAt(0, 0, 0);
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  });
+})();
+
+// ===================== STORY THREE.JS =====================
+(function initStory() {
+  const canvas = document.getElementById('story-canvas');
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+  const w = canvas.parentElement.clientWidth;
+  const h = canvas.parentElement.clientHeight;
+  renderer.setSize(w, h);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, w/h, 0.1, 100);
+  camera.position.z = 6;
+
+  const geo = new THREE.IcosahedronGeometry(2, 2);
+  const mat = new THREE.MeshBasicMaterial({ color: 0x00ffcc, wireframe: true, transparent: true, opacity: 0.4 });
+  const ico = new THREE.Mesh(geo, mat);
+  scene.add(ico);
+
+  const innerGeo = new THREE.IcosahedronGeometry(1.4, 1);
+  const innerMat = new THREE.MeshBasicMaterial({ color: 0xccff00, wireframe: true, transparent: true, opacity: 0.2 });
+  const inner = new THREE.Mesh(innerGeo, innerMat);
+  scene.add(inner);
+
+  let t = 0;
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.01;
+    ico.rotation.y += 0.005;
+    ico.rotation.x += 0.003;
+    inner.rotation.y -= 0.008;
+    inner.rotation.z += 0.004;
+    ico.scale.setScalar(1 + Math.sin(t) * 0.03);
+    renderer.render(scene, camera);
+  }
+  animate();
+})();
+
+// ===================== PRODUCT 3D VIEWERS =====================
+function initProduct3D(canvas, color, shape) {
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(50, canvas.parentElement.clientWidth / canvas.parentElement.clientHeight, 0.1, 100);
+  camera.position.z = 4;
+
+  let geo;
+  if (shape === 'cylinder') geo = new THREE.CylinderGeometry(1, 1, 2, 8);
+  else if (shape === 'torus') geo = new THREE.TorusGeometry(1.2, 0.4, 8, 16);
+  else if (shape === 'octahedron') geo = new THREE.OctahedronGeometry(1.5);
+  else geo = new THREE.BoxGeometry(2, 2.5, 0.3);
+
+  const mat = new THREE.MeshBasicMaterial({ color, wireframe: true, transparent: true, opacity: 0.7 });
+  const mesh = new THREE.Mesh(geo, mat);
+  scene.add(mesh);
+
+  // Particles around product
+  const pGeo = new THREE.BufferGeometry();
+  const pPos = new Float32Array(200 * 3);
+  for (let i = 0; i < 200; i++) {
+    pPos[i*3] = (Math.random()-0.5)*6;
+    pPos[i*3+1] = (Math.random()-0.5)*6;
+    pPos[i*3+2] = (Math.random()-0.5)*4;
+  }
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  const pMat = new THREE.PointsMaterial({ color, size: 0.04, transparent: true, opacity: 0.4 });
+  scene.add(new THREE.Points(pGeo, pMat));
+
+  let isHovered = false;
+  let t = 0;
+  canvas.parentElement.addEventListener('mouseenter', () => isHovered = true);
+  canvas.parentElement.addEventListener('mouseleave', () => isHovered = false);
+
+  function animate() {
+    requestAnimationFrame(animate);
+    t += 0.01;
+    mesh.rotation.y += isHovered ? 0.025 : 0.008;
+    mesh.rotation.x += 0.003;
+    mesh.position.y = Math.sin(t) * 0.1;
+    renderer.render(scene, camera);
+  }
+  animate();
 }
 
-function generateRegId() {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let id = 'AX-';
-  for(let i=0;i<8;i++) id += chars[Math.floor(Math.random()*chars.length)];
-  return id;
-}
-
-function showTicket(formData) {
-  const t = currentTournament;
-  const regId = generateRegId();
-  const now = new Date();
-  const dateStr = now.toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
-  const pageUrl = `${window.location.origin}${window.location.pathname}#registrationid/${regId}`;
-
-  window.location.hash = `registrationid/${regId}`;
-  window._lastRegId = regId;
-  window._lastRegUrl = pageUrl;
-
-  document.getElementById('ticketTName').textContent = t.name;
-  document.getElementById('ticketRegId').textContent = regId;
-  document.getElementById('ticketUrl').innerHTML = `<span style="color:var(--muted)">URL: </span><span class="ticket-url-link">${pageUrl}</span>`;
-  document.getElementById('ticketDate').textContent = dateStr;
-
-  const badge = document.getElementById('ticketBadge');
-  badge.textContent = t.game.toUpperCase();
-  badge.className = `ticket-game-badge ${t.game}`;
-
-  const card = document.getElementById('ticketCard');
-  const banner = card.querySelector('.ticket-banner');
-  card.className = `ticket ${t.game}`;
-
-  document.getElementById('ticketGrid').innerHTML = [
-    ['PLAYER NAME', formData.name],
-    ['AGE', formData.age],
-    ['EMAIL', formData.email],
-    ['PHONE', formData.phone],
-    ['IN-GAME NAME', formData.ign],
-    ['DISCORD ID', formData.discord],
-    ['TOURNAMENT', t.name],
-    ['DATE & TIME', `${formatDate(t.date)} · ${t.time}`],
-    ['MODE', t.mode],
-    ['PRIZE POOL', t.prize],
-    ['ENTRY FEE PAID', '₹50 ✓'],
-    ['REGION', t.region],
-  ].map(([l,v]) => `
-    <div class="ticket-field">
-      <div class="ticket-field-label">${l}</div>
-      <div class="ticket-field-value">${v}</div>
+// ===================== BUILD PRODUCTS =====================
+function buildProducts() {
+  const grid = document.getElementById('products-grid');
+  grid.innerHTML = PRODUCTS.map(p => `
+    <div class="product-card">
+      <div class="product-3d-viewer">
+        <canvas class="product-3d-canvas" id="p3d-${p.id}"></canvas>
+        <div class="product-badge badge-${p.badge}">${p.badge.toUpperCase()}</div>
+      </div>
+      <div class="product-info">
+        <div class="product-cat">${p.cat}</div>
+        <div class="product-name">${p.name}</div>
+        <div class="product-desc">${p.desc}</div>
+        <div class="product-sizes size-group-${p.id}">
+          ${p.sizes.map((s, i) => `<button class="size-btn ${i===2?'active':''}" data-size="${s}" onclick="selectSize(${p.id},'${s}')">${s}</button>`).join('')}
+        </div>
+        <div class="product-footer">
+          <div class="product-price">
+            ${p.orig ? `<span class="orig">$${p.orig}</span>` : ''}
+            $${p.price}
+          </div>
+          <button class="add-to-cart" onclick="addToCart(${p.id})">ADD TO CART</button>
+        </div>
+      </div>
     </div>
   `).join('');
 
-  document.getElementById('ticketModal').classList.add('open');
+  // init default sizes
+  PRODUCTS.forEach(p => { selectedSizes[p.id] = p.sizes[2] || p.sizes[0]; });
+
+  // Init 3D after DOM ready
+  requestAnimationFrame(() => {
+    PRODUCTS.forEach(p => {
+      const canvas = document.getElementById(`p3d-${p.id}`);
+      if (canvas) initProduct3D(canvas, p.color, p.shape);
+    });
+  });
 }
 
-document.getElementById('ticketClose').onclick = () => {
-  document.getElementById('ticketModal').classList.remove('open');
-  window.location.hash = '';
-  showToast('Registration saved! Check your email.');
-};
+buildProducts();
+updateCartUI();
 
-window.copyTicketUrl = function() {
-  navigator.clipboard.writeText(window._lastRegUrl || '').then(() => showToast('URL copied!')).catch(() => showToast('Copy failed'));
-};
+// ===================== SCROLL ANIMATIONS =====================
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1 });
 
-// ── TOAST ──
-function showToast(msg) {
-  const t = document.getElementById('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  setTimeout(() => t.classList.remove('show'), 3000);
-}
-
-window.showToast = showToast;
-
+document.querySelectorAll('.product-card, .story-text, .story-visual').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(40px)';
+  el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
+  observer.observe(el);
+});
 </script>
 </body>
 </html>
