@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Authenticating...</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #03050d;
+    --accent: #5865F2;
+    --border: rgba(88,101,242,0.25);
+    --cyan: #00d4ff;
+    --text: #cdd6f4;
+    --muted: #525a7a;
+    --red: #f38ba8;
+    --green: #22c55e;
+    --font-mono: 'Share Tech Mono', monospace;
+  }
+  html, body { height: 100%; background: var(--bg); }
+  body {
+    font-family: var(--font-mono);
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; flex-direction: column; gap: 24px;
+    color: var(--text);
+  }
+  .ring-wrap { position: relative; width: 72px; height: 72px; }
+  .ring {
+    width: 72px; height: 72px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.9s linear infinite;
+    position: absolute;
+  }
+  .ring2 {
+    width: 54px; height: 54px;
+    border: 1px solid rgba(0,212,255,0.2);
+    border-bottom-color: var(--cyan);
+    border-radius: 50%;
+    animation: spin 1.4s linear infinite reverse;
+    position: absolute; top: 9px; left: 9px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #statusText {
+    font-size: 13px; letter-spacing: 0.2em;
+    color: var(--muted); text-align: center;
+    animation: pulse 1.4s ease infinite alternate;
+    max-width: 340px; line-height: 1.8;
+  }
+  @keyframes pulse { from { opacity: 0.5; } to { opacity: 1; } }
+  #errorBox {
+    display: none; flex-direction: column; align-items: center; gap: 12px;
+    text-align: center;
+  }
+  #errorBox.show { display: flex; }
+  #errorMsg {
+    color: var(--red); font-size: 12px; letter-spacing: 0.1em;
+    border: 1px solid rgba(243,139,168,0.2);
+    padding: 12px 20px; max-width: 380px; line-height: 1.8;
+  }
+  .back-btn {
+    color: var(--accent); font-family: var(--font-mono);
+    font-size: 12px; letter-spacing: 0.15em;
+    text-decoration: none; border: 1px solid var(--border);
+    padding: 8px 20px; transition: all 0.2s;
+  }
+  .back-btn:hover { background: rgba(88,101,242,0.1); }
+</style>
+</head>
+<body>
+
+<div class="ring-wrap" id="spinner">
+  <div class="ring"></div>
+  <div class="ring2"></div>
+</div>
+<div id="statusText">VERIFYING IDENTITY...<br/>PLEASE WAIT</div>
+<div id="errorBox">
+  <div id="errorMsg"></div>
+  <a href="login.html" class="back-btn">← RETURN TO LOGIN</a>
+</div>
+
+<script>
+  // ── CONFIG — MUST MATCH login.html ──────────────────────────────────
+  const CLIENT_ID     = '1476236554061086770';
+  const CLIENT_SECRET = 'hDjhDR3HwVT3xNZrmiFos-nSWPeznvjH';
+  const REDIRECT_URI  = 'https://axoncord.netlify.app/callback.html';
+  // ────────────────────────────────────────────────────────────────────
+
+  // ⚠️  SECURITY NOTE:
+  // Putting CLIENT_SECRET in frontend JS is okay for PERSONAL / private tools
+  // but for a public-facing production site, use a small backend (Node/Python)
+  // to exchange the code → token server-side so the secret stays hidden.
+
+  function showError(msg) {
+    document.getElementById('spinner').style.display  = 'none';
+    document.getElementById('statusText').style.display = 'none';
+    const box = document.getElementById('errorBox');
+    box.classList.add('show');
+    document.getElementById('errorMsg').textContent = msg;
+  }
+
+  async function handleCallback() {
+    const params = new URLSearchParams(window.location.search);
+    const code   = params.get('code');
+    const error  = params.get('error');
+
+    if (error) { showError('DISCORD DENIED ACCESS: ' + error.toUpperCase()); return; }
+    if (!code)  { showError('NO AUTH CODE RECEIVED. POSSIBLE MISCONFIGURATION.'); return; }
+
+    document.getElementById('statusText').textContent = 'EXCHANGING TOKEN...';
+
+    // Exchange code for access token
+    let tokenData;
+    try {
+      const res = await fetch('https://discord.com/api/oauth2/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id:     CLIENT_ID,
+          client_secret: CLIENT_SECRET,
+          grant_type:    'authorization_code',
+          code,
+          redirect_uri:  REDIRECT_URI,
+        }),
+      });
+      tokenData = await res.json();
+    } catch (err) {
+      showError('NETWORK ERROR DURING TOKEN EXCHANGE.\n' + err.message);
+      return;
+    }
+
+    if (tokenData.error) {
+      showError('TOKEN ERROR: ' + tokenData.error_description?.toUpperCase() || tokenData.error.toUpperCase());
+      return;
+    }
+
+    document.getElementById('statusText').textContent = 'FETCHING USER DATA...';
+
+    // Fetch Discord user info
+    let userData;
+    try {
+      const res = await fetch('https://discord.com/api/users/@me', {
+        headers: { Authorization: `Bearer ${tokenData.access_token}` },
+      });
+      userData = await res.json();
+    } catch (err) {
+      showError('FAILED TO FETCH USER PROFILE.\n' + err.message);
+      return;
+    }
+
+    if (userData.code) {
+      showError('API ERROR ' + userData.code + ': ' + userData.message?.toUpperCase());
+      return;
+    }
+
+    // Build avatar URL
+    const avatarURL = userData.avatar
+      ? `https://cdn.discordapp.com/avatars/${userData.id}/${userData.avatar}.${userData.avatar.startsWith('a_') ? 'gif' : 'png'}?size=256`
+      : `https://cdn.discordapp.com/embed/avatars/${parseInt(userData.discriminator || 0) % 5}.png`;
+
+    // Store user in localStorage
+    const userObj = {
+      id:            userData.id,
+      username:      userData.username,
+      discriminator: userData.discriminator || '0',
+      globalName:    userData.global_name || userData.username,
+      avatar:        avatarURL,
+      email:         userData.email || null,
+      accessToken:   tokenData.access_token,
+      loggedInAt:    Date.now(),
+    };
+
+    localStorage.setItem('discord_user', JSON.stringify(userObj));
+
+    document.getElementById('statusText').textContent = 'ACCESS GRANTED — REDIRECTING...';
+
+    // Brief pause then redirect
+    setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
+  }
+
+  handleCallback();
+</script>
+</body>
+</html>
