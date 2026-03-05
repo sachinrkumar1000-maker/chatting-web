@@ -294,35 +294,74 @@ body::after {
   position:fixed; inset:0; z-index:200000;
   display:none;
   align-items:center; justify-content:center;
-  background:rgba(0,0,0,0.97);
+  background:rgba(0,0,0,0.98);
   flex-direction:column;
 }
 #js-overlay.show { display:flex; }
 #js-canvas-main { position:absolute; inset:0; }
 .js-face-text {
   position:relative; z-index:2; text-align:center;
-  pointer-events:none;
+  pointer-events:none; width:100%; height:100%;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
 }
 .js-emoji-big {
-  font-size:clamp(80px,18vw,200px);
-  animation:jsShake .05s infinite;
+  font-size:clamp(100px,28vw,320px);
+  animation:jsShake .04s infinite;
   display:block; line-height:1;
-  filter:drop-shadow(0 0 40px #ff0000);
+  filter:drop-shadow(0 0 60px #ff0000);
 }
 .js-scream-text {
   font-family:'UnifrakturMaguntia',cursive;
-  font-size:clamp(32px,7vw,100px);
+  font-size:clamp(40px,10vw,130px);
   color:#ff0000;
-  text-shadow:0 0 40px #ff0000, 0 0 80px rgba(255,0,0,0.5);
-  animation:jsShake .06s infinite;
-  display:block;
+  text-shadow:0 0 60px #ff0000, 0 0 120px rgba(255,0,0,0.6);
+  animation:jsShake .04s infinite;
+  display:block; margin-top:12px;
 }
 @keyframes jsShake {
-  0%  {transform:translate(-5px,-3px) rotate(-1deg)}
-  25% {transform:translate(5px,3px) rotate(1deg)}
-  50% {transform:translate(-4px,5px) rotate(-.5deg)}
-  75% {transform:translate(4px,-5px) rotate(.5deg)}
-  100%{transform:translate(-5px,3px) rotate(-1deg)}
+  0%  {transform:translate(-8px,-5px) rotate(-1.5deg) scale(1.02)}
+  25% {transform:translate(8px,5px) rotate(1.5deg) scale(0.98)}
+  50% {transform:translate(-6px,8px) rotate(-.8deg) scale(1.03)}
+  75% {transform:translate(6px,-8px) rotate(.8deg) scale(0.97)}
+  100%{transform:translate(-8px,5px) rotate(-1.5deg) scale(1.01)}
+}
+
+/* face rush — full screen face slam */
+#face-rush {
+  position:fixed; inset:0; z-index:210000;
+  display:none; align-items:center; justify-content:center;
+  pointer-events:none;
+}
+#face-rush.show { display:flex; }
+.rush-face {
+  font-size:0px;
+  animation: rushZoom .5s ease-out forwards;
+  filter:drop-shadow(0 0 80px #ff0000);
+}
+@keyframes rushZoom {
+  0%   { font-size:40px; opacity:1; transform:scale(0.1); }
+  60%  { font-size:clamp(200px,50vw,600px); opacity:1; transform:scale(1.1); }
+  100% { font-size:clamp(200px,50vw,600px); opacity:0; transform:scale(1.4); }
+}
+
+/* cursor stalker — red eyes that follow */
+.stalker-eye {
+  position:fixed; pointer-events:none; z-index:190000;
+  font-size:48px; opacity:0;
+  transition:opacity .3s;
+  filter:drop-shadow(0 0 20px #ff0000);
+  animation:eyePulse 0.8s infinite alternate;
+}
+@keyframes eyePulse {
+  from{filter:drop-shadow(0 0 10px #ff0000)}
+  to{filter:drop-shadow(0 0 40px #ff0000)}
+}
+
+/* red screen flash */
+#red-flash {
+  position:fixed; inset:0; pointer-events:none; z-index:199999;
+  background:#ff0000; opacity:0; transition:opacity .04s;
 }
 
 /* ── VIGNETTE ── */
@@ -389,7 +428,11 @@ body::after {
 <div id="cursor"></div>
 <div id="vignette"></div>
 <div id="flash"></div>
+<div id="red-flash"></div>
 <div id="noise-overlay"></div>
+<div id="face-rush"><div class="rush-face" id="rush-face">😱</div></div>
+<div class="stalker-eye" id="stalker-l">👁️</div>
+<div class="stalker-eye" id="stalker-r">👁️</div>
 
 <!-- ████ ENTER SCREEN ████ -->
 <div id="enter-screen">
@@ -482,7 +525,7 @@ body::after {
 
 <script>
 // ════════════════════════════════════════
-// AUDIO ENGINE — Web Audio API synth screams
+// AUDIO ENGINE — MAXIMUM HORROR
 // ════════════════════════════════════════
 let audioCtx = null;
 function initAudio() {
@@ -490,100 +533,171 @@ function initAudio() {
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 }
 
+// Compressor to keep loud sounds from clipping to nothing
+function getMaster(vol=1) {
+  const comp = audioCtx.createDynamicsCompressor();
+  comp.threshold.value = -6; comp.knee.value = 3;
+  comp.ratio.value = 4; comp.attack.value = 0.001; comp.release.value = 0.1;
+  const g = audioCtx.createGain();
+  g.gain.value = Math.min(vol, 3.0);
+  g.connect(comp); comp.connect(audioCtx.destination);
+  return g;
+}
+
 function playScream(intensity = 1) {
   if (!audioCtx) return;
-  const master = audioCtx.createGain();
-  master.gain.setValueAtTime(0, audioCtx.currentTime);
-  master.gain.linearRampToValueAtTime(1.2 * intensity, audioCtx.currentTime + 0.01);
-  master.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 1.8);
-  master.connect(audioCtx.destination);
+  const master = getMaster(intensity * 2.5);
+  const now = audioCtx.currentTime;
 
-  // Layer 1 — high shriek
-  for (let h = 0; h < 6; h++) {
+  // LAYER 1 — brutal high-pitched shriek × 10 voices
+  for (let h = 0; h < 10; h++) {
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
-    osc.type = h % 2 === 0 ? 'sawtooth' : 'square';
-    const baseF = 800 + h * 200 + Math.random() * 400;
-    osc.frequency.setValueAtTime(baseF, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(baseF * 2.5 + Math.random()*800, audioCtx.currentTime + 0.3);
-    osc.frequency.exponentialRampToValueAtTime(baseF * 0.4, audioCtx.currentTime + 1.8);
-    g.gain.setValueAtTime(0.15 * intensity, audioCtx.currentTime);
+    osc.type = h % 3 === 0 ? 'sawtooth' : h % 3 === 1 ? 'square' : 'triangle';
+    const base = 600 + h * 180 + Math.random() * 500;
+    osc.frequency.setValueAtTime(base * 0.5, now);
+    osc.frequency.linearRampToValueAtTime(base * 3.5, now + 0.04);
+    osc.frequency.exponentialRampToValueAtTime(base * 1.8, now + 0.4);
+    osc.frequency.exponentialRampToValueAtTime(base * 0.3, now + 2.2);
+    g.gain.setValueAtTime(0, now);
+    g.gain.linearRampToValueAtTime(0.22 * intensity, now + 0.02);
+    g.gain.setValueAtTime(0.22 * intensity, now + 0.3);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 2.4);
     osc.connect(g); g.connect(master);
-    osc.start(); osc.stop(audioCtx.currentTime + 1.8);
+    osc.start(now); osc.stop(now + 2.5);
   }
 
-  // Layer 2 — low rumble
-  const rumble = audioCtx.createOscillator();
-  const rGain = audioCtx.createGain();
-  rumble.type = 'sawtooth';
-  rumble.frequency.setValueAtTime(60, audioCtx.currentTime);
-  rumble.frequency.exponentialRampToValueAtTime(30, audioCtx.currentTime + 2);
-  rGain.gain.setValueAtTime(0.4 * intensity, audioCtx.currentTime);
-  rGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 2);
-  rumble.connect(rGain); rGain.connect(master);
-  rumble.start(); rumble.stop(audioCtx.currentTime + 2);
+  // LAYER 2 — sub bass SLAM
+  for (let b = 0; b < 3; b++) {
+    const osc = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    osc.type = 'sawtooth';
+    osc.frequency.setValueAtTime(120 - b*20, now);
+    osc.frequency.exponentialRampToValueAtTime(20, now + 1.5);
+    g.gain.setValueAtTime(0.6 * intensity, now);
+    g.gain.exponentialRampToValueAtTime(0.001, now + 1.8);
+    osc.connect(g); g.connect(master);
+    osc.start(now); osc.stop(now + 2);
+  }
 
-  // Layer 3 — noise burst
-  const bufSize = audioCtx.sampleRate * 0.5;
-  const noiseBuffer = audioCtx.createBuffer(1, bufSize, audioCtx.sampleRate);
-  const data = noiseBuffer.getChannelData(0);
-  for (let i = 0; i < bufSize; i++) data[i] = (Math.random() * 2 - 1);
+  // LAYER 3 — white noise ROAR
+  const bufLen = audioCtx.sampleRate * 2.5;
+  const buf = audioCtx.createBuffer(2, bufLen, audioCtx.sampleRate);
+  for (let ch=0; ch<2; ch++) {
+    const d = buf.getChannelData(ch);
+    for (let i=0; i<bufLen; i++) d[i] = (Math.random()*2-1);
+  }
   const noise = audioCtx.createBufferSource();
-  noise.buffer = noiseBuffer;
+  noise.buffer = buf;
   const nGain = audioCtx.createGain();
-  nGain.gain.setValueAtTime(0.5 * intensity, audioCtx.currentTime);
-  nGain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.5);
-  const filter = audioCtx.createBiquadFilter();
-  filter.type = 'bandpass'; filter.frequency.value = 2000; filter.Q.value = 0.5;
-  noise.connect(filter); filter.connect(nGain); nGain.connect(master);
-  noise.start(); noise.stop(audioCtx.currentTime + 0.5);
+  nGain.gain.setValueAtTime(0, now);
+  nGain.gain.linearRampToValueAtTime(1.2 * intensity, now + 0.01);
+  nGain.gain.exponentialRampToValueAtTime(0.001, now + 2.5);
+  const bandpass = audioCtx.createBiquadFilter();
+  bandpass.type = 'bandpass'; bandpass.frequency.value = 3000; bandpass.Q.value = 0.3;
+  noise.connect(bandpass); bandpass.connect(nGain); nGain.connect(master);
+  noise.start(now); noise.stop(now + 2.5);
+
+  // LAYER 4 — ultra-high pitch screech
+  const screech = audioCtx.createOscillator();
+  const sGain = audioCtx.createGain();
+  screech.type = 'square';
+  screech.frequency.setValueAtTime(4000, now);
+  screech.frequency.linearRampToValueAtTime(8000, now + 0.08);
+  screech.frequency.exponentialRampToValueAtTime(2000, now + 0.5);
+  sGain.gain.setValueAtTime(0, now);
+  sGain.gain.linearRampToValueAtTime(0.4*intensity, now+0.01);
+  sGain.gain.exponentialRampToValueAtTime(0.001, now+0.6);
+  screech.connect(sGain); sGain.connect(master);
+  screech.start(now); screech.stop(now+0.7);
+
+  // LAYER 5 — repeated stutter
+  for(let s=0; s<6; s++){
+    const st = audioCtx.createOscillator();
+    const sg = audioCtx.createGain();
+    st.type = 'sawtooth';
+    st.frequency.value = 300 + Math.random()*800;
+    const t2 = now + s*0.06;
+    sg.gain.setValueAtTime(0.3*intensity, t2);
+    sg.gain.exponentialRampToValueAtTime(0.001, t2+0.05);
+    st.connect(sg); sg.connect(master);
+    st.start(t2); st.stop(t2+0.06);
+  }
 }
 
 function playCreak() {
   if (!audioCtx) return;
+  const master = getMaster(0.8);
+  const now = audioCtx.currentTime;
   const osc = audioCtx.createOscillator();
   const g = audioCtx.createGain();
   osc.type = 'sawtooth';
-  osc.frequency.setValueAtTime(200 + Math.random()*100, audioCtx.currentTime);
-  osc.frequency.linearRampToValueAtTime(80 + Math.random()*60, audioCtx.currentTime + 0.8);
-  g.gain.setValueAtTime(0.3, audioCtx.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.9);
-  osc.connect(g); g.connect(audioCtx.destination);
-  osc.start(); osc.stop(audioCtx.currentTime + 0.9);
+  osc.frequency.setValueAtTime(300+Math.random()*100, now);
+  osc.frequency.linearRampToValueAtTime(60+Math.random()*40, now+1.2);
+  g.gain.setValueAtTime(0.5, now);
+  g.gain.exponentialRampToValueAtTime(0.001, now+1.3);
+  osc.connect(g); g.connect(master);
+  osc.start(now); osc.stop(now+1.4);
 }
 
 function playHeartbeat() {
   if (!audioCtx) return;
+  const master = getMaster(1.5);
   const beat = (t, freq) => {
     const osc = audioCtx.createOscillator();
     const g = audioCtx.createGain();
-    osc.frequency.value = freq;
-    osc.type = 'sine';
+    osc.frequency.value = freq; osc.type = 'sine';
     g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.8, t + 0.03);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.25);
-    osc.connect(g); g.connect(audioCtx.destination);
-    osc.start(t); osc.stop(t + 0.3);
+    g.gain.linearRampToValueAtTime(1.0, t+0.03);
+    g.gain.exponentialRampToValueAtTime(0.001, t+0.3);
+    osc.connect(g); g.connect(master);
+    osc.start(t); osc.stop(t+0.35);
   };
   const now = audioCtx.currentTime;
-  beat(now, 80); beat(now + 0.2, 60);
-  beat(now + 0.8, 80); beat(now + 1.0, 60);
+  beat(now, 90); beat(now+0.22, 65);
+  beat(now+0.9, 90); beat(now+1.12, 65);
 }
 
 function playWhisper() {
   if (!audioCtx) return;
-  for (let i = 0; i < 4; i++) {
-    const osc = audioCtx.createOscillator();
+  const master = getMaster(0.6);
+  const now = audioCtx.currentTime;
+  for (let i=0; i<8; i++) {
+    const bufLen = audioCtx.sampleRate * 0.4;
+    const buf = audioCtx.createBuffer(1, bufLen, audioCtx.sampleRate);
+    const d = buf.getChannelData(0);
+    for(let j=0;j<bufLen;j++) d[j]=(Math.random()*2-1)*0.3;
+    const src = audioCtx.createBufferSource();
+    src.buffer = buf;
     const g = audioCtx.createGain();
-    osc.type = 'sine';
-    osc.frequency.value = 200 + Math.random()*300;
-    const t = audioCtx.currentTime + i * 0.15;
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.15, t + 0.05);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
-    osc.connect(g); g.connect(audioCtx.destination);
-    osc.start(t); osc.stop(t + 0.7);
+    const t2 = now + i*0.12;
+    g.gain.setValueAtTime(0, t2);
+    g.gain.linearRampToValueAtTime(0.4, t2+0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, t2+0.4);
+    const filt = audioCtx.createBiquadFilter();
+    filt.type='bandpass'; filt.frequency.value=400+Math.random()*600; filt.Q.value=2;
+    src.connect(filt); filt.connect(g); g.connect(master);
+    src.start(t2); src.stop(t2+0.5);
   }
+}
+
+function playJumpscareStinger() {
+  if (!audioCtx) return;
+  // Extra loud instant attack stinger for jumpscares
+  const master = getMaster(3.0);
+  const now = audioCtx.currentTime;
+  // Instant impact
+  const impact = audioCtx.createOscillator();
+  const iGain = audioCtx.createGain();
+  impact.type = 'sawtooth';
+  impact.frequency.setValueAtTime(80, now);
+  impact.frequency.exponentialRampToValueAtTime(25, now+0.1);
+  iGain.gain.setValueAtTime(1.5, now);
+  iGain.gain.exponentialRampToValueAtTime(0.001, now+0.15);
+  impact.connect(iGain); iGain.connect(master);
+  impact.start(now); impact.stop(now+0.2);
+  // Then scream
+  setTimeout(() => playScream(2.0), 20);
 }
 
 // ════════════════════════════════════════
@@ -646,6 +760,9 @@ function enterSite() {
     buildDrips();
     startAmbience();
     scheduleJumpscares();
+    // FIRST JUMPSCARE — hits fast
+    setTimeout(()=>triggerFaceRush(), 3000);
+    setTimeout(()=>triggerJumpscare('intro'), 7000);
   }, 900);
 }
 
@@ -790,7 +907,8 @@ function buildFaceGrid() {
 }
 
 function cellJumpscare(idx) {
-  triggerJumpscare('cell', idx);
+  if(Math.random()>0.5) triggerFaceRush();
+  else triggerJumpscare('cell');
 }
 
 // ════════════════════════════════════════
@@ -1036,126 +1154,227 @@ function startAmbience() {
 }
 
 // ════════════════════════════════════════
-// JUMPSCARE SYSTEM
+// JUMPSCARE SYSTEM — MAXIMUM TERROR
 // ════════════════════════════════════════
 const JUMPSCARES = [
-  {emoji:'💀',text:'YOU ARE DEAD',color:'#ff0000'},
-  {emoji:'👁️',text:'I SEE YOU',color:'#ff3300'},
-  {emoji:'🕷️',text:'IT FOUND YOU',color:'#cc0000'},
-  {emoji:'👻',text:'GET OUT NOW',color:'#ff0000'},
-  {emoji:'😱',text:'RUN.',color:'#ff2200'},
-  {emoji:'🩸',text:'THERE IS NO ESCAPE',color:'#880000'},
-  {emoji:'💀',text:'HAHAHAHAHA',color:'#ff4400'},
-  {emoji:'👁️',text:'BEHIND YOU',color:'#ff0000'},
+  {emoji:'💀',text:'YOU ARE DEAD',dur:1800},
+  {emoji:'👁️',text:'I SEE YOU',dur:1600},
+  {emoji:'🕷️',text:'IT FOUND YOU',dur:1500},
+  {emoji:'👻',text:'GET OUT NOW',dur:2000},
+  {emoji:'😱',text:'RUN.',dur:1400},
+  {emoji:'🩸',text:'NO ESCAPE',dur:1700},
+  {emoji:'💀',text:'HAHAHAHAHA',dur:1600},
+  {emoji:'👁️',text:'BEHIND YOU',dur:1500},
+  {emoji:'🦷',text:'IT SMELLS YOU',dur:1800},
+  {emoji:'🖤',text:'TOO LATE',dur:1400},
 ];
 
-let jsQueue = [...JUMPSCARES];
+const RUSH_FACES = ['😱','💀','👁️','🕷️','👻','🩸'];
+
 let jsActive = false;
 const jsOverlay = document.getElementById('js-overlay');
 const jsCanvasMain = document.getElementById('js-canvas-main');
-let jsRenderer = null, jsScene = null;
+let jsRenderer = null;
 
-function triggerJumpscare(source='auto', idx=0) {
+function triggerJumpscare(source='auto') {
   if(jsActive) return;
   jsActive = true;
   initAudio();
 
-  const js = jsQueue[Math.floor(Math.random()*jsQueue.length)];
+  const js = JUMPSCARES[Math.floor(Math.random()*JUMPSCARES.length)];
   document.getElementById('js-emoji').textContent = js.emoji;
   document.getElementById('js-txt').textContent = js.text;
-  document.getElementById('js-txt').style.color = js.color;
 
-  // Screen flash
+  // ── triple white flash
   const flash = document.getElementById('flash');
-  flash.style.opacity = '1';
-  setTimeout(()=>flash.style.opacity='0', 60);
-  setTimeout(()=>{flash.style.opacity='1';},120);
-  setTimeout(()=>flash.style.opacity='0', 180);
+  const redFlash = document.getElementById('red-flash');
+  flash.style.opacity='1'; setTimeout(()=>flash.style.opacity='0',50);
+  setTimeout(()=>{flash.style.opacity='1';},100);
+  setTimeout(()=>{flash.style.opacity='0';},160);
+  setTimeout(()=>{flash.style.opacity='1';},220);
+  setTimeout(()=>{flash.style.opacity='0';},280);
+  // red flash
+  setTimeout(()=>{redFlash.style.opacity='0.7';},300);
+  setTimeout(()=>{redFlash.style.opacity='0';},600);
 
-  // Noise overlay
+  // noise
   const noise = document.getElementById('noise-overlay');
-  noise.style.opacity = '0.8';
-  setTimeout(()=>noise.style.opacity='0', 800);
+  noise.style.opacity='1';
+  setTimeout(()=>noise.style.opacity='0', 1000);
 
-  // Screen shake
-  document.body.style.animation='screenShake .1s infinite';
+  // screen shake
+  document.body.style.animation='screenShake .08s infinite';
 
-  // Sound
-  playScream(1.5);
+  // LOUD SOUND
+  playJumpscareStinger();
 
+  // show overlay
   jsOverlay.classList.add('show');
 
-  // 3D jumpscare scene
-  if(jsRenderer) { jsRenderer.dispose(); jsRenderer=null; }
+  // 3D explosion in overlay
+  if(jsRenderer){jsRenderer.dispose();jsRenderer=null;}
   const W=window.innerWidth, H=window.innerHeight;
-  jsRenderer = new THREE.WebGLRenderer({canvas:jsCanvasMain, alpha:true, antialias:true});
+  jsRenderer=new THREE.WebGLRenderer({canvas:jsCanvasMain,alpha:true,antialias:true});
   jsRenderer.setSize(W,H);
-  jsScene = new THREE.Scene();
-  const jsCam = new THREE.PerspectiveCamera(80,W/H,.1,100);
-  jsCam.position.z=5;
+  const sc=new THREE.Scene();
+  const cam=new THREE.PerspectiveCamera(80,W/H,.1,100);
+  cam.position.z=5;
 
-  // Explosion of shapes
-  const jsShapes=[];
-  for(let i=0;i<30;i++){
-    const geos=[new THREE.IcosahedronGeometry(0.3+Math.random()*.5,0),new THREE.OctahedronGeometry(0.4+Math.random()*.4),new THREE.BoxGeometry(0.3+Math.random()*.5,0.3+Math.random()*.5,0.3)];
-    const g=geos[Math.floor(Math.random()*geos.length)];
-    const m=new THREE.MeshBasicMaterial({color:Math.random()>.5?0xff0000:0x8b0000,wireframe:true,transparent:true,opacity:.9});
+  const shapes=[];
+  for(let i=0;i<50;i++){
+    const gList=[new THREE.IcosahedronGeometry(.4+Math.random()*.8,0),new THREE.OctahedronGeometry(.5+Math.random()*.6),new THREE.BoxGeometry(.4+Math.random()*.7,.4+Math.random()*.7,.3)];
+    const g=gList[i%3];
+    const m=new THREE.MeshBasicMaterial({color:i%2===0?0xff0000:0x8b0000,wireframe:true,transparent:true,opacity:1});
     const mesh=new THREE.Mesh(g,m);
-    mesh.position.set((Math.random()-.5)*8,(Math.random()-.5)*8,(Math.random()-.5)*4);
-    mesh.userData={vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,vz:(Math.random()-.5)*.2};
-    jsScene.add(mesh); jsShapes.push(mesh);
+    const angle=Math.random()*Math.PI*2;
+    const speed=3+Math.random()*4;
+    mesh.position.set(0,0,0);
+    mesh.userData={vx:Math.cos(angle)*speed*.1,vy:Math.sin(angle)*speed*.1,vz:(Math.random()-.5)*speed*.1};
+    sc.add(mesh); shapes.push(mesh);
   }
+  // Central face geometry
+  const faceGeo=new THREE.IcosahedronGeometry(2.5,2);
+  const faceMesh=new THREE.Mesh(faceGeo,new THREE.MeshBasicMaterial({color:0xff0000,wireframe:true,transparent:true,opacity:0.7}));
+  sc.add(faceMesh);
+  const eyeL=new THREE.Mesh(new THREE.SphereGeometry(.4,8,8),new THREE.MeshBasicMaterial({color:0xffffff}));
+  const eyeR=eyeL.clone();
+  eyeL.position.set(-0.8,.5,2.3); eyeR.position.set(.8,.5,2.3); sc.add(eyeL,eyeR);
 
   let jt=0;
-  (function jsLoop(){
-    if(!jsActive){return;}
-    requestAnimationFrame(jsLoop);
-    jt+=0.05;
-    jsShapes.forEach(m=>{
+  (function jloop(){
+    if(!jsActive) return;
+    requestAnimationFrame(jloop); jt+=0.05;
+    shapes.forEach(m=>{
       m.position.x+=m.userData.vx;
       m.position.y+=m.userData.vy;
       m.position.z+=m.userData.vz;
-      m.rotation.x+=0.05; m.rotation.y+=0.07;
-      m.material.opacity=Math.max(0,m.material.opacity-.005);
+      m.rotation.x+=0.08; m.rotation.y+=0.1;
+      if(m.material.opacity>0) m.material.opacity-=0.008;
     });
-    jsRenderer.render(jsScene,jsCam);
+    faceMesh.rotation.y+=0.04; faceMesh.rotation.x+=0.02;
+    faceMesh.scale.setScalar(1+Math.sin(jt*8)*0.06);
+    eyeL.material.color.setHSL(0,1,.4+Math.sin(jt*10)*.5);
+    eyeR.material.color.copy(eyeL.material.color);
+    jsRenderer.render(sc,cam);
   })();
 
-  const dur = source==='cell' ? 1000 : 1600;
   setTimeout(()=>{
     jsOverlay.classList.remove('show');
     document.body.style.animation='';
     jsActive=false;
     if(jsRenderer){jsRenderer.dispose();jsRenderer=null;}
-  }, dur);
+  }, js.dur);
 }
 
+// Face rush — emoji SLAMS toward screen
+function triggerFaceRush() {
+  if(jsActive) return;
+  const rush=document.getElementById('face-rush');
+  const face=document.getElementById('rush-face');
+  face.textContent=RUSH_FACES[Math.floor(Math.random()*RUSH_FACES.length)];
+  rush.classList.add('show');
+  // rebuild animation
+  face.classList.remove('rush-anim');
+  void face.offsetWidth;
+  face.style.animation='none';
+  void face.offsetWidth;
+  face.style.animation='rushZoom .55s ease-out forwards';
+  initAudio(); playScream(1.8);
+  const flash=document.getElementById('flash');
+  flash.style.opacity='1'; setTimeout(()=>flash.style.opacity='0',80);
+  setTimeout(()=>rush.classList.remove('show'), 700);
+}
+
+// Cursor stalker — ghost eyes drift toward cursor
+let stalkerActive=false, stalkerX=window.innerWidth/2, stalkerY=window.innerHeight/2;
+let csX=window.innerWidth*0.3, csY=window.innerHeight*0.3;
+let csX2=window.innerWidth*0.7, csY2=window.innerHeight*0.6;
+function activateStalker() {
+  stalkerActive=true;
+  const eL=document.getElementById('stalker-l');
+  const eR=document.getElementById('stalker-r');
+  eL.style.opacity='1'; eR.style.opacity='1';
+  initAudio(); playWhisper();
+  setTimeout(()=>{ eL.style.opacity='0'; eR.style.opacity='0'; stalkerActive=false; }, 4000);
+}
+document.addEventListener('mousemove',e=>{ stalkerX=e.clientX; stalkerY=e.clientY; });
+(function stalkerLoop(){
+  requestAnimationFrame(stalkerLoop);
+  if(!stalkerActive) return;
+  const eL=document.getElementById('stalker-l');
+  const eR=document.getElementById('stalker-r');
+  csX+=(stalkerX-48-csX)*0.02;
+  csY+=(stalkerY-48-csY)*0.02;
+  csX2+=(stalkerX+48-csX2)*0.025;
+  csY2+=(stalkerY+48-csY2)*0.025;
+  eL.style.left=csX+'px'; eL.style.top=csY+'px';
+  eR.style.left=csX2+'px'; eR.style.top=csY2+'px';
+})();
+
 // ════════════════════════════════════════
-// SCROLL-BASED JUMPSCARES
+// IDLE DETECTION — scare when user stops
+// ════════════════════════════════════════
+let lastMove=Date.now(), idleWarned=false;
+document.addEventListener('mousemove',()=>{ lastMove=Date.now(); idleWarned=false; });
+setInterval(()=>{
+  const idle=Date.now()-lastMove;
+  if(idle>8000 && !idleWarned && !jsActive){
+    idleWarned=true;
+    activateStalker();
+    setTimeout(()=>{ if(!jsActive) triggerJumpscare('idle'); }, 2500);
+  }
+},1000);
+
+// ════════════════════════════════════════
+// SCROLL-BASED JUMPSCARES — every section
 // ════════════════════════════════════════
 function scheduleJumpscares() {
-  const sections = ['s-faces','s-corridor','s-eyes','s-blood','s-breathing','s-mirror'];
-  const triggered = new Set();
-
-  const io = new IntersectionObserver(entries=>{
+  const triggered=new Set();
+  // Rapid scroll detection — jumpscare on EVERY section enter
+  const io=new IntersectionObserver(entries=>{
     entries.forEach(e=>{
       if(e.isIntersecting && !triggered.has(e.target.id)){
         triggered.add(e.target.id);
-        const delay = Math.random()*2000 + 800;
-        setTimeout(()=> triggerJumpscare('scroll'), delay);
+        // Random type: full jumpscare OR face rush
+        const delay=400+Math.random()*1200;
+        setTimeout(()=>{
+          if(Math.random()>.4) triggerJumpscare('scroll');
+          else triggerFaceRush();
+        }, delay);
       }
     });
-  }, {threshold:0.4});
+  },{threshold:0.3});
+  ['s-faces','s-corridor','s-eyes','s-blood','s-breathing','s-mirror','s-end']
+    .forEach(id=>{ const el=document.getElementById(id); if(el) io.observe(el); });
 
-  sections.forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) io.observe(el);
+  // Frequent random jumpscares — every 8–15 seconds
+  const randomJs = () => {
+    const delay = 8000+Math.random()*7000;
+    setTimeout(()=>{
+      if(!jsActive){
+        const roll=Math.random();
+        if(roll<0.33) triggerJumpscare('timer');
+        else if(roll<0.66) triggerFaceRush();
+        else activateStalker();
+      }
+      randomJs(); // reschedule
+    }, delay);
+  };
+  randomJs();
+
+  // Extra: jumpscare on click anywhere (30% chance)
+  document.addEventListener('click',()=>{
+    if(!jsActive && Math.random()<0.3) {
+      setTimeout(()=>triggerFaceRush(), 300+Math.random()*800);
+    }
   });
 
-  // Also time-based random ones
-  setInterval(()=>{
-    if(!jsActive && Math.random()>.65) triggerJumpscare('timer');
-  }, 18000);
+  // Jumpscare when tab becomes visible again
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden && !jsActive) {
+      setTimeout(()=>triggerJumpscare('tab'), 600);
+    }
+  });
 }
 
 // ════════════════════════════════════════
