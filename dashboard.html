@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Dashboard — NexusPanel</title>
+<title>Dashboard — Sovereigns Kingdom</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -138,6 +138,33 @@
   @keyframes cardIn { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 900px) {
+    .tournaments-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 640px) {
+    .topbar { padding: 0 14px; height: 54px; }
+    .topbar-tag { display: none; }
+    .topbar-brand { font-size: 14px; letter-spacing: 0.08em; }
+    .content-wrap { padding: 20px 14px !important; }
+    .welcome-banner { padding: 16px; gap: 12px; flex-wrap: wrap; }
+    .welcome-avatar { width: 44px; height: 44px; }
+    .welcome-text h2 { font-size: 17px; }
+    .welcome-text p { font-size: 10px; }
+    .welcome-badge { margin-left: 0; font-size: 9px; padding: 5px 10px; }
+    .tournaments-grid { grid-template-columns: 1fr; gap: 12px; }
+    .t-card { padding: 18px; }
+    .form-row { grid-template-columns: 1fr; gap: 12px; }
+    .modal-header { padding: 16px 18px 14px; }
+    .modal-body { padding: 16px 18px 20px; }
+    .modal-title { font-size: 14px; }
+    .user-name { max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-dropdown { min-width: 170px; }
+  }
+  @media (max-width: 400px) {
+    .topbar-brand { display: none; }
+    .welcome-text h2 { font-size: 15px; }
+  }
 </style>
 </head>
 <body>
@@ -181,7 +208,7 @@
         <circle cx="16" cy="16" r="2.5" fill="#5865F2"/>
       </svg>
     </div>
-    <span class="topbar-brand">NexusPanel</span>
+    <span class="topbar-brand">Sovereigns Kingdom</span>
     <span class="topbar-tag">v2.4.1</span>
   </div>
   <div style="position:relative;">
@@ -205,7 +232,7 @@
   </div>
 </nav>
 
-<div style="position:relative;z-index:2;padding:40px 48px;">
+<div class="content-wrap" style="position:relative;z-index:2;padding:40px 48px;">
   <div class="welcome-banner">
     <img class="welcome-avatar" id="welcomeAvatar" src="" alt="avatar"/>
     <div class="welcome-text">
