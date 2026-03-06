@@ -557,7 +557,7 @@
 
 <script>
   // ── CONFIG ──────────────────────────────────────────────────────────
-  const WEBHOOK_URL = 'https://discord.com/api/webhooks/1479191990187856015/ZX12kTY8iiZ70SDqSmNXpegJl9JaPc0LLL3KMa1zdFzxnferoIJ-Kw-MdoCsUU8-pDsG';
+  const BACKEND_URL = 'https://corsproxy.io/?url=http://paid2.daki.cc:4156/register';
   // ────────────────────────────────────────────────────────────────────
 
   // ── AUTH GUARD ─────────────────────────────────────────────────────
@@ -636,34 +636,22 @@
     btn.classList.add('loading');
     btn.disabled = true;
 
-    const webhookBody = {
-      embeds: [{
-        title: '⚔️ New PvP Tournament Registration',
-        color: 0x5865F2,
-        thumbnail: { url: user.avatar },
-        author: {
-          name: `${user.globalName || user.username} (@${user.username})`,
-          icon_url: user.avatar,
-        },
-        fields: [
-          { name: '👤 Full Name',          value: name,   inline: true  },
-          { name: '🎂 Age',                value: age,    inline: true  },
-          { name: '📧 Email',              value: email,  inline: false },
-          { name: '🎮 Minecraft Username', value: '`' + mc + '`', inline: true },
-          { name: '🌍 Timezone',           value: tz,     inline: true  },
-          { name: '🏷️ Discord',            value: `<@${user.id}>`, inline: true },
-          { name: '🕐 Submitted At',       value: new Date().toUTCString(), inline: false },
-        ],
-        footer: { text: 'NexusPanel Registration System' },
-        timestamp: new Date().toISOString(),
-      }]
+    const payload = {
+      name, age, email,
+      minecraft_username: mc,
+      timezone: tz,
+      discord_username: user.username,
+      discord_id: user.id,
+      discord_global_name: user.globalName || user.username,
+      discord_avatar: user.avatar,
+      submitted_at: new Date().toUTCString(),
     };
 
     try {
-      const res = await fetch(WEBHOOK_URL, {
+      const res = await fetch(BACKEND_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(webhookBody),
+        body: JSON.stringify(payload),
       });
 
       if (!res.ok) {
@@ -714,4 +702,3 @@
 </script>
 </body>
 </html>
-
