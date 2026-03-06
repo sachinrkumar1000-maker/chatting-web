@@ -198,8 +198,14 @@
       <div class="pill-arrow">▾</div>
     </div>
     <div class="user-dropdown" id="userDropdown">
+      <a href="profile.html" class="dropdown-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> My Profile
+      </a>
       <a href="my-registrations.html" class="dropdown-item">
         <svg><use href="#icon-list"/></svg> My Registrations
+      </a>
+      <a href="leaderboard.html" class="dropdown-item">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M6 9H4a2 2 0 01-2-2V5h4M18 9h2a2 2 0 002-2V5h-4"/><path d="M6 5h12v6a6 6 0 01-12 0V5z"/><path d="M12 17v4M8 21h8"/></svg> Leaderboard
       </a>
       <div class="dropdown-divider"></div>
       <button class="dropdown-item danger" onclick="logout()">
@@ -238,8 +244,14 @@ const displayName = user.globalName || user.username;
 document.getElementById('topAvatar').src = user.avatar;
 document.getElementById('topUsername').textContent = displayName;
 
-function getMyRegs() { return JSON.parse(localStorage.getItem('my_registrations') || '{}'); }
-function removeReg(id) { const r = getMyRegs(); delete r[id]; localStorage.setItem('my_registrations', JSON.stringify(r)); }
+function getMyRegs() { return JSON.parse(localStorage.getItem('regs_' + user.id) || '{}'); }
+function removeReg(id) { const r = getMyRegs(); delete r[id]; localStorage.setItem('regs_' + user.id, JSON.stringify(r)); }
+function getHistory() { return JSON.parse(localStorage.getItem('hist_' + user.id) || '[]'); }
+function logHistory(action, tournamentId, tournamentName, extra) {
+  const h = getHistory();
+  h.unshift({ action, tournamentId, tournamentName, timestamp: new Date().toISOString(), ...extra });
+  localStorage.setItem('hist_' + user.id, JSON.stringify(h.slice(0, 200)));
+}
 
 function renderRegs() {
   const myRegs = getMyRegs();
@@ -356,6 +368,7 @@ async function confirmCancel(tid) {
     });
   } catch(e) { console.warn('Cancel notify failed:', e); }
 
+  logHistory('cancelled', tid, t.name, { game_username: reg.game_username });
   removeReg(tid);
   const card = document.getElementById(`card-${tid}`);
   card.style.transition = 'opacity 0.4s, transform 0.4s';
@@ -369,7 +382,7 @@ document.addEventListener('click', e => {
   if (!document.getElementById('userPill').contains(e.target))
     document.getElementById('userDropdown').classList.remove('open');
 });
-function logout() { localStorage.removeItem('discord_user'); window.location.href = 'index.html'; }
+function logout() { localStorage.removeItem('discord_user'); localStorage.removeItem('regs_' + user.id); window.location.href = 'index.html'; }
 
 renderRegs();
 
