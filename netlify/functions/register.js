@@ -1,29 +1,29 @@
 // netlify/functions/register.js
+const BACKEND = 'http://paid2.daki.cc:4156';
+
 exports.handler = async (event) => {
-  if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: 'Method Not Allowed' };
-  }
+  const headers = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };
 
   try {
-    const data = JSON.parse(event.body);
+    if (event.httpMethod === 'GET') {
+      // Fetch tournament state + winners
+      const res = await fetch(`${BACKEND}/state`);
+      const data = await res.json();
+      return { statusCode: 200, headers, body: JSON.stringify(data) };
+    }
 
-    const response = await fetch('http://paid2.daki.cc:4156/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
+    if (event.httpMethod === 'POST') {
+      const res = await fetch(`${BACKEND}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: event.body,
+      });
+      const data = await res.json();
+      return { statusCode: res.status, headers, body: JSON.stringify(data) };
+    }
 
-    const result = await response.json();
-    return {
-      statusCode: 200,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify(result),
-    };
+    return { statusCode: 405, headers, body: JSON.stringify({ error: 'Method not allowed' }) };
   } catch (err) {
-    return {
-      statusCode: 500,
-      headers: { 'Access-Control-Allow-Origin': '*' },
-      body: JSON.stringify({ error: err.message }),
-    };
+    return { statusCode: 500, headers, body: JSON.stringify({ error: err.message }) };
   }
 };
