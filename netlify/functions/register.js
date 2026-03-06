@@ -5,13 +5,31 @@ exports.handler = async (event) => {
   const headers = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };
 
   try {
-    if (event.httpMethod === 'GET') {
-      // Fetch tournament state + winners
+    const path = event.path.replace('/.netlify/functions/register', '') || '/';
+
+    // GET /state
+    if (event.httpMethod === 'GET' && (path === '/' || path === '')) {
       const res = await fetch(`${BACKEND}/state`);
       const data = await res.json();
       return { statusCode: 200, headers, body: JSON.stringify(data) };
     }
 
+    // GET /history/:discord_id
+    if (event.httpMethod === 'GET' && path.startsWith('/history/')) {
+      const discordId = path.replace('/history/', '');
+      const res = await fetch(`${BACKEND}/history/${discordId}`);
+      const data = await res.json();
+      return { statusCode: 200, headers, body: JSON.stringify(data) };
+    }
+
+    // GET /leaderboard
+    if (event.httpMethod === 'GET' && path === '/leaderboard') {
+      const res = await fetch(`${BACKEND}/leaderboard`);
+      const data = await res.json();
+      return { statusCode: 200, headers, body: JSON.stringify(data) };
+    }
+
+    // POST (register/cancel)
     if (event.httpMethod === 'POST') {
       const res = await fetch(`${BACKEND}/register`, {
         method: 'POST',
