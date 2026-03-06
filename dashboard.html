@@ -340,12 +340,23 @@
 </div>
 
 <script>
-const TOURNAMENTS = [
-  { id:'minecraft-pvp', name:'Minecraft PvP',    game:'Minecraft', iconHref:'#icon-sword',  color:'#22c55e' },
-  { id:'valorant',      name:'Valorant',          game:'Valorant',  iconHref:'#icon-target', color:'#ff4655' },
-  { id:'roblox',        name:'Roblox',            game:'Roblox',    iconHref:'#icon-grid',   color:'#f9c74f' },
-  { id:'fortnite',      name:'Fortnite',          game:'Fortnite',  iconHref:'#icon-zap',    color:'#00d4ff' },
-];
+// TOURNAMENTS are loaded dynamically from the server
+// Fallback icon map from bot icon keys -> SVG href
+const ICON_MAP = {
+  sword:  '#icon-sword',
+  target: '#icon-target',
+  grid:   '#icon-grid',
+  zap:    '#icon-zap',
+  shield: '#icon-sword',
+  star:   '#icon-zap',
+  bolt:   '#icon-zap',
+};
+
+function hexColor(n) {
+  return '#' + (n >>> 0).toString(16).padStart(6, '0');
+}
+
+let TOURNAMENTS = []; // populated after fetching state
 
 const raw = localStorage.getItem('discord_user');
 if (!raw) { window.location.href = 'index.html'; }
@@ -372,8 +383,18 @@ async function fetchState() {
     const res = await fetch('/.netlify/functions/register');
     if (res.ok) {
       const data = await res.json();
-      serverState   = data.state   || {};
-      serverWinners = data.winners || {};
+      serverState   = data.state       || {};
+      serverWinners = data.winners     || {};
+
+      // Build TOURNAMENTS array from server data
+      const serverTournaments = data.tournaments || {};
+      TOURNAMENTS = Object.entries(serverTournaments).map(([id, t]) => ({
+        id,
+        name:     t.name,
+        game:     t.name, // used as label
+        iconHref: ICON_MAP[t.icon] || '#icon-zap',
+        color:    hexColor(t.color || 0x5865F2),
+      }));
     }
   } catch(e) { console.warn('Could not fetch state:', e); }
 }
@@ -421,8 +442,8 @@ function renderCards() {
         </div>
         <div class="t-status ${statusClass}">${statusLabel}</div>
       </div>
-      <div class="t-name">${t.name} Tournament</div>
-      <div class="t-game">// ${t.game.toUpperCase()}</div>
+      <div class="t-name">${t.name}</div>
+      <div class="t-game">// TOURNAMENT</div>
       ${btnHtml}
     `;
     grid.appendChild(card);
@@ -476,7 +497,7 @@ function renderWinners() {
     block.innerHTML = `
       <div class="winners-tournament-header">
         <svg width="16" height="16" style="color:${t.color}"><use href="${t.iconHref}"/></svg>
-        <div class="winners-tournament-name">${t.name} Tournament</div>
+        <div class="winners-tournament-name">${t.name}</div>
       </div>
       <div class="winners-podium">${podiumHtml}</div>
     `;
@@ -488,6 +509,9 @@ function renderWinners() {
 
 // ── INIT ──
 async function init() {
+  // Show loading placeholder
+  document.getElementById('tournamentsGrid').innerHTML =
+    '<div style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.15em;padding:20px 0;">LOADING TOURNAMENTS...</div>';
   await fetchState();
   renderCards();
   renderWinners();
@@ -499,8 +523,8 @@ function openModal(tid) {
   activeTournamentId = tid;
   const t = TOURNAMENTS.find(x => x.id === tid);
   document.getElementById('modalIcon').innerHTML = `<use href="${t.iconHref}"/>`;
-  document.getElementById('modalTitle').childNodes[1].textContent = ` ${t.name} Tournament`;
-  document.getElementById('modalSub').textContent = `${t.game.toUpperCase()} // REGISTRATION`;
+  document.getElementById('modalTitle').childNodes[1].textContent = ` ${t.name}`;
+  document.getElementById('modalSub').textContent = `${t.name.toUpperCase()} // REGISTRATION`;
   document.getElementById('fDiscord').value = user.username;
   ['fName','fAge','fEmail','fMC'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('fTZ').value = '';
@@ -539,8 +563,8 @@ async function submitForm() {
     discord_avatar: user.avatar,
     submitted_at: new Date().toUTCString(),
     tournament_id: activeTournamentId,
-    tournament_name: t.name + ' Tournament',
-    game: t.game, action: 'register',
+    tournament_name: t.name,
+    game: t.name, action: 'register',
   };
 
   try {
