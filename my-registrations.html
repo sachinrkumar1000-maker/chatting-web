@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>My Registrations — NexusPanel</title>
+<title>My Registrations — Sovereigns Kingdom</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -100,6 +100,28 @@
   @keyframes cardIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  @media (max-width: 640px) {
+    .topbar { padding: 0 14px; height: 54px; }
+    .topbar-tag { display: none; }
+    .topbar-brand { font-size: 14px; letter-spacing: 0.08em; }
+    .back-btn { padding: 5px 10px; font-size: 10px; }
+    .content { padding: 20px 14px; }
+    .page-title { font-size: 20px; }
+    .page-sub { font-size: 10px; }
+    .reg-card { flex-wrap: wrap; gap: 12px; padding: 16px 18px; }
+    .reg-icon { margin-left: 0; }
+    .reg-info { min-width: 0; flex: 1 1 100%; order: 2; }
+    .reg-actions { width: 100%; order: 3; flex-direction: row; flex-wrap: wrap; gap: 8px; }
+    .cancel-btn, .confirm-btn { font-size: 11px; padding: 7px 12px; }
+    .reg-meta { gap: 10px; }
+    .user-name { max-width: 70px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .user-dropdown { min-width: 170px; }
+  }
+  @media (max-width: 400px) {
+    .topbar-brand { display: none; }
+    .page-title { font-size: 17px; }
+  }
 </style>
 </head>
 <body>
@@ -160,7 +182,7 @@
         <circle cx="16" cy="16" r="2.5" fill="#5865F2"/>
       </svg>
     </div>
-    <span class="topbar-brand">NexusPanel</span>
+    <span class="topbar-brand">Sovereigns Kingdom</span>
     <span class="topbar-tag">v2.4.1</span>
     <a href="dashboard.html" class="back-btn">
       <svg><use href="#icon-arrow-left"/></svg> Dashboard
