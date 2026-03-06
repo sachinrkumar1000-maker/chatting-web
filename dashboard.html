@@ -221,6 +221,12 @@
   <symbol id="icon-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
     <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
   </symbol>
+  <symbol id="icon-user" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/>
+  </symbol>
+  <symbol id="icon-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 9H4a2 2 0 01-2-2V5h4M18 9h2a2 2 0 002-2V5h-4"/><path d="M6 5h12v6a6 6 0 01-12 0V5z"/><path d="M12 17v4M8 21h8"/>
+  </symbol>
 </svg>
 
 <!-- TOPBAR -->
@@ -236,6 +242,11 @@
     <span class="topbar-brand">Sovereigns Kingdom</span>
     <span class="topbar-tag">v2.4.1</span>
   </div>
+  <div style="display:flex;align-items:center;gap:12px;">
+    <div id="refreshIndicator" style="font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.12em;display:flex;align-items:center;gap:6px;opacity:0;transition:opacity 0.4s;">
+      <div id="refreshDot" style="width:5px;height:5px;border-radius:50%;background:var(--green);box-shadow:0 0 5px var(--green);"></div>
+      <span id="refreshLabel">SYNCED</span>
+    </div>
   <div style="position:relative;">
     <div class="user-pill" id="userPill" onclick="toggleDropdown()">
       <img class="user-avatar" id="topAvatar" src="" alt="avatar"/>
@@ -246,14 +257,21 @@
       <div class="pill-arrow">▾</div>
     </div>
     <div class="user-dropdown" id="userDropdown">
+      <a href="profile.html" class="dropdown-item">
+        <svg><use href="#icon-user"/></svg> My Profile
+      </a>
       <a href="my-registrations.html" class="dropdown-item">
         <svg><use href="#icon-list"/></svg> My Registrations
+      </a>
+      <a href="leaderboard.html" class="dropdown-item">
+        <svg><use href="#icon-trophy"/></svg> Leaderboard
       </a>
       <div class="dropdown-divider"></div>
       <button class="dropdown-item danger" onclick="logout()">
         <svg><use href="#icon-logout"/></svg> Sign Out
       </button>
     </div>
+  </div>
   </div>
 </nav>
 
@@ -372,6 +390,14 @@ document.getElementById('successName').textContent = displayName;
 
 function getMyRegs() { return JSON.parse(localStorage.getItem('my_registrations') || '{}'); }
 function saveReg(id, data) { const r = getMyRegs(); r[id] = data; localStorage.setItem('my_registrations', JSON.stringify(r)); }
+
+// ── HISTORY TRACKING ──
+function getHistory() { return JSON.parse(localStorage.getItem('tournament_history') || '[]'); }
+function logHistory(action, tournamentId, tournamentName, extra) {
+  const h = getHistory();
+  h.unshift({ action, tournamentId, tournamentName, timestamp: new Date().toISOString(), ...extra });
+  localStorage.setItem('tournament_history', JSON.stringify(h.slice(0, 200))); // keep last 200
+}
 
 let activeTournamentId = null;
 let serverState = {};
@@ -507,16 +533,79 @@ function renderWinners() {
   section.style.display = hasAny ? 'block' : 'none';
 }
 
+// ── AUTO REFRESH (silent, every 30s) ──
+let refreshTimer = null;
+let countdown = 30;
+
+function showRefreshIndicator(msg, color) {
+  const el = document.getElementById('refreshIndicator');
+  const dot = document.getElementById('refreshDot');
+  const lbl = document.getElementById('refreshLabel');
+  dot.style.background = color;
+  dot.style.boxShadow = `0 0 5px ${color}`;
+  lbl.textContent = msg;
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 2000);
+}
+
+async function silentRefresh() {
+  // Don't refresh if modal is open
+  if (document.getElementById('modalOverlay').classList.contains('open')) return;
+  try {
+    const res = await fetch('/.netlify/functions/register');
+    if (res.ok) {
+      const data = await res.json();
+      const newState   = data.state       || {};
+      const newWinners = data.winners     || {};
+      const newTournaments = data.tournaments || {};
+
+      // Only re-render if something changed
+      const stateChanged    = JSON.stringify(newState)       !== JSON.stringify(serverState);
+      const winnersChanged  = JSON.stringify(newWinners)     !== JSON.stringify(serverWinners);
+      const tournsChanged   = JSON.stringify(newTournaments) !== JSON.stringify({});
+
+      serverState   = newState;
+      serverWinners = newWinners;
+
+      if (Object.keys(newTournaments).length > 0) {
+        TOURNAMENTS = Object.entries(newTournaments).map(([id, t]) => ({
+          id, name: t.name, game: t.name,
+          iconHref: ICON_MAP[t.icon] || '#icon-zap',
+          color: hexColor(t.color || 0x5865F2),
+        }));
+      }
+
+      if (stateChanged || winnersChanged || tournsChanged) {
+        renderCards();
+        renderWinners();
+        showRefreshIndicator('UPDATED', 'var(--cyan)');
+      } else {
+        showRefreshIndicator('SYNCED', 'var(--green)');
+      }
+    }
+  } catch(e) { console.warn('Refresh failed:', e); }
+}
+
+function startRefreshCycle() {
+  refreshTimer = setInterval(silentRefresh, 30000);
+}
+
 // ── INIT ──
 async function init() {
-  // Show loading placeholder
   document.getElementById('tournamentsGrid').innerHTML =
     '<div style="font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.15em;padding:20px 0;">LOADING TOURNAMENTS...</div>';
   await fetchState();
   renderCards();
   renderWinners();
+  startRefreshCycle();
 }
 init();
+
+// Pause refresh when tab is hidden, resume when visible
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) { clearInterval(refreshTimer); }
+  else { silentRefresh(); startRefreshCycle(); }
+});
 
 // ── MODAL ──
 function openModal(tid) {
@@ -581,6 +670,7 @@ async function submitForm() {
       throw new Error(msg);
     }
     saveReg(activeTournamentId, payload);
+    logHistory('registered', activeTournamentId, t.name, { game_username: mc });
     document.getElementById('formWrap').style.display = 'none';
     document.getElementById('successBox').classList.add('show');
     setTimeout(() => { closeModal(); location.reload(); }, 2500);
