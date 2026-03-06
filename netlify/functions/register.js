@@ -1,6 +1,4 @@
 // netlify/functions/register.js
-// This runs on Netlify's servers - no CORS or SSL issues!
-
 exports.handler = async (event) => {
   if (event.httpMethod !== 'POST') {
     return { statusCode: 405, body: 'Method Not Allowed' };
