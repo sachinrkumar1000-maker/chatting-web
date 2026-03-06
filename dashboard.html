@@ -87,6 +87,10 @@
   .t-btn.register { background: rgba(88,101,242,0.12); border-color: rgba(88,101,242,0.4); color: #fff; }
   .t-btn.register:hover { background: var(--accent); box-shadow: 0 0 20px rgba(88,101,242,0.4); }
   .t-btn.already { background: rgba(0,212,255,0.06); border-color: rgba(0,212,255,0.2); color: var(--cyan); cursor: default; }
+  .t-cap { margin-bottom: 10px; }
+  .t-cap-bar { height: 3px; background: rgba(88,101,242,0.15); border-radius: 2px; overflow: hidden; margin-bottom: 5px; }
+  .t-cap-fill { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+  .t-cap-label { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: 0.14em; }
   .t-btn.blocked { background: rgba(243,139,168,0.06); border-color: rgba(243,139,168,0.2); color: var(--red); cursor: default; }
   .t-btn.ended   { background: rgba(82,90,122,0.1); border-color: rgba(82,90,122,0.3); color: var(--muted); cursor: default; }
   .t-status.ended,.t-status.started,.t-status.closed { color: var(--red); background: rgba(243,139,168,0.08); border: 1px solid rgba(243,139,168,0.2); }
@@ -437,12 +441,21 @@ function renderCards() {
     const regStatus = tState.registration || 'open';
     const tStatus   = tState.tournament   || 'upcoming';
 
+    const cap    = tState.cap   || null;
+    const count  = tState.count || 0;
+    const isFull = cap !== null && count >= cap;
+
     let statusLabel = 'OPEN';
     let statusClass = 'open';
-    if (isReg)                   { statusLabel = 'REGISTERED';  statusClass = 'registered'; }
-    else if (tStatus === 'ended'){ statusLabel = 'ENDED';        statusClass = 'ended'; }
+    if (isReg)                    { statusLabel = 'REGISTERED';  statusClass = 'registered'; }
+    else if (tStatus === 'ended') { statusLabel = 'ENDED';       statusClass = 'ended'; }
     else if (tStatus === 'started'){statusLabel = 'STARTED';     statusClass = 'started'; }
     else if (regStatus === 'closed'){statusLabel = 'REG CLOSED'; statusClass = 'closed'; }
+    else if (isFull)              { statusLabel = 'FULL';        statusClass = 'closed'; }
+
+    const capHtml = cap !== null
+      ? `<div class="t-cap"><div class="t-cap-bar"><div class="t-cap-fill" style="width:${Math.min(100, Math.round(count/cap*100))}%;background:${isFull ? 'var(--red)' : 'var(--accent)'}"></div></div><div class="t-cap-label">${count} / ${cap} SPOTS</div></div>`
+      : '';
 
     let btnHtml = '';
     if (isReg) {
@@ -453,6 +466,8 @@ function renderCards() {
       btnHtml = `<button class="t-btn blocked">Tournament Already Started</button>`;
     } else if (regStatus === 'closed') {
       btnHtml = `<button class="t-btn blocked">Registrations Closed</button>`;
+    } else if (isFull) {
+      btnHtml = `<button class="t-btn blocked">Spots Full</button>`;
     } else {
       btnHtml = `<button class="t-btn register" onclick="openModal('${t.id}')"><svg width="14" height="14"><use href="#icon-register"/></svg> Register Now</button>`;
     }
@@ -470,6 +485,7 @@ function renderCards() {
       </div>
       <div class="t-name">${t.name}</div>
       <div class="t-game">// TOURNAMENT</div>
+      ${capHtml}
       ${btnHtml}
     `;
     grid.appendChild(card);
@@ -667,6 +683,7 @@ async function submitForm() {
       if (msg === 'REGISTRATION_CLOSED') msg = 'Registrations are currently closed.';
       if (msg === 'TOURNAMENT_STARTED')  msg = 'This tournament has already started.';
       if (msg === 'TOURNAMENT_ENDED')    msg = 'This tournament has ended.';
+      if (msg === 'REGISTRATION_FULL')    msg = 'Sorry, this tournament is full!';
       throw new Error(msg);
     }
     saveReg(activeTournamentId, payload);
