@@ -392,15 +392,15 @@ document.getElementById('welcomeName').textContent = displayName;
 document.getElementById('welcomeId').textContent = user.id;
 document.getElementById('successName').textContent = displayName;
 
-function getMyRegs() { return JSON.parse(localStorage.getItem('my_registrations') || '{}'); }
-function saveReg(id, data) { const r = getMyRegs(); r[id] = data; localStorage.setItem('my_registrations', JSON.stringify(r)); }
+function getMyRegs() { return JSON.parse(localStorage.getItem('regs_' + user.id) || '{}'); }
+function saveReg(id, data) { const r = getMyRegs(); r[id] = data; localStorage.setItem('regs_' + user.id, JSON.stringify(r)); }
 
 // ── HISTORY TRACKING ──
-function getHistory() { return JSON.parse(localStorage.getItem('tournament_history') || '[]'); }
+function getHistory() { return JSON.parse(localStorage.getItem('hist_' + user.id) || '[]'); }
 function logHistory(action, tournamentId, tournamentName, extra) {
   const h = getHistory();
   h.unshift({ action, tournamentId, tournamentName, timestamp: new Date().toISOString(), ...extra });
-  localStorage.setItem('tournament_history', JSON.stringify(h.slice(0, 200))); // keep last 200
+  localStorage.setItem('hist_' + user.id, JSON.stringify(h.slice(0, 200)));
 }
 
 let activeTournamentId = null;
@@ -700,7 +700,7 @@ async function submitForm() {
 
 function toggleDropdown() { document.getElementById('userDropdown').classList.toggle('open'); }
 document.addEventListener('click', e => { if (!document.getElementById('userPill').contains(e.target)) document.getElementById('userDropdown').classList.remove('open'); });
-function logout() { localStorage.removeItem('discord_user'); window.location.href = 'index.html'; }
+function logout() { localStorage.removeItem('discord_user'); localStorage.removeItem('regs_' + user.id); window.location.href = 'index.html'; }
 
 const canvas = document.getElementById('bgCanvas');
 const ctx = canvas.getContext('2d');
