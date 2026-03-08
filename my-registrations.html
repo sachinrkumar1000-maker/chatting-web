@@ -183,7 +183,7 @@
       </svg>
     </div>
     <span class="topbar-brand">Sovereigns Kingdom</span>
-    <span class="topbar-tag">v2.4.1</span>
+    <span class="topbar-tag">v2.5.0</span>
     <a href="dashboard.html" class="back-btn">
       <svg><use href="#icon-arrow-left"/></svg> Dashboard
     </a>
@@ -300,6 +300,8 @@ async function loadAndRender() {
     card.style.setProperty('--t-color', color);
     card.style.animationDelay = `${idx * 0.07}s`;
     card.id = `card-${tid}`;
+    const safeGameUser = (reg.game_username || '').replace(/'/g, "\\'");
+    const safeTname    = tname.replace(/'/g, "\\'");
     card.innerHTML = `
       <div class="reg-icon" style="border-color:${color}30; color:${color}">
         <svg width="24" height="24"><use href="${iconHref}"/></svg>
@@ -320,7 +322,7 @@ async function loadAndRender() {
         <button class="cancel-btn" id="cancelBtn-${tid}" onclick="startCancel('${tid}')">
           <svg><use href="#icon-x"/></svg> Cancel
         </button>
-        <button class="confirm-btn" id="confirmBtn-${tid}" onclick="confirmCancel('${tid}', '${tname.replace(/'/g,"\'")}')">
+        <button class="confirm-btn" id="confirmBtn-${tid}" onclick="confirmCancel('${tid}', '${safeTname}', '${safeGameUser}')">
           <svg><use href="#icon-alert"/></svg> Confirm Cancel
         </button>
         <button class="cancel-abort" id="abortBtn-${tid}" onclick="abortCancel('${tid}')">Keep Registration</button>
@@ -342,7 +344,7 @@ function abortCancel(tid) {
   document.getElementById(`abortBtn-${tid}`).classList.remove('show');
 }
 
-async function confirmCancel(tid, tname) {
+async function confirmCancel(tid, tname, gameUsername) {
   document.getElementById(`confirmBtn-${tid}`).style.display = 'none';
   document.getElementById(`abortBtn-${tid}`).classList.remove('show');
   document.getElementById(`loader-${tid}`).style.display = 'block';
@@ -356,7 +358,7 @@ async function confirmCancel(tid, tname) {
     discord_global_name: user.globalName || user.username,
     discord_avatar:      user.avatar,
     name:                user.globalName || user.username,
-    game_username:       '',
+    game_username:       gameUsername || '',
     submitted_at:        '',
     cancelled_at:        new Date().toUTCString(),
   };
