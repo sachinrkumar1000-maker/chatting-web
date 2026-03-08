@@ -270,6 +270,9 @@
       <a href="leaderboard.html" class="dropdown-item">
         <svg><use href="#icon-trophy"/></svg> Leaderboard
       </a>
+      <a href="admin.html" id="adminLink" style="display:none" class="dropdown-item">
+        <svg><use href="#icon-settings"/></svg> Admin Panel
+      </a>
       <div class="dropdown-divider"></div>
       <button class="dropdown-item danger" onclick="logout()">
         <svg><use href="#icon-logout"/></svg> Sign Out
@@ -644,6 +647,12 @@ async function submitForm() {
   }
 }
 
+function checkAdmin() {
+  const u = JSON.parse(localStorage.getItem('discord_user')||'{}');
+  const link = document.getElementById('adminLink');
+  if (link && u.id === '921970487431671859') link.style.display = '';
+}
+checkAdmin();
 function toggleDropdown() { document.getElementById('userDropdown').classList.toggle('open'); }
 document.addEventListener('click', e => { if (!document.getElementById('userPill').contains(e.target)) document.getElementById('userDropdown').classList.remove('open'); });
 function logout() { localStorage.removeItem('discord_user'); window.location.href = 'index.html'; }
