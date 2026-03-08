@@ -362,120 +362,147 @@
 </div>
 
 <script>
-// TOURNAMENTS are loaded dynamically from the server
-// Fallback icon map from bot icon keys -> SVG href
+// Icon map from bot icon keys -> SVG href
 const ICON_MAP = {
-  sword:  '#icon-sword',
-  target: '#icon-target',
-  grid:   '#icon-grid',
-  zap:    '#icon-zap',
-  shield: '#icon-sword',
-  star:   '#icon-zap',
-  bolt:   '#icon-zap',
+  sword:'#icon-sword', target:'#icon-target', grid:'#icon-grid',
+  zap:'#icon-zap', shield:'#icon-sword', star:'#icon-zap', bolt:'#icon-zap',
 };
+function hexColor(n) { return '#' + (n >>> 0).toString(16).padStart(6,'0'); }
 
-function hexColor(n) {
-  return '#' + (n >>> 0).toString(16).padStart(6, '0');
-}
-
-let TOURNAMENTS = []; // populated after fetching state
+let TOURNAMENTS    = [];
+let serverState    = {};
+let serverWinners  = {};
+let myRegistrations= {}; // keyed by tournament_id, from SERVER
+let activeTournamentId = null;
+let refreshTimer;
 
 const raw = localStorage.getItem('discord_user');
 if (!raw) { window.location.href = 'index.html'; }
 const user = JSON.parse(raw);
 const displayName = user.globalName || user.username;
 
-document.getElementById('topAvatar').src = user.avatar;
+document.getElementById('topAvatar').src       = user.avatar;
 document.getElementById('topUsername').textContent = displayName;
-document.getElementById('welcomeAvatar').src = user.avatar;
+document.getElementById('welcomeAvatar').src   = user.avatar;
 document.getElementById('welcomeName').textContent = displayName;
-document.getElementById('welcomeId').textContent = user.id;
+document.getElementById('welcomeId').textContent   = user.id;
 document.getElementById('successName').textContent = displayName;
 
-function getMyRegs() { return JSON.parse(localStorage.getItem('regs_' + user.id) || '{}'); }
-function saveReg(id, data) { const r = getMyRegs(); r[id] = data; localStorage.setItem('regs_' + user.id, JSON.stringify(r)); }
-
-// ── HISTORY TRACKING ──
-function getHistory() { return JSON.parse(localStorage.getItem('hist_' + user.id) || '[]'); }
-function logHistory(action, tournamentId, tournamentName, extra) {
-  const h = getHistory();
-  h.unshift({ action, tournamentId, tournamentName, timestamp: new Date().toISOString(), ...extra });
-  localStorage.setItem('hist_' + user.id, JSON.stringify(h.slice(0, 200)));
-}
-
-let activeTournamentId = null;
-let serverState = {};
-let serverWinners = {};
-
-// ── FETCH STATE FROM BOT ──
+// ── FETCH STATE + MY REGISTRATIONS FROM SERVER ──
 async function fetchState() {
   try {
-    const res = await fetch('/.netlify/functions/register');
-    if (res.ok) {
-      const data = await res.json();
-      serverState   = data.state       || {};
-      serverWinners = data.winners     || {};
-
-      // Build TOURNAMENTS array from server data
+    const [stateRes, myRegRes] = await Promise.all([
+      fetch('/.netlify/functions/register'),
+      fetch(`/.netlify/functions/register/my-registrations/${user.id}`),
+    ]);
+    if (stateRes.ok) {
+      const data    = await stateRes.json();
+      serverState   = data.state   || {};
+      serverWinners = data.winners || {};
       const serverTournaments = data.tournaments || {};
       TOURNAMENTS = Object.entries(serverTournaments).map(([id, t]) => ({
-        id,
-        name:     t.name,
-        game:     t.name, // used as label
-        iconHref: ICON_MAP[t.icon] || '#icon-zap',
-        color:    hexColor(t.color || 0x5865F2),
+        id, name: t.name, iconHref: ICON_MAP[t.icon] || '#icon-zap',
+        color: hexColor(t.color || 0x5865F2),
       }));
+    }
+    if (myRegRes.ok) {
+      const mData = await myRegRes.json();
+      myRegistrations = mData.registrations || {};
     }
   } catch(e) { console.warn('Could not fetch state:', e); }
 }
 
-// ── RENDER TOURNAMENT CARDS ──
+// ── SILENT REFRESH (every 30s) ──
+function showRefreshIndicator(label, color) {
+  const ind = document.getElementById('refreshIndicator');
+  const dot = document.getElementById('refreshDot');
+  const lbl = document.getElementById('refreshLabel');
+  if (!ind) return;
+  dot.style.background = color; dot.style.boxShadow = `0 0 5px ${color}`;
+  lbl.textContent = label; ind.style.opacity = '1';
+  setTimeout(() => { ind.style.opacity = '0'; }, 2000);
+}
+
+async function silentRefresh() {
+  try {
+    const [stateRes, myRegRes] = await Promise.all([
+      fetch('/.netlify/functions/register'),
+      fetch(`/.netlify/functions/register/my-registrations/${user.id}`),
+    ]);
+    if (!stateRes.ok || !myRegRes.ok) return;
+
+    const data    = await stateRes.json();
+    const mData   = await myRegRes.json();
+    const newState   = data.state       || {};
+    const newWinners = data.winners     || {};
+    const newTourns  = data.tournaments || {};
+    const newMyRegs  = mData.registrations || {};
+
+    const changed =
+      JSON.stringify(newState)   !== JSON.stringify(serverState)   ||
+      JSON.stringify(newWinners) !== JSON.stringify(serverWinners) ||
+      JSON.stringify(newMyRegs)  !== JSON.stringify(myRegistrations)||
+      Object.keys(newTourns).length !== TOURNAMENTS.length;
+
+    serverState    = newState;
+    serverWinners  = newWinners;
+    myRegistrations= newMyRegs;
+
+    if (Object.keys(newTourns).length > 0) {
+      TOURNAMENTS = Object.entries(newTourns).map(([id, t]) => ({
+        id, name: t.name, iconHref: ICON_MAP[t.icon] || '#icon-zap',
+        color: hexColor(t.color || 0x5865F2),
+      }));
+    }
+
+    if (changed) {
+      renderCards(); renderWinners();
+      showRefreshIndicator('UPDATED', 'var(--cyan)');
+    } else {
+      showRefreshIndicator('SYNCED', 'var(--green)');
+    }
+  } catch(e) { console.warn('Refresh failed:', e); }
+}
+
+function startRefreshCycle() { refreshTimer = setInterval(silentRefresh, 30000); }
+
+// ── RENDER CARDS ──
 function renderCards() {
-  const myRegs = getMyRegs();
   const grid = document.getElementById('tournamentsGrid');
   grid.innerHTML = '';
 
   TOURNAMENTS.forEach((t, idx) => {
-    const isReg     = !!myRegs[t.id];
-    const tState    = serverState[t.id] || {};
-    const regStatus = tState.registration || 'open';
-    const tStatus   = tState.tournament   || 'upcoming';
+    const isReg    = !!myRegistrations[t.id];
+    const tState   = serverState[t.id] || {};
+    const regStatus= tState.registration || 'open';
+    const tStatus  = tState.tournament   || 'upcoming';
+    const cap      = tState.cap   || null;
+    const count    = tState.count || 0;
+    const isFull   = cap !== null && count >= cap;
 
-    const cap    = tState.cap   || null;
-    const count  = tState.count || 0;
-    const isFull = cap !== null && count >= cap;
-
-    let statusLabel = 'OPEN';
-    let statusClass = 'open';
-    if (isReg)                    { statusLabel = 'REGISTERED';  statusClass = 'registered'; }
-    else if (tStatus === 'ended') { statusLabel = 'ENDED';       statusClass = 'ended'; }
-    else if (tStatus === 'started'){statusLabel = 'STARTED';     statusClass = 'started'; }
-    else if (regStatus === 'closed'){statusLabel = 'REG CLOSED'; statusClass = 'closed'; }
-    else if (isFull)              { statusLabel = 'FULL';        statusClass = 'closed'; }
+    let statusLabel = 'OPEN', statusClass = 'open';
+    if (isReg)                     { statusLabel='REGISTERED';  statusClass='registered'; }
+    else if (tStatus==='ended')    { statusLabel='ENDED';       statusClass='ended'; }
+    else if (tStatus==='started')  { statusLabel='STARTED';     statusClass='started'; }
+    else if (regStatus==='closed') { statusLabel='REG CLOSED';  statusClass='closed'; }
+    else if (isFull)               { statusLabel='FULL';        statusClass='closed'; }
 
     const capHtml = cap !== null
-      ? `<div class="t-cap"><div class="t-cap-bar"><div class="t-cap-fill" style="width:${Math.min(100, Math.round(count/cap*100))}%;background:${isFull ? 'var(--red)' : 'var(--accent)'}"></div></div><div class="t-cap-label">${count} / ${cap} SPOTS</div></div>`
+      ? `<div class="t-cap"><div class="t-cap-bar"><div class="t-cap-fill" style="width:${Math.min(100,Math.round(count/cap*100))}%;background:${isFull?'var(--red)':'var(--accent)'}"></div></div><div class="t-cap-label">${count} / ${cap} SPOTS</div></div>`
       : '';
 
     let btnHtml = '';
-    if (isReg) {
-      btnHtml = `<button class="t-btn already"><svg width="14" height="14"><use href="#icon-check"/></svg> Already Registered</button>`;
-    } else if (tStatus === 'ended') {
-      btnHtml = `<button class="t-btn blocked">Tournament Ended</button>`;
-    } else if (tStatus === 'started') {
-      btnHtml = `<button class="t-btn blocked">Tournament Already Started</button>`;
-    } else if (regStatus === 'closed') {
-      btnHtml = `<button class="t-btn blocked">Registrations Closed</button>`;
-    } else if (isFull) {
-      btnHtml = `<button class="t-btn blocked">Spots Full</button>`;
-    } else {
-      btnHtml = `<button class="t-btn register" onclick="openModal('${t.id}')"><svg width="14" height="14"><use href="#icon-register"/></svg> Register Now</button>`;
-    }
+    if (isReg)                     btnHtml = `<button class="t-btn already"><svg width="14" height="14"><use href="#icon-check"/></svg> Already Registered</button>`;
+    else if (tStatus==='ended')    btnHtml = `<button class="t-btn blocked">Tournament Ended</button>`;
+    else if (tStatus==='started')  btnHtml = `<button class="t-btn blocked">Tournament Already Started</button>`;
+    else if (regStatus==='closed') btnHtml = `<button class="t-btn blocked">Registrations Closed</button>`;
+    else if (isFull)               btnHtml = `<button class="t-btn blocked">Spots Full</button>`;
+    else                           btnHtml = `<button class="t-btn register" onclick="openModal('${t.id}')"><svg width="14" height="14"><use href="#icon-register"/></svg> Register Now</button>`;
 
     const card = document.createElement('div');
     card.className = 't-card';
     card.style.setProperty('--t-color', t.color);
-    card.style.animationDelay = `${idx * 0.05}s`;
+    card.style.animationDelay = `${idx*0.05}s`;
     card.innerHTML = `
       <div class="t-card-top">
         <div class="t-icon-box" style="border-color:${t.color}30;color:${t.color}">
@@ -486,8 +513,7 @@ function renderCards() {
       <div class="t-name">${t.name}</div>
       <div class="t-game">// TOURNAMENT</div>
       ${capHtml}
-      ${btnHtml}
-    `;
+      ${btnHtml}`;
     grid.appendChild(card);
   });
 }
@@ -497,113 +523,34 @@ function renderWinners() {
   const section = document.getElementById('winnersSection');
   const grid    = document.getElementById('winnersGrid');
   grid.innerHTML = '';
-
   const places = [
-    { key: '1st', label: '1ST PLACE', cls: 'p1', medal: '🥇' },
-    { key: '2nd', label: '2ND PLACE', cls: 'p2', medal: '🥈' },
-    { key: '3rd', label: '3RD PLACE', cls: 'p3', medal: '🥉' },
+    { key:'1st', medal:'🥇', cls:'p1' },
+    { key:'2nd', medal:'🥈', cls:'p2' },
+    { key:'3rd', medal:'🥉', cls:'p3' },
   ];
-
   let hasAny = false;
-
   TOURNAMENTS.forEach(t => {
     const tw = serverWinners[t.id];
-    if (!tw || Object.keys(tw).length === 0) return;
+    if (!tw || !Object.keys(tw).length) return;
     hasAny = true;
-
     const block = document.createElement('div');
     block.className = 'winners-tournament';
     block.style.setProperty('--t-color', t.color);
-
     const podiumHtml = places.map(p => {
       const w = tw[p.key];
-      if (w) {
-        return `
-          <div class="winner-slot">
-            <div class="place-medal">${p.medal}</div>
-            <div class="winner-place ${p.cls}">${p.label}</div>
-            <img class="winner-avatar ${p.cls}" src="${w.avatar}" alt="${w.display_name}" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'"/>
-            <div class="winner-name">${w.display_name}</div>
-          </div>`;
-      } else {
-        return `
-          <div class="winner-slot">
-            <div class="place-medal" style="opacity:0.2">${p.medal}</div>
-            <div class="winner-place ${p.cls}">${p.label}</div>
-            <div class="winner-avatar-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-            <div class="winner-empty">TBD</div>
-          </div>`;
-      }
+      return w
+        ? `<div class="winner-slot"><div class="place-medal">${p.medal}</div><div class="winner-place ${p.cls}">${p.key.toUpperCase()} PLACE</div><img class="winner-avatar ${p.cls}" src="${w.avatar}" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'"/><div class="winner-name">${w.display_name}</div></div>`
+        : `<div class="winner-slot"><div class="place-medal" style="opacity:0.2">${p.medal}</div><div class="winner-place ${p.cls}">${p.key.toUpperCase()} PLACE</div><div class="winner-avatar-placeholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="winner-empty">TBD</div></div>`;
     }).join('');
-
     block.innerHTML = `
       <div class="winners-tournament-header">
         <svg width="16" height="16" style="color:${t.color}"><use href="${t.iconHref}"/></svg>
         <div class="winners-tournament-name">${t.name}</div>
       </div>
-      <div class="winners-podium">${podiumHtml}</div>
-    `;
+      <div class="winners-podium">${podiumHtml}</div>`;
     grid.appendChild(block);
   });
-
   section.style.display = hasAny ? 'block' : 'none';
-}
-
-// ── AUTO REFRESH (silent, every 30s) ──
-let refreshTimer = null;
-let countdown = 30;
-
-function showRefreshIndicator(msg, color) {
-  const el = document.getElementById('refreshIndicator');
-  const dot = document.getElementById('refreshDot');
-  const lbl = document.getElementById('refreshLabel');
-  dot.style.background = color;
-  dot.style.boxShadow = `0 0 5px ${color}`;
-  lbl.textContent = msg;
-  el.style.opacity = '1';
-  setTimeout(() => { el.style.opacity = '0'; }, 2000);
-}
-
-async function silentRefresh() {
-  // Don't refresh if modal is open
-  if (document.getElementById('modalOverlay').classList.contains('open')) return;
-  try {
-    const res = await fetch('/.netlify/functions/register');
-    if (res.ok) {
-      const data = await res.json();
-      const newState   = data.state       || {};
-      const newWinners = data.winners     || {};
-      const newTournaments = data.tournaments || {};
-
-      // Only re-render if something changed
-      const stateChanged    = JSON.stringify(newState)       !== JSON.stringify(serverState);
-      const winnersChanged  = JSON.stringify(newWinners)     !== JSON.stringify(serverWinners);
-      const tournsChanged   = JSON.stringify(newTournaments) !== JSON.stringify({});
-
-      serverState   = newState;
-      serverWinners = newWinners;
-
-      if (Object.keys(newTournaments).length > 0) {
-        TOURNAMENTS = Object.entries(newTournaments).map(([id, t]) => ({
-          id, name: t.name, game: t.name,
-          iconHref: ICON_MAP[t.icon] || '#icon-zap',
-          color: hexColor(t.color || 0x5865F2),
-        }));
-      }
-
-      if (stateChanged || winnersChanged || tournsChanged) {
-        renderCards();
-        renderWinners();
-        showRefreshIndicator('UPDATED', 'var(--cyan)');
-      } else {
-        showRefreshIndicator('SYNCED', 'var(--green)');
-      }
-    }
-  } catch(e) { console.warn('Refresh failed:', e); }
-}
-
-function startRefreshCycle() {
-  refreshTimer = setInterval(silentRefresh, 30000);
 }
 
 // ── INIT ──
@@ -617,9 +564,8 @@ async function init() {
 }
 init();
 
-// Pause refresh when tab is hidden, resume when visible
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) { clearInterval(refreshTimer); }
+  if (document.hidden) clearInterval(refreshTimer);
   else { silentRefresh(); startRefreshCycle(); }
 });
 
@@ -642,55 +588,55 @@ function openModal(tid) {
   document.body.style.overflow = 'hidden';
 }
 function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); document.body.style.overflow = ''; }
-function handleOverlayClick(e) { if (e.target === document.getElementById('modalOverlay')) closeModal(); }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+function handleOverlayClick(e) { if (e.target===document.getElementById('modalOverlay')) closeModal(); }
+document.addEventListener('keydown', e => { if (e.key==='Escape') closeModal(); });
 
 async function submitForm() {
-  const name = document.getElementById('fName').value.trim();
-  const age  = document.getElementById('fAge').value.trim();
-  const email= document.getElementById('fEmail').value.trim();
-  const mc   = document.getElementById('fMC').value.trim();
-  const tz   = document.getElementById('fTZ').value;
-  const err  = document.getElementById('errorBanner');
+  const name  = document.getElementById('fName').value.trim();
+  const age   = document.getElementById('fAge').value.trim();
+  const email = document.getElementById('fEmail').value.trim();
+  const mc    = document.getElementById('fMC').value.trim();
+  const tz    = document.getElementById('fTZ').value;
+  const err   = document.getElementById('errorBanner');
   err.classList.remove('show');
   if (!name||!age||!email||!mc||!tz) { err.textContent='ERROR // ALL FIELDS ARE REQUIRED.'; err.classList.add('show'); return; }
   if (parseInt(age)<8||parseInt(age)>99) { err.textContent='ERROR // INVALID AGE.'; err.classList.add('show'); return; }
   if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { err.textContent='ERROR // INVALID EMAIL.'; err.classList.add('show'); return; }
 
-  const t = TOURNAMENTS.find(x => x.id === activeTournamentId);
+  const t   = TOURNAMENTS.find(x => x.id === activeTournamentId);
   const btn = document.getElementById('submitBtn');
   btn.classList.add('loading'); btn.disabled = true;
 
   const payload = {
     name, age, email, game_username: mc, timezone: tz,
-    discord_username: user.username, discord_id: user.id,
+    discord_username:    user.username,
+    discord_id:          user.id,
     discord_global_name: user.globalName || user.username,
-    discord_avatar: user.avatar,
-    submitted_at: new Date().toUTCString(),
-    tournament_id: activeTournamentId,
-    tournament_name: t.name,
-    game: t.name, action: 'register',
+    discord_avatar:      user.avatar,
+    submitted_at:        new Date().toUTCString(),
+    tournament_id:       activeTournamentId,
+    tournament_name:     t.name,
+    game:                t.name,
+    action:              'register',
   };
 
   try {
     const res = await fetch('/.netlify/functions/register', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(payload),
     });
     const d = await res.json().catch(()=>({}));
     if (!res.ok) {
       let msg = d.error || `${res.status}`;
-      if (msg === 'REGISTRATION_CLOSED') msg = 'Registrations are currently closed.';
-      if (msg === 'TOURNAMENT_STARTED')  msg = 'This tournament has already started.';
-      if (msg === 'TOURNAMENT_ENDED')    msg = 'This tournament has ended.';
-      if (msg === 'REGISTRATION_FULL')    msg = 'Sorry, this tournament is full!';
+      if (msg==='REGISTRATION_CLOSED')  msg='Registrations are currently closed.';
+      if (msg==='TOURNAMENT_STARTED')   msg='This tournament has already started.';
+      if (msg==='TOURNAMENT_ENDED')     msg='This tournament has ended.';
+      if (msg==='REGISTRATION_FULL')    msg='Sorry, this tournament is full!';
       throw new Error(msg);
     }
-    saveReg(activeTournamentId, payload);
-    logHistory('registered', activeTournamentId, t.name, { game_username: mc });
     document.getElementById('formWrap').style.display = 'none';
     document.getElementById('successBox').classList.add('show');
-    setTimeout(() => { closeModal(); location.reload(); }, 2500);
+    setTimeout(() => { closeModal(); silentRefresh(); }, 2500);
   } catch(e) {
     err.textContent = 'ERROR // ' + e.message.toUpperCase();
     err.classList.add('show');
@@ -700,7 +646,7 @@ async function submitForm() {
 
 function toggleDropdown() { document.getElementById('userDropdown').classList.toggle('open'); }
 document.addEventListener('click', e => { if (!document.getElementById('userPill').contains(e.target)) document.getElementById('userDropdown').classList.remove('open'); });
-function logout() { localStorage.removeItem('discord_user'); localStorage.removeItem('regs_' + user.id); window.location.href = 'index.html'; }
+function logout() { localStorage.removeItem('discord_user'); window.location.href = 'index.html'; }
 
 const canvas = document.getElementById('bgCanvas');
 const ctx = canvas.getContext('2d');
@@ -714,18 +660,13 @@ function resize() {
 function draw() {
   ctx.clearRect(0,0,W,H);
   for(let i=0;i<dots.length;i++){
-    const d=dots[i]; d.x+=d.vx; d.y+=d.vy;
-    d.vx+=(d.ox-d.x)*.0005; d.vy+=(d.oy-d.y)*.0005;
-    for(let j=i+1;j<dots.length;j++){
-      const e=dots[j],dx=d.x-e.x,dy=d.y-e.y,dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist<120){ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(e.x,e.y);ctx.strokeStyle=`rgba(88,101,242,${0.05*(1-dist/120)})`;ctx.lineWidth=.5;ctx.stroke();}
-    }
+    const d=dots[i]; d.x+=d.vx; d.y+=d.vy; d.vx+=(d.ox-d.x)*.0005; d.vy+=(d.oy-d.y)*.0005;
+    for(let j=i+1;j<dots.length;j++){const e=dots[j],dx=d.x-e.x,dy=d.y-e.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<120){ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(e.x,e.y);ctx.strokeStyle=`rgba(88,101,242,${0.05*(1-dist/120)})`;ctx.lineWidth=.5;ctx.stroke();}}
     ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle=`rgba(88,101,242,${d.a})`;ctx.fill();
   }
   requestAnimationFrame(draw);
 }
-window.addEventListener('resize',resize);
-resize(); draw();
+window.addEventListener('resize',resize); resize(); draw();
 </script>
 </body>
 </html>
