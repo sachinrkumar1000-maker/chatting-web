@@ -863,7 +863,7 @@ async function loadTickets() {
   document.getElementById('ticketDetail').style.display = 'none';
   document.getElementById('ticketsWrap').style.display = 'block';
   try {
-    const d = await api({ action: 'dummy' }, '/tickets/all');
+    const d = await apiFetch('/tickets/all', {});
     allTickets = d.tickets || [];
     renderTicketList();
   } catch(e) { document.getElementById('ticketsWrap').innerHTML = `<div class="empty">Error: ${e.message}</div>`; }
