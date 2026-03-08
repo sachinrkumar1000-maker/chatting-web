@@ -292,6 +292,12 @@ function renderTimeline(entries) {
 
 loadProfile();
 
+function checkAdmin() {
+  const u = JSON.parse(localStorage.getItem('discord_user')||'{}');
+  const link = document.getElementById('adminLink');
+  if (link && u.id === '921970487431671859') link.style.display = '';
+}
+checkAdmin();
 function toggleDropdown() { document.getElementById('userDropdown').classList.toggle('open'); }
 document.addEventListener('click', e => { if (!document.getElementById('userPill').contains(e.target)) document.getElementById('userDropdown').classList.remove('open'); });
 function logout() { localStorage.removeItem('discord_user'); window.location.href = 'index.html'; }
