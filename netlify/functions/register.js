@@ -1,4 +1,4 @@
-const BACKEND = 'http://paid2.daki.cc:4156';
+const BACKEND = process.env.BACKEND_URL;
 
 exports.handler = async (event) => {
   const headers = {
