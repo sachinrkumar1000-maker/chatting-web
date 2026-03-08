@@ -207,6 +207,9 @@
       <a href="leaderboard.html" class="dropdown-item">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M6 9H4a2 2 0 01-2-2V5h4M18 9h2a2 2 0 002-2V5h-4"/><path d="M6 5h12v6a6 6 0 01-12 0V5z"/><path d="M12 17v4M8 21h8"/></svg> Leaderboard
       </a>
+      <a href="admin.html" id="adminLink" style="display:none" class="dropdown-item">
+        <svg><use href="#icon-settings"/></svg> Admin Panel
+      </a>
       <div class="dropdown-divider"></div>
       <button class="dropdown-item danger" onclick="logout()">
         <svg><use href="#icon-logout"/></svg> Sign Out
@@ -378,6 +381,12 @@ async function confirmCancel(tid, tname, gameUsername) {
   setTimeout(() => loadAndRender(), 400);
 }
 
+function checkAdmin() {
+  const u = JSON.parse(localStorage.getItem('discord_user')||'{}');
+  const link = document.getElementById('adminLink');
+  if (link && u.id === '921970487431671859') link.style.display = '';
+}
+checkAdmin();
 function toggleDropdown() { document.getElementById('userDropdown').classList.toggle('open'); }
 document.addEventListener('click', e => {
   if (!document.getElementById('userPill').contains(e.target))
