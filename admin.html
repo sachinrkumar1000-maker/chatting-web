@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Admin Panel — Sovereigns Kingdom</title>
+<link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#03050d;--panel:rgba(8,12,24,0.92);--panel2:rgba(6,9,20,0.8);
+  --border:rgba(88,101,242,0.2);--border2:rgba(88,101,242,0.1);
+  --accent:#5865F2;--glow:rgba(88,101,242,0.4);
+  --cyan:#00d4ff;--green:#22c55e;--yellow:#fbbf24;--red:#f38ba8;--orange:#f97316;
+  --text:#cdd6f4;--muted:#525a7a;
+  --font:'Rajdhani',sans-serif;--mono:'Share Tech Mono',monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.3}
+body::after{content:'';position:fixed;inset:0;z-index:1;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 4px);pointer-events:none}
+
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:60px;background:rgba(3,5,13,0.97);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)}
+.tl{display:flex;align-items:center;gap:14px}
+.logo-icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid var(--border);border-radius:2px;background:rgba(88,101,242,0.08)}
+.topbar-brand{font-size:18px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#fff}
+.admin-badge{font-family:var(--mono);font-size:9px;color:var(--orange);border:1px solid rgba(249,115,22,0.3);padding:2px 8px;border-radius:1px;background:rgba(249,115,22,0.08);letter-spacing:0.12em}
+.back-btn{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:6px 14px;border-radius:2px;transition:all 0.2s}
+.back-btn svg{width:12px;height:12px}
+.back-btn:hover{color:var(--text);background:rgba(88,101,242,0.08);border-color:rgba(88,101,242,0.4)}
+.user-pill{display:flex;align-items:center;gap:10px;padding:5px 12px 5px 5px;border:1px solid var(--border);border-radius:2px;background:rgba(88,101,242,0.06);cursor:pointer}
+.u-av{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--orange);object-fit:cover;box-shadow:0 0 10px rgba(249,115,22,0.4)}
+.u-name{font-size:13px;font-weight:700;color:#fff;line-height:1}
+.u-role{font-family:var(--mono);font-size:9px;color:var(--orange)}
+
+/* LAYOUT */
+.layout{position:relative;z-index:2;display:grid;grid-template-columns:240px 1fr;min-height:calc(100vh - 60px)}
+
+/* SIDEBAR */
+.sidebar{background:rgba(5,8,18,0.9);border-right:1px solid var(--border);padding:20px 0;display:flex;flex-direction:column;gap:4px;position:sticky;top:60px;height:calc(100vh - 60px);overflow-y:auto}
+.sidebar-section{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.2em;padding:12px 20px 6px;text-transform:uppercase}
+.sidebar-btn{display:flex;align-items:center;gap:10px;padding:10px 20px;font-size:13px;font-weight:600;letter-spacing:0.05em;color:var(--muted);cursor:pointer;border:none;background:none;width:100%;text-align:left;transition:all 0.15s;border-left:2px solid transparent}
+.sidebar-btn svg{width:15px;height:15px;flex-shrink:0}
+.sidebar-btn:hover{color:var(--text);background:rgba(88,101,242,0.06);border-left-color:rgba(88,101,242,0.3)}
+.sidebar-btn.active{color:#fff;background:rgba(88,101,242,0.1);border-left-color:var(--accent)}
+.sidebar-btn.danger{color:var(--muted)}
+.sidebar-btn.danger:hover{color:var(--red);background:rgba(243,139,168,0.06);border-left-color:var(--red)}
+.sidebar-divider{height:1px;background:var(--border2);margin:8px 12px}
+
+/* MAIN */
+.main{padding:32px 36px;overflow-y:auto}
+.page{display:none}
+.page.active{display:block;animation:fadeUp 0.3s cubic-bezier(.22,1,.36,1) both}
+.page-title{font-size:22px;font-weight:700;color:#fff;letter-spacing:0.08em;margin-bottom:4px}
+.page-sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.12em;margin-bottom:24px}
+
+/* CARDS */
+.card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:24px;margin-bottom:20px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--accent),transparent)}
+.card-title{font-size:14px;font-weight:700;color:#fff;letter-spacing:0.08em;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.card-title svg{width:14px;height:14px;color:var(--accent)}
+
+/* FORM ELEMENTS */
+.form-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.form-group{display:flex;flex-direction:column;gap:6px;flex:1;min-width:160px}
+.form-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.16em;text-transform:uppercase}
+.form-input{background:rgba(88,101,242,0.06);border:1px solid var(--border);border-radius:2px;padding:9px 13px;font-family:var(--font);font-size:13px;font-weight:600;color:var(--text);outline:none;transition:all 0.2s;width:100%}
+.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(88,101,242,0.15)}
+.form-input::placeholder{color:var(--muted)}
+select.form-input option{background:#0d1120;color:var(--text)}
+textarea.form-input{resize:vertical;min-height:80px;font-family:var(--mono);font-size:12px}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:0.08em;border:1px solid;border-radius:2px;cursor:pointer;transition:all 0.2s;text-transform:uppercase}
+.btn svg{width:13px;height:13px}
+.btn-primary{background:rgba(88,101,242,0.15);border-color:var(--accent);color:var(--accent)}
+.btn-primary:hover{background:rgba(88,101,242,0.25);box-shadow:0 0 14px var(--glow)}
+.btn-primary:disabled{opacity:0.4;cursor:not-allowed}
+.btn-success{background:rgba(34,197,94,0.1);border-color:var(--green);color:var(--green)}
+.btn-success:hover{background:rgba(34,197,94,0.2)}
+.btn-danger{background:rgba(243,139,168,0.1);border-color:var(--red);color:var(--red)}
+.btn-danger:hover{background:rgba(243,139,168,0.2)}
+.btn-warn{background:rgba(251,191,36,0.1);border-color:var(--yellow);color:var(--yellow)}
+.btn-warn:hover{background:rgba(251,191,36,0.2)}
+.btn-sm{padding:6px 12px;font-size:11px}
+.btn.loading{opacity:0.6;pointer-events:none}
+
+/* TOURNAMENT CARDS GRID */
+.t-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;margin-bottom:24px}
+.t-card{background:var(--panel2);border:1px solid var(--border);border-radius:2px;padding:18px;position:relative;overflow:hidden;transition:border-color 0.2s}
+.t-card:hover{border-color:rgba(88,101,242,0.4)}
+.t-card-accent{position:absolute;top:0;left:0;bottom:0;width:3px}
+.t-card-name{font-size:16px;font-weight:700;color:#fff;letter-spacing:0.05em;margin-bottom:10px}
+.t-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.badge{font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 8px;border-radius:1px;letter-spacing:0.1em}
+.badge-open{color:var(--green);background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.2)}
+.badge-closed{color:var(--red);background:rgba(243,139,168,0.1);border:1px solid rgba(243,139,168,0.2)}
+.badge-upcoming{color:var(--accent);background:rgba(88,101,242,0.1);border:1px solid rgba(88,101,242,0.2)}
+.badge-started{color:var(--yellow);background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2)}
+.badge-ended{color:var(--muted);background:rgba(82,90,122,0.1);border:1px solid rgba(82,90,122,0.2)}
+.badge-players{color:var(--cyan);background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.2)}
+.t-card-actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* PLAYERS TABLE */
+.players-table{width:100%;border-collapse:collapse;margin-top:8px}
+.players-table th{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.15em;text-align:left;padding:8px 12px;border-bottom:1px solid var(--border);background:rgba(88,101,242,0.04)}
+.players-table td{font-size:13px;padding:10px 12px;border-bottom:1px solid var(--border2);vertical-align:middle}
+.players-table tr:last-child td{border-bottom:none}
+.players-table tr:hover td{background:rgba(88,101,242,0.04)}
+.player-av{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--border);object-fit:cover;margin-right:8px;vertical-align:middle}
+
+/* WINNERS GRID */
+.winners-row{display:flex;gap:12px;margin-bottom:16px}
+.winner-slot{flex:1;background:var(--panel2);border:1px solid var(--border);border-radius:2px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.winner-place-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.2em}
+.winner-current{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:700;color:var(--text)}
+.winner-current img{width:24px;height:24px;border-radius:50%;border:1px solid var(--border)}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:28px;right:28px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.1em;padding:12px 18px;border-radius:2px;border:1px solid;box-shadow:0 8px 30px rgba(0,0,0,0.5);animation:toastIn 0.3s cubic-bezier(.22,1,.36,1) both;display:flex;align-items:center;gap:8px;max-width:320px}
+.toast svg{width:13px;height:13px;flex-shrink:0}
+.toast.success{color:var(--green);background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3)}
+.toast.error{color:var(--red);background:rgba(243,139,168,0.1);border-color:rgba(243,139,168,0.3)}
+.toast.info{color:var(--cyan);background:rgba(0,212,255,0.08);border-color:rgba(0,212,255,0.2)}
+.toast.out{animation:toastOut 0.3s ease forwards}
+
+/* CONFIRM MODAL */
+.overlay{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.8);backdrop-filter:blur(6px);display:none;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:rgba(8,12,24,0.99);border:1px solid var(--border);border-radius:2px;padding:28px;max-width:400px;width:90%;position:relative;animation:fadeUp 0.3s cubic-bezier(.22,1,.36,1) both}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--red),transparent)}
+.modal-title{font-size:16px;font-weight:700;color:#fff;margin-bottom:8px}
+.modal-body{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:12px;margin-bottom:24px}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:16px 20px;display:flex;flex-direction:column;gap:4px}
+.stat-val{font-size:28px;font-weight:700;color:#fff;letter-spacing:0.05em;line-height:1}
+.stat-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.18em}
+
+/* EMPTY */
+.empty{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.12em;padding:28px;text-align:center}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(20px)}}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .layout{grid-template-columns:1fr}
+  .sidebar{position:fixed;left:-240px;top:60px;z-index:90;transition:left 0.3s;height:calc(100vh - 60px)}
+  .sidebar.open{left:0}
+  .main{padding:20px 14px}
+  .topbar{padding:0 14px}
+  .topbar-brand{font-size:14px}
+  .t-grid{grid-template-columns:1fr}
+  .winners-row{flex-direction:column}
+  .stats-row{grid-template-columns:1fr 1fr}
+  .hamburger{display:flex}
+}
+.hamburger{display:none;align-items:center;justify-content:center;width:36px;height:36px;border:1px solid var(--border);border-radius:2px;cursor:pointer;color:var(--muted);background:none}
+.hamburger svg{width:16px;height:16px}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+
+<svg style="display:none">
+  <symbol id="ic-left"     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></symbol>
+  <symbol id="ic-grid"     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></symbol>
+  <symbol id="ic-plus"     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="ic-trash"    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M19 6l-1 14H6L5 6M10 11v6M14 11v6M9 6V4h6v2"/></symbol>
+  <symbol id="ic-users"    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></symbol>
+  <symbol id="ic-trophy"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 01-2-2V5h4M18 9h2a2 2 0 002-2V5h-4"/><path d="M6 5h12v6a6 6 0 01-12 0V5z"/><path d="M12 17v4M8 21h8"/></symbol>
+  <symbol id="ic-megaphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l19-9-9 19-2-8-8-2z"/></symbol>
+  <symbol id="ic-mail"     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 7l-10 7L2 7"/></symbol>
+  <symbol id="ic-lock"     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></symbol>
+  <symbol id="ic-check"    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"   stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></symbol>
+  <symbol id="ic-x"        viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"   stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></symbol>
+  <symbol id="ic-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></symbol>
+  <symbol id="ic-logout"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="ic-menu"     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h18"/></symbol>
+</svg>
+
+<!-- TOPBAR -->
+<nav class="topbar">
+  <div class="tl">
+    <button class="hamburger" onclick="toggleSidebar()"><svg><use href="#ic-menu"/></svg></button>
+    <div class="logo-icon">
+      <svg viewBox="0 0 32 32" fill="none" width="18" height="18">
+        <polygon points="16,2 28,9 28,23 16,30 4,23 4,9" stroke="#5865F2" stroke-width="1.5" fill="none"/>
+        <polygon points="16,8 22,11.5 22,20.5 16,24 10,20.5 10,11.5" stroke="#f97316" stroke-width="1" fill="rgba(249,115,22,0.12)"/>
+        <circle cx="16" cy="16" r="2.5" fill="#f97316"/>
+      </svg>
+    </div>
+    <span class="topbar-brand">Sovereigns Kingdom</span>
+    <span class="admin-badge">ADMIN PANEL</span>
+    <a href="dashboard.html" class="back-btn"><svg><use href="#ic-left"/></svg> Dashboard</a>
+  </div>
+  <div class="user-pill">
+    <img class="u-av" id="topAvatar" src="" alt=""/>
+    <div style="display:flex;flex-direction:column;gap:1px">
+      <div class="u-name" id="topName">...</div>
+      <div class="u-role">● ADMIN</div>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-section">Overview</div>
+    <button class="sidebar-btn active" onclick="showPage('overview')" id="nav-overview">
+      <svg><use href="#ic-grid"/></svg> Overview
+    </button>
+
+    <div class="sidebar-section">Tournaments</div>
+    <button class="sidebar-btn" onclick="showPage('create')" id="nav-create">
+      <svg><use href="#ic-plus"/></svg> Create Tournament
+    </button>
+    <button class="sidebar-btn" onclick="showPage('manage')" id="nav-manage">
+      <svg><use href="#ic-settings"/></svg> Manage Tournaments
+    </button>
+
+    <div class="sidebar-section">Players</div>
+    <button class="sidebar-btn" onclick="showPage('players')" id="nav-players">
+      <svg><use href="#ic-users"/></svg> View Registrations
+    </button>
+
+    <div class="sidebar-section">Winners</div>
+    <button class="sidebar-btn" onclick="showPage('winners')" id="nav-winners">
+      <svg><use href="#ic-trophy"/></svg> Set Winners
+    </button>
+
+    <div class="sidebar-section">Communications</div>
+    <button class="sidebar-btn" onclick="showPage('announce')" id="nav-announce">
+      <svg><use href="#ic-megaphone"/></svg> Announce
+    </button>
+    <button class="sidebar-btn" onclick="showPage('dmall')" id="nav-dmall">
+      <svg><use href="#ic-mail"/></svg> DM All Players
+    </button>
+
+    <div class="sidebar-divider"></div>
+    <button class="sidebar-btn danger" onclick="logout()">
+      <svg><use href="#ic-logout"/></svg> Sign Out
+    </button>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── OVERVIEW ── -->
+    <div class="page active" id="page-overview">
+      <div class="page-title">Overview</div>
+      <div class="page-sub">// SOVEREIGNS KINGDOM // ADMIN CONTROL CENTER</div>
+      <div class="stats-row" id="overviewStats"></div>
+      <div class="card">
+        <div class="card-title"><svg><use href="#ic-grid"/></svg> Tournament Status</div>
+        <div id="overviewGrid" class="t-grid"></div>
+      </div>
+    </div>
+
+    <!-- ── CREATE ── -->
+    <div class="page" id="page-create">
+      <div class="page-title">Create Tournament</div>
+      <div class="page-sub">// ADD A NEW TOURNAMENT TO THE PLATFORM</div>
+      <div class="card">
+        <div class="card-title"><svg><use href="#ic-plus"/></svg> New Tournament</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tournament Name</label>
+            <input type="text" class="form-input" id="createName" placeholder="e.g. Minecraft Hunger Games"/>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="createTournament()" id="createBtn">
+          <svg><use href="#ic-plus"/></svg> Create Tournament
+        </button>
+      </div>
+    </div>
+
+    <!-- ── MANAGE ── -->
+    <div class="page" id="page-manage">
+      <div class="page-title">Manage Tournaments</div>
+      <div class="page-sub">// CONTROL REGISTRATION AND TOURNAMENT STATE</div>
+      <div id="manageGrid" class="t-grid"></div>
+    </div>
+
+    <!-- ── PLAYERS ── -->
+    <div class="page" id="page-players">
+      <div class="page-title">Registrations</div>
+      <div class="page-sub">// VIEW AND MANAGE ALL REGISTERED PLAYERS</div>
+      <div class="form-row" style="margin-bottom:16px">
+        <div class="form-group" style="max-width:260px">
+          <label class="form-label">Filter by Tournament</label>
+          <select class="form-input" id="playersFilter" onchange="loadPlayers()">
+            <option value="">All Tournaments</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div id="playersTable"><div class="empty">LOADING...</div></div>
+      </div>
+    </div>
+
+    <!-- ── WINNERS ── -->
+    <div class="page" id="page-winners">
+      <div class="page-title">Set Winners</div>
+      <div class="page-sub">// ASSIGN PODIUM PLACEMENTS FOR EACH TOURNAMENT</div>
+      <div class="form-row" style="margin-bottom:16px">
+        <div class="form-group" style="max-width:260px">
+          <label class="form-label">Tournament</label>
+          <select class="form-input" id="winnersSelect" onchange="loadWinnersPanel()">
+            <option value="">Select tournament...</option>
+          </select>
+        </div>
+      </div>
+      <div id="winnersPanel"></div>
+    </div>
+
+    <!-- ── ANNOUNCE ── -->
+    <div class="page" id="page-announce">
+      <div class="page-title">Announce</div>
+      <div class="page-sub">// POST AN ANNOUNCEMENT EMBED TO DISCORD CHANNEL</div>
+      <div class="card">
+        <div class="card-title"><svg><use href="#ic-megaphone"/></svg> New Announcement</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tournament</label>
+            <select class="form-input" id="announceSelect">
+              <option value="">Select tournament...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Message</label>
+            <textarea class="form-input" id="announceMsg" placeholder="Type your announcement..."></textarea>
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="sendAnnounce()" id="announceBtn">
+          <svg><use href="#ic-megaphone"/></svg> Send Announcement
+        </button>
+      </div>
+    </div>
+
+    <!-- ── DM ALL ── -->
+    <div class="page" id="page-dmall">
+      <div class="page-title">DM All Players</div>
+      <div class="page-sub">// SEND A DIRECT MESSAGE TO ALL REGISTERED PLAYERS</div>
+      <div class="card">
+        <div class="card-title"><svg><use href="#ic-mail"/></svg> Compose DM</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tournament</label>
+            <select class="form-input" id="dmSelect">
+              <option value="">Select tournament...</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Message</label>
+            <textarea class="form-input" id="dmMsg" placeholder="Type your message..."></textarea>
+          </div>
+        </div>
+        <button class="btn btn-warn" onclick="sendDmAll()" id="dmBtn">
+          <svg><use href="#ic-mail"/></svg> Send DM to All Players
+        </button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- CONFIRM MODAL -->
+<div class="overlay" id="confirmOverlay">
+  <div class="modal">
+    <div class="modal-title" id="confirmTitle">Confirm Action</div>
+    <div class="modal-body"  id="confirmBody">Are you sure?</div>
+    <div class="modal-actions">
+      <button class="btn btn-primary btn-sm" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger  btn-sm" id="confirmOkBtn" onclick="doConfirm()">Confirm</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+// ── AUTH ──
+const raw = localStorage.getItem('discord_user');
+if (!raw) window.location.href = 'index.html';
+const user = JSON.parse(raw);
+const OWNER_ID = '921970487431671859';
+
+if (user.id !== OWNER_ID) {
+  document.body.innerHTML = `
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;gap:16px;font-family:'Share Tech Mono',monospace;color:#f38ba8">
+      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+      <div style="font-size:16px;letter-spacing:0.2em">ACCESS DENIED</div>
+      <div style="font-size:11px;color:#525a7a">This panel is restricted to the server owner.</div>
+      <a href="dashboard.html" style="font-size:11px;color:#5865F2;text-decoration:none;border:1px solid rgba(88,101,242,0.3);padding:8px 16px;border-radius:2px">← Back to Dashboard</a>
+    </div>`;
+  throw new Error('Unauthorized');
+}
+
+document.getElementById('topAvatar').src = user.avatar;
+document.getElementById('topName').textContent = user.globalName || user.username;
+
+// ── STATE ──
+let serverData = { tournaments: {}, state: {}, winners: {} };
+let allRegs    = {};
+
+// ── API ──
+async function adminCall(payload) {
+  const res = await fetch('/.netlify/functions/register/admin', {
+    method:  'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body:    JSON.stringify({ ...payload, caller_id: user.id }),
+  });
+  const d = await res.json();
+  if (!res.ok) throw new Error(d.error || res.status);
+  return d;
+}
+
+async function loadState() {
+  const res = await fetch('/.netlify/functions/register');
+  if (!res.ok) throw new Error('Failed to load state');
+  serverData = await res.json();
+  populateSelects();
+}
+
+async function loadAllRegs() {
+  const d = await adminCall({ action: 'get_registrations' });
+  allRegs = d.registrations || {};
+}
+
+function populateSelects() {
+  const tids = Object.keys(serverData.tournaments || {});
+  const selects = ['playersFilter','winnersSelect','announceSelect','dmSelect'];
+  selects.forEach(id => {
+    const el = document.getElementById(id);
+    const cur = el.value;
+    const isFilter = id === 'playersFilter';
+    el.innerHTML = isFilter ? '<option value="">All Tournaments</option>' : '<option value="">Select tournament...</option>';
+    tids.forEach(tid => {
+      const opt = document.createElement('option');
+      opt.value = tid;
+      opt.textContent = serverData.tournaments[tid].name;
+      el.appendChild(opt);
+    });
+    if (cur) el.value = cur;
+  });
+}
+
+function hexColor(n) { return '#' + (n >>> 0).toString(16).padStart(6,'0'); }
+
+// ── PAGES ──
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.getElementById('nav-' + name).classList.add('active');
+  if (name === 'overview') renderOverview();
+  if (name === 'manage')   renderManage();
+  if (name === 'players')  loadPlayers();
+  if (name === 'winners')  loadWinnersPanel();
+  // Close sidebar on mobile
+  document.getElementById('sidebar').classList.remove('open');
+}
+
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('open');
+}
+
+// ── OVERVIEW ──
+function renderOverview() {
+  const tourns = serverData.tournaments || {};
+  const st     = serverData.state       || {};
+  const tids   = Object.keys(tourns);
+
+  // Stats
+  let totalPlayers = 0;
+  tids.forEach(tid => totalPlayers += (st[tid]?.count || 0));
+  const open    = tids.filter(tid => st[tid]?.registration === 'open').length;
+  const started = tids.filter(tid => st[tid]?.tournament   === 'started').length;
+
+  document.getElementById('overviewStats').innerHTML = `
+    <div class="stat-card"><div class="stat-val">${tids.length}</div><div class="stat-label">Tournaments</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--green)">${open}</div><div class="stat-label">Open Regs</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--yellow)">${started}</div><div class="stat-label">Live Now</div></div>
+    <div class="stat-card"><div class="stat-val" style="color:var(--cyan)">${totalPlayers}</div><div class="stat-label">Total Players</div></div>`;
+
+  // Cards
+  const grid = document.getElementById('overviewGrid');
+  if (!tids.length) { grid.innerHTML = '<div class="empty">No tournaments yet.</div>'; return; }
+  grid.innerHTML = tids.map(tid => {
+    const t  = tourns[tid];
+    const s  = st[tid]  || {};
+    const col = hexColor(t.color || 0x5865F2);
+    const regBadge   = s.registration === 'open'    ? 'badge-open'    : 'badge-closed';
+    const regLabel   = s.registration === 'open'    ? 'REG OPEN'      : 'REG CLOSED';
+    const tournBadge = s.tournament   === 'started' ? 'badge-started' : s.tournament === 'ended' ? 'badge-ended' : 'badge-upcoming';
+    const tournLabel = (s.tournament || 'upcoming').toUpperCase();
+    return `
+      <div class="t-card">
+        <div class="t-card-accent" style="background:${col}"></div>
+        <div class="t-card-name">${t.name}</div>
+        <div class="t-badges">
+          <span class="badge ${regBadge}">${regLabel}</span>
+          <span class="badge ${tournBadge}">${tournLabel}</span>
+          <span class="badge badge-players">${s.count || 0} PLAYERS${s.cap ? ' / ' + s.cap : ''}</span>
+        </div>
+        <div class="t-card-actions">
+          <button class="btn btn-primary btn-sm" onclick="showPage('manage')"><svg><use href="#ic-settings"/></svg> Manage</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── MANAGE ──
+function renderManage() {
+  const tourns = serverData.tournaments || {};
+  const st     = serverData.state       || {};
+  const tids   = Object.keys(tourns);
+  const grid   = document.getElementById('manageGrid');
+  if (!tids.length) { grid.innerHTML = '<div class="empty">No tournaments yet. Create one first.</div>'; return; }
+
+  grid.innerHTML = tids.map(tid => {
+    const t   = tourns[tid];
+    const s   = st[tid] || {};
+    const col = hexColor(t.color || 0x5865F2);
+    const isOpen    = s.registration === 'open';
+    const isStarted = s.tournament   === 'started';
+    const isEnded   = s.tournament   === 'ended';
+    const cap       = s.cap || '';
+
+    return `
+      <div class="t-card">
+        <div class="t-card-accent" style="background:${col}"></div>
+        <div class="t-card-name">${t.name}</div>
+        <div class="t-badges">
+          <span class="badge ${isOpen ? 'badge-open' : 'badge-closed'}">${isOpen ? 'REG OPEN' : 'REG CLOSED'}</span>
+          <span class="badge ${isStarted ? 'badge-started' : isEnded ? 'badge-ended' : 'badge-upcoming'}">${(s.tournament||'UPCOMING').toUpperCase()}</span>
+          <span class="badge badge-players">${s.count||0}${cap ? '/'+cap : ''} PLAYERS</span>
+        </div>
+
+        <div style="margin-bottom:12px">
+          <div class="form-label" style="margin-bottom:6px">Registration Cap (0 = unlimited)</div>
+          <div style="display:flex;gap:8px">
+            <input type="number" class="form-input" id="cap-${tid}" value="${cap}" min="0" placeholder="0" style="width:100px"/>
+            <button class="btn btn-primary btn-sm" onclick="setCap('${tid}')">Set</button>
+          </div>
+        </div>
+
+        <div class="t-card-actions" style="flex-wrap:wrap">
+          ${!isOpen
+            ? `<button class="btn btn-success btn-sm" onclick="setState('${tid}','open',null)"><svg><use href="#ic-check"/></svg> Open Regs</button>`
+            : `<button class="btn btn-danger  btn-sm" onclick="setState('${tid}','closed',null)"><svg><use href="#ic-x"/></svg> Close Regs</button>`}
+          ${!isStarted && !isEnded
+            ? `<button class="btn btn-warn btn-sm" onclick="setState('${tid}',null,'started')"><svg><use href="#ic-check"/></svg> Start</button>`
+            : ''}
+          ${!isEnded
+            ? `<button class="btn btn-danger btn-sm" onclick="setState('${tid}',null,'ended')"><svg><use href="#ic-x"/></svg> End</button>`
+            : `<button class="btn btn-primary btn-sm" onclick="setState('${tid}','open','upcoming')"><svg><use href="#ic-check"/></svg> Reset</button>`}
+          <button class="btn btn-danger btn-sm" onclick="confirmDelete('${tid}', '${t.name.replace(/'/g,"\\'")}')">
+            <svg><use href="#ic-trash"/></svg> Delete
+          </button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── PLAYERS ──
+async function loadPlayers() {
+  const wrap  = document.getElementById('playersTable');
+  const tidF  = document.getElementById('playersFilter').value;
+  wrap.innerHTML = '<div class="empty">LOADING...</div>';
+  try {
+    await loadAllRegs();
+    const entries = tidF
+      ? (allRegs[tidF] ? { [tidF]: allRegs[tidF] } : {})
+      : allRegs;
+
+    let totalCount = 0;
+    const rows = [];
+    for (const [tid, tdata] of Object.entries(entries)) {
+      const players = tdata.players || [];
+      totalCount += players.length;
+      players.forEach(p => {
+        rows.push(`
+          <tr>
+            <td><img class="player-av" src="https://cdn.discordapp.com/avatars/${p.discord_id}/avatar.png" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" alt=""/>
+              ${p.discord_global_name || p.discord_username}</td>
+            <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">@${p.discord_username}</td>
+            <td style="font-family:var(--mono);font-size:11px">${p.game_username || '—'}</td>
+            <td>${tdata.tournament_name}</td>
+            <td style="font-family:var(--mono);font-size:10px;color:var(--muted)">${(p.submitted_at||'').split(',')[0]}</td>
+            <td><button class="btn btn-danger btn-sm" onclick="confirmRemovePlayer('${tid}','${p.discord_id}','${(p.discord_global_name||p.discord_username).replace(/'/g,"\\'")}')">
+              <svg><use href="#ic-trash"/></svg> Remove</button></td>
+          </tr>`);
+      });
+    }
+
+    if (!rows.length) {
+      wrap.innerHTML = '<div class="empty">No registrations found.</div>';
+      return;
+    }
+
+    wrap.innerHTML = `
+      <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:12px;letter-spacing:0.12em">${totalCount} PLAYER${totalCount!==1?'S':''} TOTAL</div>
+      <div style="overflow-x:auto">
+        <table class="players-table">
+          <thead><tr>
+            <th>Player</th><th>Username</th><th>Game Tag</th><th>Tournament</th><th>Registered</th><th>Action</th>
+          </tr></thead>
+          <tbody>${rows.join('')}</tbody>
+        </table>
+      </div>`;
+  } catch(e) {
+    wrap.innerHTML = `<div class="empty">Error: ${e.message}</div>`;
+  }
+}
+
+// ── WINNERS ──
+function loadWinnersPanel() {
+  const tid  = document.getElementById('winnersSelect').value;
+  const wrap = document.getElementById('winnersPanel');
+  if (!tid) { wrap.innerHTML = ''; return; }
+
+  const t      = serverData.tournaments[tid];
+  const tw     = (serverData.winners || {})[tid] || {};
+  const st     = serverData.state[tid] || {};
+  const players= (allRegs[tid]?.players || []);
+  const color  = hexColor(t?.color || 0x5865F2);
+
+  const medals = { '1st':'🥇','2nd':'🥈','3rd':'🥉' };
+  const placeColors = { '1st':'#fbbf24','2nd':'#94a3b8','3rd':'#cd7c2f' };
+
+  const slots = ['1st','2nd','3rd'].map(place => {
+    const w = tw[place];
+    const opts = players.map(p =>
+      `<option value="${p.discord_id}|${p.discord_global_name||p.discord_username}|${p.discord_username}">${p.discord_global_name||p.discord_username} (@${p.discord_username})</option>`
+    ).join('');
+    return `
+      <div class="card" style="border-color:${placeColors[place]}30">
+        <div class="card-title" style="color:${placeColors[place]}">${medals[place]} ${place} Place</div>
+        ${w ? `
+          <div class="winner-current" style="margin-bottom:12px">
+            <img src="${w.avatar || 'https://cdn.discordapp.com/embed/avatars/0.png'}" alt=""/>
+            <span style="color:#fff">${w.display_name || w.username}</span>
+            <button class="btn btn-danger btn-sm" onclick="removeWinner('${tid}','${place}')"><svg><use href="#ic-x"/></svg> Remove</button>
+          </div>` : `<div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:12px;letter-spacing:0.1em">NOT SET</div>`}
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Set winner from registered players</label>
+            <select class="form-input" id="winner-select-${place}">
+              <option value="">Choose a player...</option>
+              ${opts}
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Or enter Discord ID manually</label>
+            <input type="text" class="form-input" id="winner-id-${place}" placeholder="Discord ID"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Display name</label>
+            <input type="text" class="form-input" id="winner-name-${place}" placeholder="Display name"/>
+          </div>
+        </div>
+        <button class="btn btn-success btn-sm" onclick="setWinner('${tid}','${place}')">
+          <svg><use href="#ic-check"/></svg> Set ${place} Place
+        </button>
+      </div>`;
+  }).join('');
+
+  wrap.innerHTML = slots;
+
+  // Wire up select auto-fill
+  ['1st','2nd','3rd'].forEach(place => {
+    const sel = document.getElementById(`winner-select-${place}`);
+    if (!sel) return;
+    sel.addEventListener('change', () => {
+      if (!sel.value) return;
+      const [did, dispName, uname] = sel.value.split('|');
+      document.getElementById(`winner-id-${place}`).value   = did;
+      document.getElementById(`winner-name-${place}`).value = dispName;
+    });
+  });
+}
+
+// ── ACTIONS ──
+async function createTournament() {
+  const name = document.getElementById('createName').value.trim();
+  if (!name) { toast('Enter a tournament name', 'error'); return; }
+  const btn = document.getElementById('createBtn');
+  btn.classList.add('loading');
+  try {
+    await adminCall({ action: 'create', name });
+    await loadState();
+    document.getElementById('createName').value = '';
+    toast(`Tournament created!`, 'success');
+    btn.classList.remove('loading');
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+    btn.classList.remove('loading');
+  }
+}
+
+async function setState(tid, regStatus, tournStatus) {
+  try {
+    await adminCall({ action: 'set_state', tournament_id: tid, registration: regStatus, tournament_status: tournStatus });
+    await loadState();
+    renderManage();
+    renderOverview();
+    toast('Tournament updated!', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function setCap(tid) {
+  const val = parseInt(document.getElementById(`cap-${tid}`).value) || 0;
+  try {
+    await adminCall({ action: 'set_cap', tournament_id: tid, cap: val });
+    await loadState();
+    renderManage();
+    toast(val === 0 ? 'Cap removed (unlimited)' : `Cap set to ${val}`, 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function setWinner(tid, place) {
+  const did  = document.getElementById(`winner-id-${place}`).value.trim();
+  const name = document.getElementById(`winner-name-${place}`).value.trim();
+  if (!did || !name) { toast('Enter Discord ID and display name', 'error'); return; }
+  try {
+    // Try to get avatar from players list
+    const players = allRegs[tid]?.players || [];
+    const player  = players.find(p => p.discord_id === did);
+    const avatar  = player
+      ? `https://cdn.discordapp.com/avatars/${did}/avatar.png`
+      : `https://cdn.discordapp.com/embed/avatars/0.png`;
+    await adminCall({ action: 'set_winner', tournament_id: tid, place, discord_id: did, display_name: name, username: name, avatar });
+    await loadState();
+    await loadAllRegs();
+    loadWinnersPanel();
+    toast(`${place} place winner set!`, 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function removeWinner(tid, place) {
+  try {
+    await adminCall({ action: 'remove_winner', tournament_id: tid, place });
+    await loadState();
+    loadWinnersPanel();
+    toast('Winner removed', 'info');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function sendAnnounce() {
+  const tid = document.getElementById('announceSelect').value;
+  const msg = document.getElementById('announceMsg').value.trim();
+  if (!tid) { toast('Select a tournament', 'error'); return; }
+  if (!msg) { toast('Enter a message', 'error'); return; }
+  const btn = document.getElementById('announceBtn');
+  btn.classList.add('loading');
+  try {
+    await adminCall({ action: 'announce', tournament_id: tid, message: msg });
+    document.getElementById('announceMsg').value = '';
+    toast('Announcement sent to Discord!', 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.classList.remove('loading');
+}
+
+async function sendDmAll() {
+  const tid = document.getElementById('dmSelect').value;
+  const msg = document.getElementById('dmMsg').value.trim();
+  if (!tid) { toast('Select a tournament', 'error'); return; }
+  if (!msg) { toast('Enter a message', 'error'); return; }
+  const btn = document.getElementById('dmBtn');
+  btn.classList.add('loading');
+  try {
+    const d = await adminCall({ action: 'dm_all', tournament_id: tid, message: msg });
+    document.getElementById('dmMsg').value = '';
+    toast(`DMs sent: ${d.sent} success, ${d.failed} failed`, 'success');
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+  btn.classList.remove('loading');
+}
+
+// ── CONFIRM MODAL ──
+let confirmCallback = null;
+function confirmDelete(tid, name) {
+  document.getElementById('confirmTitle').textContent = 'Delete Tournament';
+  document.getElementById('confirmBody').textContent  = `Are you sure you want to delete "${name}"? This will remove ALL registrations and winners for this tournament.`;
+  document.getElementById('confirmOkBtn').className   = 'btn btn-danger btn-sm';
+  document.getElementById('confirmOkBtn').textContent = 'Delete';
+  confirmCallback = async () => {
+    try {
+      await adminCall({ action: 'delete', tournament_id: tid });
+      await loadState();
+      renderManage();
+      renderOverview();
+      toast('Tournament deleted', 'info');
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  };
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+function confirmRemovePlayer(tid, did, name) {
+  document.getElementById('confirmTitle').textContent = 'Remove Player';
+  document.getElementById('confirmBody').textContent  = `Remove "${name}" from this tournament? This cannot be undone.`;
+  document.getElementById('confirmOkBtn').className   = 'btn btn-danger btn-sm';
+  document.getElementById('confirmOkBtn').textContent = 'Remove';
+  confirmCallback = async () => {
+    try {
+      await adminCall({ action: 'remove_player', tournament_id: tid, discord_id: did });
+      await loadPlayers();
+      toast('Player removed', 'info');
+    } catch(e) { toast('Error: ' + e.message, 'error'); }
+  };
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+
+function doConfirm() {
+  closeConfirm();
+  if (confirmCallback) { confirmCallback(); confirmCallback = null; }
+}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('open'); }
+document.getElementById('confirmOverlay').addEventListener('click', e => {
+  if (e.target === document.getElementById('confirmOverlay')) closeConfirm();
+});
+
+// ── TOAST ──
+function toast(msg, type = 'info') {
+  const wrap = document.getElementById('toastWrap');
+  const el   = document.createElement('div');
+  const icons = { success: '#ic-check', error: '#ic-x', info: '#ic-check' };
+  el.className = `toast ${type}`;
+  el.innerHTML = `<svg width="13" height="13"><use href="${icons[type]||'#ic-check'}"/></svg>${msg}`;
+  wrap.appendChild(el);
+  setTimeout(() => {
+    el.classList.add('out');
+    setTimeout(() => el.remove(), 300);
+  }, 3500);
+}
+
+function logout() { localStorage.removeItem('discord_user'); window.location.href = 'index.html'; }
+
+// ── INIT ──
+async function init() {
+  try {
+    await loadState();
+    await loadAllRegs();
+    renderOverview();
+    toast('Admin panel loaded', 'success');
+  } catch(e) {
+    toast('Could not connect to bot server', 'error');
+  }
+}
+init();
+
+// ── BG CANVAS ──
+const canvas = document.getElementById('bgCanvas');
+const ctx = canvas.getContext('2d');
+let W, H, dots = [];
+function resize() {
+  W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; dots = [];
+  const c = Math.ceil(W/90), r = Math.ceil(H/90);
+  for (let x=0;x<=c;x++) for (let y=0;y<=r;y++)
+    dots.push({x:x*90,y:y*90,ox:x*90,oy:y*90,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,r:Math.random()+.3,a:Math.random()*.3+.04});
+}
+function draw() {
+  ctx.clearRect(0,0,W,H);
+  for (let i=0;i<dots.length;i++) {
+    const d=dots[i]; d.x+=d.vx; d.y+=d.vy; d.vx+=(d.ox-d.x)*.0005; d.vy+=(d.oy-d.y)*.0005;
+    for (let j=i+1;j<dots.length;j++) {
+      const e=dots[j],dx=d.x-e.x,dy=d.y-e.y,dist=Math.sqrt(dx*dx+dy*dy);
+      if (dist<120) { ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(e.x,e.y);ctx.strokeStyle='rgba(249,115,22,'+(0.03*(1-dist/120))+')';ctx.lineWidth=.5;ctx.stroke(); }
+    }
+    ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba(249,115,22,'+d.a+')';ctx.fill();
+  }
+  requestAnimationFrame(draw);
+}
+window.addEventListener('resize',resize); resize(); draw();
+</script>
+</body>
+</html>
