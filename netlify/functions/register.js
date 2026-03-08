@@ -1,34 +1,51 @@
 const BACKEND = 'http://paid2.daki.cc:4156';
 
 exports.handler = async (event) => {
-  const headers = { 'Access-Control-Allow-Origin': '*', 'Content-Type': 'application/json' };
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Content-Type': 'application/json',
+  };
 
   try {
     const path = event.path.replace('/.netlify/functions/register', '') || '/';
 
+    // GET /state
     if (event.httpMethod === 'GET' && (path === '/' || path === '')) {
       const res = await fetch(`${BACKEND}/state`);
       return { statusCode: 200, headers, body: JSON.stringify(await res.json()) };
     }
+    // GET /my-registrations/:id
     if (event.httpMethod === 'GET' && path.startsWith('/my-registrations/')) {
-      const discordId = path.replace('/my-registrations/', '');
-      const res = await fetch(`${BACKEND}/my-registrations/${discordId}`);
+      const id  = path.replace('/my-registrations/', '');
+      const res = await fetch(`${BACKEND}/my-registrations/${id}`);
       return { statusCode: 200, headers, body: JSON.stringify(await res.json()) };
     }
+    // GET /history/:id
     if (event.httpMethod === 'GET' && path.startsWith('/history/')) {
-      const discordId = path.replace('/history/', '');
-      const res = await fetch(`${BACKEND}/history/${discordId}`);
+      const id  = path.replace('/history/', '');
+      const res = await fetch(`${BACKEND}/history/${id}`);
       return { statusCode: 200, headers, body: JSON.stringify(await res.json()) };
     }
+    // GET /leaderboard
     if (event.httpMethod === 'GET' && path === '/leaderboard') {
       const res = await fetch(`${BACKEND}/leaderboard`);
       return { statusCode: 200, headers, body: JSON.stringify(await res.json()) };
     }
+    // POST /admin  (all admin actions)
+    if (event.httpMethod === 'POST' && path === '/admin') {
+      const res = await fetch(`${BACKEND}/admin`, {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    event.body,
+      });
+      return { statusCode: res.status, headers, body: JSON.stringify(await res.json()) };
+    }
+    // POST /  (register / cancel)
     if (event.httpMethod === 'POST') {
       const res = await fetch(`${BACKEND}/register`, {
-        method: 'POST',
+        method:  'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: event.body,
+        body:    event.body,
       });
       return { statusCode: res.status, headers, body: JSON.stringify(await res.json()) };
     }
