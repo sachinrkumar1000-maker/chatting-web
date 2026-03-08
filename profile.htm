@@ -6,111 +6,109 @@
 <title>My Profile — Sovereigns Kingdom</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  :root {
-    --bg:#03050d; --panel:rgba(8,12,24,0.9);
-    --border:rgba(88,101,242,0.2); --border2:rgba(88,101,242,0.1);
-    --accent:#5865F2; --accent-h:#7289da; --glow:rgba(88,101,242,0.4);
-    --cyan:#00d4ff; --green:#22c55e; --yellow:#f9c74f; --red:#f38ba8;
-    --text:#cdd6f4; --muted:#525a7a;
-    --font:'Rajdhani',sans-serif; --mono:'Share Tech Mono',monospace;
-  }
-  body { font-family: var(--font); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
-  #bgCanvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.4; }
-  body::after { content: ''; position: fixed; inset: 0; z-index: 1; background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 4px); pointer-events: none; }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#03050d;--panel:rgba(8,12,24,0.92);
+  --border:rgba(88,101,242,0.2);--border2:rgba(88,101,242,0.1);
+  --accent:#5865F2;--glow:rgba(88,101,242,0.4);
+  --cyan:#00d4ff;--green:#22c55e;--yellow:#fbbf24;--red:#f38ba8;
+  --text:#cdd6f4;--muted:#525a7a;
+  --font:'Rajdhani',sans-serif;--mono:'Share Tech Mono',monospace;
+}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.4}
+body::after{content:'';position:fixed;inset:0;z-index:1;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.05) 2px,rgba(0,0,0,0.05) 4px);pointer-events:none}
 
-  .topbar { position: sticky; top: 0; z-index: 100; display: flex; align-items: center; justify-content: space-between; padding: 0 28px; height: 60px; background: rgba(3,5,13,0.95); border-bottom: 1px solid var(--border); backdrop-filter: blur(20px); }
-  .topbar-left { display: flex; align-items: center; gap: 14px; }
-  .logo-icon { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; border: 1px solid var(--border); border-radius: 2px; background: rgba(88,101,242,0.08); }
-  .topbar-brand { font-size: 18px; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #fff; }
-  .topbar-tag { font-family: var(--mono); font-size: 9px; color: var(--muted); border: 1px solid var(--border); padding: 2px 7px; border-radius: 1px; }
-  .back-btn { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 11px; font-weight: 700; letter-spacing: 0.1em; color: var(--muted); text-decoration: none; border: 1px solid var(--border); padding: 6px 14px; border-radius: 2px; transition: all 0.2s; }
-  .back-btn svg { width: 12px; height: 12px; }
-  .back-btn:hover { color: var(--text); background: rgba(88,101,242,0.08); border-color: rgba(88,101,242,0.4); }
-  .user-pill { display: flex; align-items: center; gap: 10px; padding: 5px 12px 5px 5px; border: 1px solid var(--border); border-radius: 2px; background: rgba(88,101,242,0.06); cursor: pointer; position: relative; transition: all 0.2s; }
-  .user-pill:hover { background: rgba(88,101,242,0.12); border-color: rgba(88,101,242,0.4); }
-  .u-avatar { width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--accent); object-fit: cover; box-shadow: 0 0 10px var(--glow); }
-  .u-name { font-size: 13px; font-weight: 700; color: #fff; line-height: 1; }
-  .u-status { font-family: var(--mono); font-size: 9px; color: var(--green); }
-  .pill-arrow { font-size: 10px; color: var(--muted); margin-left: 2px; transition: transform 0.2s; }
-  .user-pill:hover .pill-arrow { transform: rotate(180deg); }
-  .user-dropdown { position: absolute; top: calc(100% + 8px); right: 0; background: rgba(8,12,24,0.98); border: 1px solid var(--border); border-radius: 2px; min-width: 210px; box-shadow: 0 10px 40px rgba(0,0,0,0.7); opacity: 0; pointer-events: none; transform: translateY(-8px); transition: all 0.2s; z-index: 200; overflow: hidden; }
-  .user-dropdown.open { opacity: 1; pointer-events: all; transform: translateY(0); }
-  .dd-item { display: flex; align-items: center; gap: 10px; padding: 10px 16px; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; color: var(--muted); cursor: pointer; border: none; background: none; width: 100%; text-align: left; text-decoration: none; transition: all 0.2s; }
-  .dd-item svg { width: 14px; height: 14px; flex-shrink: 0; }
-  .dd-item:hover { color: var(--text); background: rgba(88,101,242,0.08); }
-  .dd-item.danger:hover { color: var(--red); background: rgba(243,139,168,0.06); }
-  .dd-divider { height: 1px; background: var(--border2); margin: 4px 0; }
+/* TOPBAR */
+.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:60px;background:rgba(3,5,13,0.96);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)}
+.topbar-left{display:flex;align-items:center;gap:14px}
+.logo-icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid var(--border);border-radius:2px;background:rgba(88,101,242,0.08)}
+.topbar-brand{font-size:18px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#fff}
+.topbar-tag{font-family:var(--mono);font-size:9px;color:var(--muted);border:1px solid var(--border);padding:2px 7px;border-radius:1px}
+.back-btn{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:6px 14px;border-radius:2px;transition:all 0.2s}
+.back-btn svg{width:12px;height:12px}
+.back-btn:hover{color:var(--text);background:rgba(88,101,242,0.08);border-color:rgba(88,101,242,0.4)}
+.user-pill{display:flex;align-items:center;gap:10px;padding:5px 12px 5px 5px;border:1px solid var(--border);border-radius:2px;background:rgba(88,101,242,0.06);cursor:pointer;position:relative;transition:all 0.2s}
+.user-pill:hover{background:rgba(88,101,242,0.12);border-color:rgba(88,101,242,0.4)}
+.u-avatar{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--accent);object-fit:cover;box-shadow:0 0 10px var(--glow)}
+.u-name{font-size:13px;font-weight:700;color:#fff;line-height:1}
+.u-status{font-family:var(--mono);font-size:9px;color:var(--green)}
+.pill-arrow{font-size:10px;color:var(--muted);margin-left:2px;transition:transform 0.2s}
+.user-pill:hover .pill-arrow{transform:rotate(180deg)}
+.user-dropdown{position:absolute;top:calc(100% + 8px);right:0;background:rgba(8,12,24,0.98);border:1px solid var(--border);border-radius:2px;min-width:210px;box-shadow:0 10px 40px rgba(0,0,0,0.7);opacity:0;pointer-events:none;transform:translateY(-8px);transition:all 0.2s;z-index:200;overflow:hidden}
+.user-dropdown.open{opacity:1;pointer-events:all;transform:translateY(0)}
+.dd-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;font-weight:600;letter-spacing:0.06em;color:var(--muted);cursor:pointer;border:none;background:none;width:100%;text-align:left;text-decoration:none;transition:all 0.2s}
+.dd-item svg{width:14px;height:14px;flex-shrink:0}
+.dd-item:hover{color:var(--text);background:rgba(88,101,242,0.08)}
+.dd-item.danger:hover{color:var(--red);background:rgba(243,139,168,0.06)}
+.dd-divider{height:1px;background:var(--border2);margin:4px 0}
 
-  .content { position: relative; z-index: 2; padding: 40px 48px; max-width: 860px; }
+/* CONTENT */
+.content{position:relative;z-index:2;padding:40px 48px;max-width:860px}
 
-  /* PROFILE HERO */
-  .profile-hero { background: var(--panel); border: 1px solid var(--border); border-radius: 2px; padding: 32px; display: flex; align-items: center; gap: 28px; position: relative; overflow: hidden; margin-bottom: 28px; animation: fadeUp 0.4s cubic-bezier(.22,1,.36,1) both; }
-  .profile-hero::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent), var(--cyan)); }
-  .profile-hero::after { content: ''; position: absolute; bottom: 0; left: 0; top: 0; width: 2px; background: linear-gradient(180deg, var(--accent), transparent); opacity: 0.5; }
-  .p-avatar-wrap { position: relative; flex-shrink: 0; }
-  .p-avatar { width: 84px; height: 84px; border-radius: 50%; border: 3px solid var(--accent); box-shadow: 0 0 28px var(--glow), 0 0 0 6px rgba(88,101,242,0.08); }
-  .p-online { position: absolute; bottom: 4px; right: 4px; width: 15px; height: 15px; background: var(--green); border: 2.5px solid var(--bg); border-radius: 50%; box-shadow: 0 0 8px var(--green); }
-  .p-info { flex: 1; min-width: 0; }
-  .p-name { font-size: 28px; font-weight: 700; color: #fff; letter-spacing: 0.06em; line-height: 1; }
-  .p-tag { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.15em; margin-top: 6px; }
-  .p-id { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; margin-top: 3px; opacity: 0.7; }
-  .p-stats { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
-  .stat { display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 20px; background: rgba(88,101,242,0.06); border: 1px solid var(--border2); border-radius: 2px; min-width: 80px; }
-  .stat-val { font-size: 24px; font-weight: 700; color: #fff; letter-spacing: 0.05em; line-height: 1; }
-  .stat-label { font-family: var(--mono); font-size: 9px; color: var(--muted); letter-spacing: 0.18em; }
-  .stat.gold { border-color: rgba(251,191,36,0.2); }
-  .stat.gold .stat-val { color: #fbbf24; }
+/* HERO */
+.hero{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:32px;display:flex;align-items:center;gap:28px;position:relative;overflow:hidden;margin-bottom:28px;animation:fadeUp 0.4s cubic-bezier(.22,1,.36,1) both}
+.hero::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--accent),var(--cyan))}
+.hero::after{content:'';position:absolute;bottom:0;left:0;top:0;width:2px;background:linear-gradient(180deg,var(--accent),transparent);opacity:0.5}
+.p-av-wrap{position:relative;flex-shrink:0}
+.p-av{width:84px;height:84px;border-radius:50%;border:3px solid var(--accent);box-shadow:0 0 28px var(--glow),0 0 0 6px rgba(88,101,242,0.08)}
+.p-online{position:absolute;bottom:4px;right:4px;width:15px;height:15px;background:var(--green);border:2.5px solid var(--bg);border-radius:50%;box-shadow:0 0 8px var(--green)}
+.p-info{flex:1;min-width:0}
+.p-name{font-size:28px;font-weight:700;color:#fff;letter-spacing:0.06em;line-height:1}
+.p-tag{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.15em;margin-top:6px}
+.p-id{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.08em;margin-top:3px;opacity:0.7}
+.p-stats{display:flex;gap:12px;margin-top:16px;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 20px;background:rgba(88,101,242,0.06);border:1px solid var(--border2);border-radius:2px;min-width:80px}
+.stat-val{font-size:24px;font-weight:700;color:#fff;letter-spacing:0.05em;line-height:1}
+.stat-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.18em}
+.stat.gold{border-color:rgba(251,191,36,0.2)}
+.stat.gold .stat-val{color:var(--yellow)}
 
-  /* SECTION HEADER */
-  .sec-head { font-family: var(--mono); font-size: 12px; font-weight: 700; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; margin-bottom: 14px; }
-  .sec-head span { color: var(--accent); }
+/* SECTION */
+.sec-head{font-family:var(--mono);font-size:12px;font-weight:700;letter-spacing:0.2em;color:var(--muted);text-transform:uppercase;margin-bottom:14px}
+.sec-head span{color:var(--accent)}
 
-  /* ACTIVE REGS */
-  .reg-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 32px; }
-  .reg-pill { display: flex; align-items: center; gap: 8px; padding: 7px 14px; background: rgba(0,212,255,0.06); border: 1px solid rgba(0,212,255,0.2); border-radius: 2px; font-size: 12px; font-weight: 700; color: var(--cyan); letter-spacing: 0.05em; font-family: var(--mono); }
-  .reg-pill svg { width: 11px; height: 11px; }
-  .no-regs { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 32px; }
+/* PILLS */
+.reg-pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:32px}
+.reg-pill{display:flex;align-items:center;gap:8px;padding:7px 14px;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.2);border-radius:2px;font-size:12px;font-weight:700;color:var(--cyan);letter-spacing:0.05em;font-family:var(--mono)}
+.reg-pill svg{width:11px;height:11px}
+.no-regs{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.1em;margin-bottom:32px}
 
-  /* TIMELINE */
-  .timeline { display: flex; flex-direction: column; }
-  .t-item { display: flex; gap: 14px; }
-  .t-left { display: flex; flex-direction: column; align-items: center; width: 20px; flex-shrink: 0; padding-top: 3px; }
-  .t-dot { width: 10px; height: 10px; border-radius: 50%; border: 2px solid; flex-shrink: 0; }
-  .t-dot.registered { background: rgba(34,197,94,0.2); border-color: var(--green); box-shadow: 0 0 6px rgba(34,197,94,0.5); }
-  .t-dot.cancelled   { background: rgba(243,139,168,0.2); border-color: var(--red); }
-  .t-dot.podium      { background: rgba(251,191,36,0.2); border-color: #fbbf24; box-shadow: 0 0 6px rgba(251,191,36,0.4); }
-  .t-line { flex: 1; width: 1px; background: var(--border2); margin: 4px 0; min-height: 16px; }
-  .t-body { flex: 1; padding-bottom: 20px; }
-  .t-badge { display: inline-flex; align-items: center; gap: 4px; font-family: var(--mono); font-size: 9px; font-weight: 700; letter-spacing: 0.14em; padding: 2px 8px; border-radius: 1px; margin-bottom: 5px; }
-  .t-badge.registered { color: var(--green); background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); }
-  .t-badge.cancelled   { color: var(--red);   background: rgba(243,139,168,0.08); border: 1px solid rgba(243,139,168,0.2); }
-  .t-badge.podium      { color: #fbbf24;      background: rgba(251,191,36,0.08);  border: 1px solid rgba(251,191,36,0.2); }
-  .t-title { font-size: 14px; font-weight: 700; color: var(--text); letter-spacing: 0.04em; }
-  .t-title strong { color: #fff; }
-  .t-meta { font-family: var(--mono); font-size: 10px; color: var(--muted); letter-spacing: 0.08em; margin-top: 3px; }
+/* TIMELINE */
+.timeline{display:flex;flex-direction:column}
+.t-item{display:flex;gap:14px}
+.t-left{display:flex;flex-direction:column;align-items:center;width:20px;flex-shrink:0;padding-top:3px}
+.t-dot{width:10px;height:10px;border-radius:50%;border:2px solid;flex-shrink:0}
+.t-dot.registered{background:rgba(34,197,94,0.2);border-color:var(--green);box-shadow:0 0 6px rgba(34,197,94,0.5)}
+.t-dot.cancelled{background:rgba(243,139,168,0.2);border-color:var(--red)}
+.t-dot.podium{background:rgba(251,191,36,0.2);border-color:var(--yellow);box-shadow:0 0 6px rgba(251,191,36,0.4)}
+.t-line{flex:1;width:1px;background:var(--border2);margin:4px 0;min-height:16px}
+.t-body{flex:1;padding-bottom:20px}
+.t-badge{display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.14em;padding:2px 8px;border-radius:1px;margin-bottom:5px}
+.t-badge.registered{color:var(--green);background:rgba(34,197,94,0.08);border:1px solid rgba(34,197,94,0.2)}
+.t-badge.cancelled{color:var(--red);background:rgba(243,139,168,0.08);border:1px solid rgba(243,139,168,0.2)}
+.t-badge.podium{color:var(--yellow);background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.2)}
+.t-title{font-size:14px;font-weight:700;color:var(--text);letter-spacing:0.04em}
+.t-title strong{color:#fff}
+.t-meta{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.08em;margin-top:3px}
 
-  .empty-hist { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 48px 0; text-align: center; }
-  .empty-hist svg { width: 32px; height: 32px; color: var(--muted); opacity: 0.25; }
-  .empty-hist p { font-family: var(--mono); font-size: 11px; color: var(--muted); letter-spacing: 0.15em; }
+.empty-hist{display:flex;flex-direction:column;align-items:center;gap:12px;padding:48px 0;text-align:center}
+.empty-hist p{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.15em}
 
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
+.loading-txt{font-family:var(--mono);font-size:11px;color:var(--muted);padding:14px 0;letter-spacing:0.12em}
 
-  @media (max-width: 640px) {
-    .topbar { padding: 0 14px; }
-    .topbar-tag { display: none; }
-    .topbar-brand { font-size: 14px; }
-    .content { padding: 20px 14px; }
-    .profile-hero { flex-wrap: wrap; padding: 20px; gap: 16px; }
-    .p-stats { gap: 8px; }
-    .stat { min-width: 64px; padding: 8px 12px; }
-  }
-  @media (max-width: 400px) { .topbar-brand { display: none; } }
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:640px){
+  .topbar{padding:0 14px}.topbar-tag{display:none}.topbar-brand{font-size:14px}
+  .content{padding:20px 14px}.hero{flex-wrap:wrap;padding:20px;gap:16px}
+  .p-stats{gap:8px}.stat{min-width:64px;padding:8px 12px}
+}
+@media(max-width:400px){.topbar-brand{display:none}}
 </style>
 </head>
 <body>
 <canvas id="bgCanvas"></canvas>
-
 <svg style="display:none">
   <symbol id="i-left"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></symbol>
   <symbol id="i-user"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
@@ -118,7 +116,7 @@
   <symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4a2 2 0 01-2-2V5h4M18 9h2a2 2 0 002-2V5h-4"/><path d="M6 5h12v6a6 6 0 01-12 0V5z"/><path d="M12 17v4M8 21h8"/></symbol>
   <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
   <symbol id="i-check"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"   stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></symbol>
-  <symbol id="i-hist"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-clock"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
 </svg>
 
 <nav class="topbar">
@@ -131,22 +129,22 @@
       </svg>
     </div>
     <span class="topbar-brand">Sovereigns Kingdom</span>
-    <span class="topbar-tag">v2.4.1</span>
+    <span class="topbar-tag">v2.5.0</span>
     <a href="dashboard.html" class="back-btn"><svg><use href="#i-left"/></svg> Dashboard</a>
   </div>
-  <div style="position:relative;">
+  <div style="position:relative">
     <div class="user-pill" id="userPill" onclick="toggleDropdown()">
       <img class="u-avatar" id="topAvatar" src="" alt=""/>
-      <div style="display:flex;flex-direction:column;gap:1px;">
+      <div style="display:flex;flex-direction:column;gap:1px">
         <div class="u-name" id="topName">...</div>
         <div class="u-status">● ONLINE</div>
       </div>
       <div class="pill-arrow">▾</div>
     </div>
     <div class="user-dropdown" id="userDropdown">
-      <a href="profile.html"           class="dd-item"><svg><use href="#i-user"/></svg>   My Profile</a>
-      <a href="my-registrations.html"  class="dd-item"><svg><use href="#i-list"/></svg>   My Registrations</a>
-      <a href="leaderboard.html"       class="dd-item"><svg><use href="#i-trophy"/></svg> Leaderboard</a>
+      <a href="profile.html"          class="dd-item"><svg><use href="#i-user"/></svg>   My Profile</a>
+      <a href="my-registrations.html" class="dd-item"><svg><use href="#i-list"/></svg>   My Registrations</a>
+      <a href="leaderboard.html"      class="dd-item"><svg><use href="#i-trophy"/></svg> Leaderboard</a>
       <div class="dd-divider"></div>
       <button class="dd-item danger" onclick="logout()"><svg><use href="#i-logout"/></svg> Sign Out</button>
     </div>
@@ -154,31 +152,29 @@
 </nav>
 
 <div class="content">
-  <div class="profile-hero">
-    <div class="p-avatar-wrap">
-      <img class="p-avatar" id="pAvatar" src="" alt=""/>
+  <div class="hero">
+    <div class="p-av-wrap">
+      <img class="p-av" id="pAvatar" src="" alt=""/>
       <div class="p-online"></div>
     </div>
     <div class="p-info">
       <div class="p-name" id="pName">...</div>
-      <div class="p-tag" id="pTag">...</div>
-      <div class="p-id"  id="pId">...</div>
+      <div class="p-tag"  id="pTag">...</div>
+      <div class="p-id"   id="pId">...</div>
       <div class="p-stats">
-        <div class="stat"><div class="stat-val" id="sCurrent">0</div><div class="stat-label">Active</div></div>
-        <div class="stat"><div class="stat-val" id="sTotal">0</div><div class="stat-label">Total Regs</div></div>
-        <div class="stat"><div class="stat-val" id="sCancelled">0</div><div class="stat-label">Cancelled</div></div>
-        <div class="stat gold"><div class="stat-val" id="sPodiums">0</div><div class="stat-label">Podiums</div></div>
+        <div class="stat"><div class="stat-val" id="sCurrent">—</div><div class="stat-label">Active</div></div>
+        <div class="stat"><div class="stat-val" id="sTotal">—</div><div class="stat-label">Total Regs</div></div>
+        <div class="stat"><div class="stat-val" id="sCancelled">—</div><div class="stat-label">Cancelled</div></div>
+        <div class="stat gold"><div class="stat-val" id="sPodiums">—</div><div class="stat-label">Podiums</div></div>
       </div>
     </div>
   </div>
 
   <div class="sec-head">// ACTIVE <span>REGISTRATIONS</span></div>
-  <div id="activeRegWrap"></div>
+  <div id="activeWrap"><div class="loading-txt">LOADING...</div></div>
 
-  <div class="sec-head">// ACTIVITY <span>HISTORY</span></div>
-  <div id="historyWrap">
-    <div style="font-family:var(--mono);font-size:11px;color:var(--muted);padding:14px 0;letter-spacing:0.12em;">LOADING...</div>
-  </div>
+  <div class="sec-head" style="margin-top:8px">// ACTIVITY <span>HISTORY</span></div>
+  <div id="historyWrap"><div class="loading-txt">LOADING...</div></div>
 </div>
 
 <script>
@@ -188,109 +184,108 @@ const user = JSON.parse(raw);
 const dn = user.globalName || user.username;
 
 document.getElementById('topAvatar').src = user.avatar;
-document.getElementById('topName').textContent  = dn;
-document.getElementById('pAvatar').src  = user.avatar;
-document.getElementById('pName').textContent    = dn;
-document.getElementById('pTag').textContent     = `@${user.username}`;
-document.getElementById('pId').textContent      = `DISCORD ID: ${user.id}`;
-
-const myRegs = JSON.parse(localStorage.getItem('my_registrations') || '{}');
-const activeKeys = Object.keys(myRegs);
-document.getElementById('sCurrent').textContent = activeKeys.length;
-
-// Active reg pills
-const activeWrap = document.getElementById('activeRegWrap');
-if (activeKeys.length === 0) {
-  activeWrap.innerHTML = '<div class="no-regs">No active registrations.</div>';
-} else {
-  const pillRow = document.createElement('div');
-  pillRow.className = 'reg-pills';
-  activeKeys.forEach(tid => {
-    const reg = myRegs[tid];
-    const pill = document.createElement('div');
-    pill.className = 'reg-pill';
-    pill.innerHTML = `<svg><use href="#i-check"/></svg>${reg.tournament_name || tid}`;
-    pillRow.appendChild(pill);
-  });
-  activeWrap.appendChild(pillRow);
-}
+document.getElementById('topName').textContent = dn;
+document.getElementById('pAvatar').src = user.avatar;
+document.getElementById('pName').textContent   = dn;
+document.getElementById('pTag').textContent    = '@' + user.username;
+document.getElementById('pId').textContent     = 'DISCORD ID: ' + user.id;
 
 async function loadProfile() {
   try {
-    const [hRes, sRes] = await Promise.all([
-      fetch(`/.netlify/functions/register/history/${user.id}`),
-      fetch(`/.netlify/functions/register`),
+    const [hRes, sRes, myRes] = await Promise.all([
+      fetch('/.netlify/functions/register/history/'         + user.id),
+      fetch('/.netlify/functions/register'),
+      fetch('/.netlify/functions/register/my-registrations/' + user.id),
     ]);
-    const hData = hRes.ok ? await hRes.json() : { history: [] };
-    const sData = sRes.ok ? await sRes.json() : { winners: {} };
 
-    const hist    = hData.history  || [];
-    const winners = sData.winners  || {};
+    const hData  = hRes.ok  ? await hRes.json()  : { history: [] };
+    const sData  = sRes.ok  ? await sRes.json()  : { winners: {}, tournaments: {} };
+    const myData = myRes.ok ? await myRes.json() : { registrations: {} };
 
-    // Stats
-    const totalRegs    = hist.filter(h => h.type === 'registered').length;
-    const totalCancels = hist.filter(h => h.type === 'cancelled').length;
+    const hist     = hData.history        || [];
+    const winners  = sData.winners        || {};
+    const tourns   = sData.tournaments    || {};
+    const myRegs   = myData.registrations || {};
+    const activeKeys = Object.keys(myRegs);
+
+    // ── STATS ──
+    document.getElementById('sCurrent').textContent   = activeKeys.length;
+    document.getElementById('sTotal').textContent     = hist.filter(h => h.type === 'registered').length;
+    document.getElementById('sCancelled').textContent = hist.filter(h => h.type === 'cancelled').length;
+
     let podiums = 0;
-    for (const places of Object.values(winners)) {
-      for (const info of Object.values(places)) {
+    for (const places of Object.values(winners))
+      for (const info of Object.values(places))
         if (info.discord_id === user.id) podiums++;
-      }
-    }
-    document.getElementById('sTotal').textContent     = totalRegs;
-    document.getElementById('sCancelled').textContent = totalCancels;
-    document.getElementById('sPodiums').textContent   = podiums;
+    document.getElementById('sPodiums').textContent = podiums;
 
-    // Build podium entries from winners
-    const podiumEntries = [];
-    for (const [tid, places] of Object.entries(winners)) {
-      for (const [place, info] of Object.entries(places)) {
-        if (info.discord_id === user.id) {
-          podiumEntries.push({ type: 'podium', tournament_name: sData.tournaments?.[tid]?.name || tid, place, timestamp: '' });
-        }
-      }
+    // ── ACTIVE PILLS ──
+    const activeWrap = document.getElementById('activeWrap');
+    if (activeKeys.length === 0) {
+      activeWrap.innerHTML = '<div class="no-regs">No active registrations.</div>';
+    } else {
+      const row = document.createElement('div');
+      row.className = 'reg-pills';
+      activeKeys.forEach(tid => {
+        const reg  = myRegs[tid];
+        const pill = document.createElement('div');
+        pill.className = 'reg-pill';
+        pill.innerHTML = '<svg><use href="#i-check"/></svg>' + (reg.tournament_name || tourns[tid]?.name || tid);
+        row.appendChild(pill);
+      });
+      activeWrap.innerHTML = '';
+      activeWrap.appendChild(row);
     }
+
+    // ── PODIUM ENTRIES ──
+    const podiumEntries = [];
+    for (const [tid, places] of Object.entries(winners))
+      for (const [place, info] of Object.entries(places))
+        if (info.discord_id === user.id)
+          podiumEntries.push({ type:'podium', tournament_name: tourns[tid]?.name || tid, place, timestamp:'' });
 
     renderTimeline([...podiumEntries, ...hist]);
+
   } catch(e) {
-    document.getElementById('historyWrap').innerHTML =
-      '<div style="font-family:var(--mono);font-size:11px;color:var(--muted);padding:14px 0;letter-spacing:0.1em;">Could not load history.</div>';
+    document.getElementById('historyWrap').innerHTML = '<div class="loading-txt">Could not load data. Is the bot running?</div>';
+    document.getElementById('activeWrap').innerHTML  = '<div class="no-regs">Could not load.</div>';
+    ['sCurrent','sTotal','sCancelled','sPodiums'].forEach(id => document.getElementById(id).textContent = '?');
   }
 }
 
 function renderTimeline(entries) {
   const wrap = document.getElementById('historyWrap');
   if (!entries.length) {
-    wrap.innerHTML = `<div class="empty-hist"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><use href="#i-hist"/></svg><p>NO ACTIVITY YET</p></div>`;
+    wrap.innerHTML = '<div class="empty-hist"><p>NO ACTIVITY YET</p></div>';
     return;
   }
-
-  const medals = { '1st': '🥇', '2nd': '🥈', '3rd': '🥉' };
-  const labels = { registered: 'REGISTERED', cancelled: 'CANCELLED', podium: 'PODIUM FINISH' };
-  const verbs  = { registered: 'Registered for', cancelled: 'Cancelled registration for', podium: 'Finished in' };
+  const medals  = { '1st':'🥇', '2nd':'🥈', '3rd':'🥉' };
+  const labels  = { registered:'REGISTERED', cancelled:'CANCELLED', podium:'PODIUM FINISH' };
+  const verbs   = { registered:'Registered for', cancelled:'Cancelled registration for', podium:'Finished in' };
 
   const tl = document.createElement('div');
   tl.className = 'timeline';
-
   entries.forEach((e, i) => {
     const item = document.createElement('div');
     item.className = 't-item';
-    item.style.animation = `fadeUp 0.35s cubic-bezier(.22,1,.36,1) ${i*0.04}s both`;
-    const isLast = i === entries.length - 1;
-    const badgeType = e.type === 'podium' ? 'podium' : e.type;
-    item.innerHTML = `
-      <div class="t-left">
-        <div class="t-dot ${badgeType}"></div>
-        ${!isLast ? '<div class="t-line"></div>' : ''}
-      </div>
-      <div class="t-body">
-        <div class="t-badge ${badgeType}">${e.type === 'podium' ? (medals[e.place]||'') + ' ' : ''}${labels[e.type] || e.type.toUpperCase()}</div>
-        <div class="t-title">${verbs[e.type] || e.type} <strong>${e.tournament_name || e.tournament_id || ''}</strong>${e.type === 'podium' ? ` — <strong>${e.place} Place</strong>` : ''}</div>
-        ${e.game_username ? `<div class="t-meta">Game tag: ${e.game_username}</div>` : ''}
-        ${e.timestamp ? `<div class="t-meta">${e.timestamp}</div>` : ''}
-      </div>`;
+    item.style.animation = 'fadeUp 0.35s cubic-bezier(.22,1,.36,1) ' + (i*0.04) + 's both';
+    const isLast   = i === entries.length - 1;
+    const bType    = e.type === 'podium' ? 'podium' : e.type;
+    const tname    = e.tournament_name || e.tournament_id || '';
+    item.innerHTML =
+      '<div class="t-left">' +
+        '<div class="t-dot ' + bType + '"></div>' +
+        (isLast ? '' : '<div class="t-line"></div>') +
+      '</div>' +
+      '<div class="t-body">' +
+        '<div class="t-badge ' + bType + '">' + (e.type==='podium' ? (medals[e.place]||'') + ' ' : '') + (labels[e.type]||e.type.toUpperCase()) + '</div>' +
+        '<div class="t-title">' + (verbs[e.type]||e.type) + ' <strong>' + tname + '</strong>' + (e.type==='podium' ? ' — <strong>' + e.place + ' Place</strong>' : '') + '</div>' +
+        (e.game_username ? '<div class="t-meta">Game tag: ' + e.game_username + '</div>' : '') +
+        (e.timestamp     ? '<div class="t-meta">' + e.timestamp + '</div>' : '') +
+        (e.manual        ? '<div class="t-meta" style="color:var(--accent);opacity:0.6">Added by admin</div>' : '') +
+      '</div>';
     tl.appendChild(item);
   });
-
   wrap.innerHTML = '';
   wrap.appendChild(tl);
 }
@@ -301,21 +296,25 @@ function toggleDropdown() { document.getElementById('userDropdown').classList.to
 document.addEventListener('click', e => { if (!document.getElementById('userPill').contains(e.target)) document.getElementById('userDropdown').classList.remove('open'); });
 function logout() { localStorage.removeItem('discord_user'); window.location.href = 'index.html'; }
 
+// BG canvas
 const canvas = document.getElementById('bgCanvas');
 const ctx = canvas.getContext('2d');
 let W, H, dots = [];
 function resize() {
   W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; dots = [];
   const c = Math.ceil(W/90), r = Math.ceil(H/90);
-  for(let x=0;x<=c;x++) for(let y=0;y<=r;y++)
+  for (let x=0;x<=c;x++) for (let y=0;y<=r;y++)
     dots.push({x:x*90,y:y*90,ox:x*90,oy:y*90,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,r:Math.random()+.3,a:Math.random()*.3+.04});
 }
 function draw() {
   ctx.clearRect(0,0,W,H);
-  for(let i=0;i<dots.length;i++){
+  for (let i=0;i<dots.length;i++) {
     const d=dots[i]; d.x+=d.vx; d.y+=d.vy; d.vx+=(d.ox-d.x)*.0005; d.vy+=(d.oy-d.y)*.0005;
-    for(let j=i+1;j<dots.length;j++){const e=dots[j],dx=d.x-e.x,dy=d.y-e.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<120){ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(e.x,e.y);ctx.strokeStyle=`rgba(88,101,242,${0.04*(1-dist/120)})`;ctx.lineWidth=.5;ctx.stroke();}}
-    ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle=`rgba(88,101,242,${d.a})`;ctx.fill();
+    for (let j=i+1;j<dots.length;j++) {
+      const e=dots[j],dx=d.x-e.x,dy=d.y-e.y,dist=Math.sqrt(dx*dx+dy*dy);
+      if (dist<120) { ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(e.x,e.y);ctx.strokeStyle='rgba(88,101,242,'+(0.04*(1-dist/120))+')';ctx.lineWidth=.5;ctx.stroke(); }
+    }
+    ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle='rgba(88,101,242,'+d.a+')';ctx.fill();
   }
   requestAnimationFrame(draw);
 }
