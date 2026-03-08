@@ -1,2 +1,12 @@
 [functions]
   directory = "netlify/functions"
+
+[[redirects]]
+  from = "/.netlify/functions/register/*"
+  to   = "/.netlify/functions/register/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/api/*"
+  to   = "/.netlify/functions/register/:splat"
+  status = 200
