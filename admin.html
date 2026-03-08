@@ -208,7 +208,20 @@ textarea.form-input{resize:vertical;min-height:80px;font-family:var(--mono);font
   </div>
 </nav>
 
-<div class="layout">
+<!-- TOKEN SCREEN -->
+<div id="tokenScreen" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(3,5,13,0.98);align-items:center;justify-content:center;flex-direction:column;gap:20px;">
+  <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+  <div style="font-family:var(--mono);font-size:14px;color:#fff;letter-spacing:0.2em">ADMIN TOKEN REQUIRED</div>
+  <div style="font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.12em;text-align:center;max-width:320px">Enter your secret admin token to access the panel.<br/>This clears when you close the browser.</div>
+  <div style="display:flex;flex-direction:column;gap:10px;width:320px">
+    <input type="password" id="tokenInput" class="form-input" placeholder="Paste your admin token..." style="width:100%;letter-spacing:0.1em;font-size:13px"/>
+    <div id="tokenError" style="display:none;font-family:var(--mono);font-size:10px;color:var(--red);letter-spacing:0.1em;padding:8px 12px;background:rgba(243,139,168,0.08);border:1px solid rgba(243,139,168,0.2);border-radius:2px"></div>
+    <button id="tokenBtn" class="btn btn-primary" onclick="submitToken()" style="width:100%;justify-content:center;font-size:13px;letter-spacing:0.18em">ENTER</button>
+  </div>
+  <a href="dashboard.html" style="font-family:var(--mono);font-size:10px;color:var(--muted);text-decoration:none;letter-spacing:0.1em">← Back to Dashboard</a>
+</div>
+
+<div class="layout" id="layout" style="display:none">
   <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-section">Overview</div>
@@ -372,7 +385,7 @@ textarea.form-input{resize:vertical;min-height:80px;font-family:var(--mono);font
     </div>
 
   </main>
-</div>
+</div><!-- end layout -->
 
 <!-- CONFIRM MODAL -->
 <div class="overlay" id="confirmOverlay">
@@ -410,6 +423,48 @@ if (user.id !== OWNER_ID) {
 document.getElementById('topAvatar').src = user.avatar;
 document.getElementById('topName').textContent = user.globalName || user.username;
 
+// ── TOKEN AUTH ──
+// Token stored in sessionStorage — clears when browser closes
+let ADMIN_TOKEN = sessionStorage.getItem('sk_admin_token') || '';
+
+function showTokenScreen() {
+  document.getElementById('layout').style.display = 'none';
+  document.getElementById('tokenScreen').style.display = 'flex';
+}
+function hideTokenScreen() {
+  document.getElementById('tokenScreen').style.display = 'none';
+  document.getElementById('layout').style.display = 'grid';
+}
+async function submitToken() {
+  const val = document.getElementById('tokenInput').value.trim();
+  if (!val) return;
+  const btn = document.getElementById('tokenBtn');
+  btn.textContent = 'VERIFYING...';
+  btn.disabled = true;
+  try {
+    // Test the token with a safe read-only call
+    const res = await fetch('/.netlify/functions/register/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_registrations', caller_id: user.id, admin_token: val }),
+    });
+    if (res.status === 403) throw new Error('Invalid token');
+    if (res.status === 429) throw new Error('Too many attempts — wait 5 minutes');
+    ADMIN_TOKEN = val;
+    sessionStorage.setItem('sk_admin_token', val);
+    hideTokenScreen();
+    await init();
+  } catch(e) {
+    document.getElementById('tokenError').textContent = e.message;
+    document.getElementById('tokenError').style.display = 'block';
+    btn.textContent = 'ENTER';
+    btn.disabled = false;
+  }
+}
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('tokenScreen').style.display !== 'none') submitToken();
+});
+
 // ── STATE ──
 let serverData = { tournaments: {}, state: {}, winners: {} };
 let allRegs    = {};
@@ -419,9 +474,17 @@ async function adminCall(payload) {
   const res = await fetch('/.netlify/functions/register/admin', {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
-    body:    JSON.stringify({ ...payload, caller_id: user.id }),
+    body:    JSON.stringify({ ...payload, caller_id: user.id, admin_token: ADMIN_TOKEN }),
   });
   const d = await res.json();
+  if (res.status === 403) {
+    // Token might have expired from sessionStorage — show token screen again
+    sessionStorage.removeItem('sk_admin_token');
+    ADMIN_TOKEN = '';
+    showTokenScreen();
+    throw new Error('Session expired. Re-enter your token.');
+  }
+  if (res.status === 429) throw new Error('Rate limited — wait a moment');
   if (!res.ok) throw new Error(d.error || res.status);
   return d;
 }
@@ -860,7 +923,13 @@ async function init() {
     toast('Could not connect to bot server', 'error');
   }
 }
-init();
+
+// Check token on load
+if (!ADMIN_TOKEN) {
+  showTokenScreen();
+} else {
+  init();
+}
 
 // ── BG CANVAS ──
 const canvas = document.getElementById('bgCanvas');
