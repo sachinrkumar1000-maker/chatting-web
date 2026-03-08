@@ -230,33 +230,45 @@
 
 <script>
 const TOURNAMENTS = [
-  { id:'minecraft-pvp', name:'Minecraft PvP Tournament', game:'Minecraft', iconHref:'#icon-sword',  color:'#22c55e' },
-  { id:'valorant',      name:'Valorant Tournament',      game:'Valorant',  iconHref:'#icon-target', color:'#ff4655' },
-  { id:'roblox',        name:'Roblox Tournament',        game:'Roblox',    iconHref:'#icon-grid',   color:'#f9c74f' },
-  { id:'fortnite',      name:'Fortnite Tournament',      game:'Fortnite',  iconHref:'#icon-zap',    color:'#00d4ff' },
+  { id:'minecraft-pvp', name:'Minecraft PvP Tournament', iconHref:'#icon-sword',  color:'#22c55e' },
+  { id:'valorant',      name:'Valorant Tournament',      iconHref:'#icon-target', color:'#ff4655' },
+  { id:'roblox',        name:'Roblox Tournament',        iconHref:'#icon-grid',   color:'#f9c74f' },
+  { id:'fortnite',      name:'Fortnite Tournament',      iconHref:'#icon-zap',    color:'#00d4ff' },
 ];
+const ICON_MAP = { sword:'#icon-sword', target:'#icon-target', grid:'#icon-grid', zap:'#icon-zap' };
+function hexColor(n) { return '#' + (n>>>0).toString(16).padStart(6,'0'); }
 
 const raw = localStorage.getItem('discord_user');
-if (!raw) { window.location.href = 'index.html'; }
+if (!raw) window.location.href = 'index.html';
 const user = JSON.parse(raw);
 const displayName = user.globalName || user.username;
 
 document.getElementById('topAvatar').src = user.avatar;
 document.getElementById('topUsername').textContent = displayName;
 
-function getMyRegs() { return JSON.parse(localStorage.getItem('regs_' + user.id) || '{}'); }
-function removeReg(id) { const r = getMyRegs(); delete r[id]; localStorage.setItem('regs_' + user.id, JSON.stringify(r)); }
-function getHistory() { return JSON.parse(localStorage.getItem('hist_' + user.id) || '[]'); }
-function logHistory(action, tournamentId, tournamentName, extra) {
-  const h = getHistory();
-  h.unshift({ action, tournamentId, tournamentName, timestamp: new Date().toISOString(), ...extra });
-  localStorage.setItem('hist_' + user.id, JSON.stringify(h.slice(0, 200)));
-}
-
-function renderRegs() {
-  const myRegs = getMyRegs();
-  const keys = Object.keys(myRegs);
+async function loadAndRender() {
   const container = document.getElementById('regList');
+  container.innerHTML = '<div style="font-family:var(--mono);font-size:11px;color:var(--muted);padding:20px 0;letter-spacing:0.12em;">LOADING...</div>';
+
+  let myRegs = {};
+  let serverTournaments = {};
+
+  try {
+    const [myRes, stateRes] = await Promise.all([
+      fetch(`/.netlify/functions/register/my-registrations/${user.id}`),
+      fetch('/.netlify/functions/register'),
+    ]);
+    if (myRes.ok) {
+      const d = await myRes.json();
+      myRegs = d.registrations || {};
+    }
+    if (stateRes.ok) {
+      const d = await stateRes.json();
+      serverTournaments = d.tournaments || {};
+    }
+  } catch(e) { console.warn('Failed to load registrations:', e); }
+
+  const keys = Object.keys(myRegs);
   document.getElementById('regCount').textContent = keys.length;
   container.innerHTML = '';
 
@@ -278,48 +290,42 @@ function renderRegs() {
 
   keys.forEach((tid, idx) => {
     const reg = myRegs[tid];
-    const t = TOURNAMENTS.find(x => x.id === tid) || { name: tid, iconHref:'#icon-gamepad', color:'#5865F2', game: tid };
+    const st  = serverTournaments[tid] || {};
+    const color    = st.color ? hexColor(st.color) : '#5865F2';
+    const iconHref = ICON_MAP[st.icon] || '#icon-zap';
+    const tname    = reg.tournament_name || st.name || tid;
+
     const card = document.createElement('div');
     card.className = 'reg-card';
-    card.style.setProperty('--t-color', t.color);
+    card.style.setProperty('--t-color', color);
     card.style.animationDelay = `${idx * 0.07}s`;
     card.id = `card-${tid}`;
     card.innerHTML = `
-      <div class="reg-icon" style="border-color:${t.color}30; color:${t.color}">
-        <svg width="24" height="24"><use href="${t.iconHref}"/></svg>
+      <div class="reg-icon" style="border-color:${color}30; color:${color}">
+        <svg width="24" height="24"><use href="${iconHref}"/></svg>
       </div>
       <div class="reg-info">
-        <div class="reg-name">${t.name}</div>
+        <div class="reg-name">${tname}</div>
         <div class="reg-meta">
-          <div class="reg-meta-item">
-            <svg><use href="#icon-user"/></svg>
-            <span>${reg.name}</span>
-          </div>
-          <div class="reg-meta-item">
-            <svg><use href="#icon-gamepad"/></svg>
-            <span>${reg.game_username}</span>
-          </div>
-          <div class="reg-meta-item">
-            <svg><use href="#icon-globe"/></svg>
-            <span>${reg.timezone}</span>
-          </div>
+          <div class="reg-meta-item"><svg><use href="#icon-user"/></svg><span>${reg.name || reg.discord_global_name || ''}</span></div>
+          <div class="reg-meta-item"><svg><use href="#icon-gamepad"/></svg><span>${reg.game_username || ''}</span></div>
+          <div class="reg-meta-item"><svg><use href="#icon-globe"/></svg><span>${reg.timezone || ''}</span></div>
         </div>
         <div class="reg-date">
           <svg width="10" height="10" style="vertical-align:middle;margin-right:4px"><use href="#icon-clock"/></svg>
-          Registered: ${reg.submitted_at}
+          Registered: ${reg.submitted_at || ''}
         </div>
       </div>
       <div class="reg-actions" id="actions-${tid}">
         <button class="cancel-btn" id="cancelBtn-${tid}" onclick="startCancel('${tid}')">
           <svg><use href="#icon-x"/></svg> Cancel
         </button>
-        <button class="confirm-btn" id="confirmBtn-${tid}" onclick="confirmCancel('${tid}')">
+        <button class="confirm-btn" id="confirmBtn-${tid}" onclick="confirmCancel('${tid}', '${tname.replace(/'/g,"\'")}')">
           <svg><use href="#icon-alert"/></svg> Confirm Cancel
         </button>
         <button class="cancel-abort" id="abortBtn-${tid}" onclick="abortCancel('${tid}')">Keep Registration</button>
         <div class="cancel-loader" id="loader-${tid}"></div>
-      </div>
-    `;
+      </div>`;
     list.appendChild(card);
   });
   container.appendChild(list);
@@ -336,28 +342,23 @@ function abortCancel(tid) {
   document.getElementById(`abortBtn-${tid}`).classList.remove('show');
 }
 
-async function confirmCancel(tid) {
-  const myRegs = getMyRegs();
-  const reg = myRegs[tid];
-  const t = TOURNAMENTS.find(x => x.id === tid) || { name: tid, game: tid };
-
+async function confirmCancel(tid, tname) {
   document.getElementById(`confirmBtn-${tid}`).style.display = 'none';
   document.getElementById(`abortBtn-${tid}`).classList.remove('show');
   document.getElementById(`loader-${tid}`).style.display = 'block';
 
   const payload = {
     action: 'cancel',
-    tournament_id: tid,
-    tournament_name: t.name,
-    game: t.game,
-    discord_username: user.username,
-    discord_id: user.id,
+    tournament_id:       tid,
+    tournament_name:     tname,
+    discord_username:    user.username,
+    discord_id:          user.id,
     discord_global_name: user.globalName || user.username,
-    discord_avatar: user.avatar,
-    name: reg.name,
-    game_username: reg.game_username,
-    submitted_at: reg.submitted_at,
-    cancelled_at: new Date().toUTCString(),
+    discord_avatar:      user.avatar,
+    name:                user.globalName || user.username,
+    game_username:       '',
+    submitted_at:        '',
+    cancelled_at:        new Date().toUTCString(),
   };
 
   try {
@@ -366,15 +367,13 @@ async function confirmCancel(tid) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     });
-  } catch(e) { console.warn('Cancel notify failed:', e); }
+  } catch(e) { console.warn('Cancel failed:', e); }
 
-  logHistory('cancelled', tid, t.name, { game_username: reg.game_username });
-  removeReg(tid);
   const card = document.getElementById(`card-${tid}`);
   card.style.transition = 'opacity 0.4s, transform 0.4s';
   card.style.opacity = '0';
   card.style.transform = 'translateX(20px)';
-  setTimeout(() => { renderRegs(); }, 400);
+  setTimeout(() => loadAndRender(), 400);
 }
 
 function toggleDropdown() { document.getElementById('userDropdown').classList.toggle('open'); }
@@ -382,9 +381,9 @@ document.addEventListener('click', e => {
   if (!document.getElementById('userPill').contains(e.target))
     document.getElementById('userDropdown').classList.remove('open');
 });
-function logout() { localStorage.removeItem('discord_user'); localStorage.removeItem('regs_' + user.id); window.location.href = 'index.html'; }
+function logout() { localStorage.removeItem('discord_user'); window.location.href = 'index.html'; }
 
-renderRegs();
+loadAndRender();
 
 const canvas = document.getElementById('bgCanvas');
 const ctx = canvas.getContext('2d');
@@ -398,18 +397,13 @@ function resize() {
 function draw() {
   ctx.clearRect(0,0,W,H);
   for(let i=0;i<dots.length;i++){
-    const d=dots[i]; d.x+=d.vx; d.y+=d.vy;
-    d.vx+=(d.ox-d.x)*.0005; d.vy+=(d.oy-d.y)*.0005;
-    for(let j=i+1;j<dots.length;j++){
-      const e=dots[j],dx=d.x-e.x,dy=d.y-e.y,dist=Math.sqrt(dx*dx+dy*dy);
-      if(dist<120){ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(e.x,e.y);ctx.strokeStyle=`rgba(88,101,242,${0.05*(1-dist/120)})`;ctx.lineWidth=.5;ctx.stroke();}
-    }
+    const d=dots[i]; d.x+=d.vx; d.y+=d.vy; d.vx+=(d.ox-d.x)*.0005; d.vy+=(d.oy-d.y)*.0005;
+    for(let j=i+1;j<dots.length;j++){const e=dots[j],dx=d.x-e.x,dy=d.y-e.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<120){ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(e.x,e.y);ctx.strokeStyle=`rgba(88,101,242,${0.05*(1-dist/120)})`;ctx.lineWidth=.5;ctx.stroke();}}
     ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle=`rgba(88,101,242,${d.a})`;ctx.fill();
   }
   requestAnimationFrame(draw);
 }
-window.addEventListener('resize',resize);
-resize(); draw();
+window.addEventListener('resize',resize); resize(); draw();
 </script>
 </body>
 </html>
