@@ -3,151 +3,201 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Support Ticket — Sovereigns Kingdom</title>
+<title>Support — Sovereigns Kingdom</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#03050d;--panel:rgba(8,12,24,0.92);--panel2:rgba(6,9,20,0.85);
-  --border:rgba(88,101,242,0.2);--border2:rgba(88,101,242,0.1);
-  --accent:#5865F2;--glow:rgba(88,101,242,0.4);
+  --bg:#03050d;--sidebar:rgba(6,9,20,0.97);--chat-bg:rgba(4,7,17,0.98);
+  --panel:rgba(8,12,26,0.95);--input-bg:rgba(10,14,30,0.98);
+  --border:rgba(88,101,242,0.18);--border2:rgba(88,101,242,0.08);
+  --accent:#5865F2;--glow:rgba(88,101,242,0.35);
   --cyan:#00d4ff;--green:#22c55e;--yellow:#fbbf24;--red:#f38ba8;--orange:#f97316;
-  --text:#cdd6f4;--muted:#525a7a;
+  --text:#cdd6f4;--muted:#4a5278;--muted2:#6b7499;
   --font:'Rajdhani',sans-serif;--mono:'Share Tech Mono',monospace;
 }
-body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
-#bgCanvas{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.3}
+html,body{height:100%;overflow:hidden;background:var(--bg)}
+body{font-family:var(--font);color:var(--text);display:flex;flex-direction:column}
 
 /* TOPBAR */
-.topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:60px;background:rgba(3,5,13,0.97);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)}
-.tl{display:flex;align-items:center;gap:14px}
-.logo-icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid var(--border);border-radius:2px;background:rgba(88,101,242,0.08)}
-.brand{font-size:18px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#fff}
-.page-tag{font-family:var(--mono);font-size:9px;color:var(--accent);border:1px solid rgba(88,101,242,0.3);padding:2px 8px;border-radius:1px;letter-spacing:0.12em}
-.back-btn{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:6px 14px;border-radius:2px;transition:all 0.2s}
-.back-btn:hover{color:var(--text);background:rgba(88,101,242,0.08);border-color:rgba(88,101,242,0.4)}
-.user-pill{display:flex;align-items:center;gap:8px;padding:5px 12px 5px 5px;border:1px solid var(--border);border-radius:2px;background:rgba(88,101,242,0.06);position:relative;cursor:pointer}
-.u-av{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--accent);object-fit:cover}
-.u-name{font-size:13px;font-weight:700;color:#fff}
-.dropdown{position:absolute;top:calc(100% + 8px);right:0;background:rgba(6,9,20,0.98);border:1px solid var(--border);border-radius:2px;min-width:190px;display:none;flex-direction:column;z-index:200;backdrop-filter:blur(20px)}
+.topbar{height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--sidebar);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);z-index:100;position:relative}
+.tl{display:flex;align-items:center;gap:12px}
+.logo-icon{width:32px;height:32px;border:1px solid var(--border);border-radius:2px;background:rgba(88,101,242,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.brand{font-size:16px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#fff}
+.page-tag{font-family:var(--mono);font-size:8px;color:var(--accent);border:1px solid rgba(88,101,242,0.3);padding:2px 7px;border-radius:1px;letter-spacing:0.12em}
+.back-btn{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--muted2);text-decoration:none;border:1px solid var(--border);padding:5px 12px;border-radius:2px;transition:all 0.2s}
+.back-btn:hover{color:var(--text);border-color:rgba(88,101,242,0.4);background:rgba(88,101,242,0.07)}
+.user-pill{display:flex;align-items:center;gap:8px;padding:4px 10px 4px 4px;border:1px solid var(--border);border-radius:2px;background:rgba(88,101,242,0.05);cursor:pointer;position:relative;transition:all 0.2s}
+.user-pill:hover{background:rgba(88,101,242,0.1)}
+.u-av{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--accent);object-fit:cover}
+.u-name{font-size:12px;font-weight:700;color:#fff}
+.dropdown{position:absolute;top:calc(100% + 8px);right:0;background:rgba(6,9,20,0.99);border:1px solid var(--border);border-radius:2px;min-width:188px;display:none;flex-direction:column;z-index:300;backdrop-filter:blur(20px);box-shadow:0 8px 32px rgba(0,0,0,0.5)}
 .dropdown.open{display:flex}
-.dropdown-item{display:flex;align-items:center;gap:10px;padding:10px 16px;font-size:13px;font-weight:600;color:var(--muted);text-decoration:none;transition:all 0.15s;cursor:pointer;border:none;background:none;width:100%;text-align:left}
-.dropdown-item svg{width:13px;height:13px}
+.dropdown-item{display:flex;align-items:center;gap:10px;padding:9px 14px;font-size:13px;font-weight:600;color:var(--muted2);text-decoration:none;transition:all 0.15s;cursor:pointer;border:none;background:none;width:100%;text-align:left;font-family:var(--font)}
+.dropdown-item svg{width:12px;height:12px;flex-shrink:0}
 .dropdown-item:hover{color:#fff;background:rgba(88,101,242,0.08)}
-.dropdown-divider{height:1px;background:var(--border2);margin:4px 0}
+.dropdown-divider{height:1px;background:var(--border2);margin:3px 0}
 
-/* MAIN */
-.wrap{position:relative;z-index:2;max-width:780px;margin:0 auto;padding:40px 20px}
-.pg-title{font-size:24px;font-weight:700;color:#fff;letter-spacing:0.08em;margin-bottom:4px}
-.pg-sub{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.14em;margin-bottom:32px}
+/* LAYOUT */
+.layout{flex:1;display:flex;overflow:hidden;min-height:0}
 
-/* CARDS */
-.card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:28px;position:relative;overflow:hidden;margin-bottom:20px}
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--accent),transparent)}
-.card-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:0.07em;margin-bottom:16px;display:flex;align-items:center;gap:9px}
-.card-title svg{width:15px;height:15px;color:var(--accent)}
+/* SIDEBAR */
+.sidebar{width:256px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-header{padding:18px 16px 14px;border-bottom:1px solid var(--border2)}
+.sidebar-title{font-size:10px;font-weight:700;letter-spacing:0.18em;color:var(--muted2);text-transform:uppercase;margin-bottom:12px;font-family:var(--mono)}
+.new-ticket-btn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;padding:9px;background:rgba(88,101,242,0.1);border:1px solid rgba(88,101,242,0.28);border-radius:2px;font-family:var(--font);font-size:12px;font-weight:700;letter-spacing:0.08em;color:var(--accent);cursor:pointer;transition:all 0.2s;text-transform:uppercase}
+.new-ticket-btn:hover{background:rgba(88,101,242,0.2);box-shadow:0 0 14px rgba(88,101,242,0.18)}
+.new-ticket-btn svg{width:12px;height:12px}
+.sidebar-scroll{flex:1;overflow-y:auto;padding:8px}
+.sidebar-scroll::-webkit-scrollbar{width:3px}
+.sidebar-scroll::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.ticket-item{padding:11px 11px;border-radius:2px;border:1px solid transparent;cursor:pointer;transition:all 0.15s;margin-bottom:3px}
+.ticket-item:hover{background:rgba(88,101,242,0.06);border-color:var(--border)}
+.ticket-item.active{background:rgba(88,101,242,0.1);border-color:rgba(88,101,242,0.28)}
+.ti-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px}
+.ti-id{font-family:var(--mono);font-size:9px;color:var(--muted2);letter-spacing:0.1em}
+.ti-status{display:flex;align-items:center;gap:4px;font-family:var(--mono);font-size:8px;letter-spacing:0.08em}
+.sdot{width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.sdot.open{background:var(--green);box-shadow:0 0 4px var(--green)}
+.sdot.paused{background:var(--yellow);box-shadow:0 0 4px var(--yellow)}
+.sdot.resolved{background:var(--muted)}
+.ti-status.open{color:var(--green)}.ti-status.paused{color:var(--yellow)}.ti-status.resolved{color:var(--muted2)}
+.ti-desc{font-size:11px;color:var(--muted2);line-height:1.4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ti-time{font-family:var(--mono);font-size:8px;color:var(--muted);margin-top:4px}
 
-/* FORM */
-.form-group{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
-.form-label{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.18em;text-transform:uppercase}
-.form-input{background:rgba(88,101,242,0.06);border:1px solid var(--border);border-radius:2px;padding:10px 14px;font-family:var(--font);font-size:13px;font-weight:600;color:var(--text);outline:none;transition:all 0.2s;width:100%}
-.form-input:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(88,101,242,0.12)}
-.form-input::placeholder{color:var(--muted)}
-textarea.form-input{resize:vertical;min-height:90px;font-family:var(--mono);font-size:12px;line-height:1.6}
+/* CHAT AREA */
+.chat-area{flex:1;display:flex;flex-direction:column;overflow:hidden;background:var(--chat-bg);position:relative}
+#bgCanvas{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0.15}
 
-/* BUTTONS */
-.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:0.08em;border:1px solid;border-radius:2px;cursor:pointer;transition:all 0.2s;text-transform:uppercase}
-.btn svg{width:13px;height:13px}
-.btn-primary{background:rgba(88,101,242,0.15);border-color:var(--accent);color:var(--accent)}
-.btn-primary:hover{background:rgba(88,101,242,0.25);box-shadow:0 0 14px var(--glow)}
-.btn-primary:disabled{opacity:0.4;cursor:not-allowed;pointer-events:none}
-.btn-danger{background:rgba(243,139,168,0.1);border-color:var(--red);color:var(--red)}
-.btn-danger:hover{background:rgba(243,139,168,0.2)}
+/* CHAT HEADER */
+.chat-header{padding:14px 24px;border-bottom:1px solid var(--border);background:rgba(6,9,20,0.95);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;position:relative;z-index:2;backdrop-filter:blur(10px)}
+.chat-header-left{display:flex;flex-direction:column;gap:3px}
+.ch-title{font-size:15px;font-weight:700;color:#fff;letter-spacing:0.06em}
+.ch-meta{font-family:var(--mono);font-size:9px;color:var(--muted2);letter-spacing:0.1em}
+.chat-header-right{display:flex;align-items:center;gap:10px}
+.status-chip{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:0.12em;padding:5px 12px;border-radius:1px;border:1px solid}
+.status-chip.open{color:var(--green);background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.2)}
+.status-chip.paused{color:var(--yellow);background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.2)}
+.status-chip.resolved{color:var(--muted2);background:rgba(82,90,122,0.08);border-color:rgba(82,90,122,0.2)}
+.status-chip .sdot{width:6px;height:6px}
+.live-badge{display:flex;align-items:center;gap:5px;font-family:var(--mono);font-size:8px;color:var(--green);letter-spacing:0.1em;opacity:0.85}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--green);animation:livePulse 1.5s ease infinite}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.4;transform:scale(0.8)}}
 
-/* STATUS BANNER */
-.status-bar{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-radius:2px;margin-bottom:20px;border:1px solid}
-.status-bar.open{background:rgba(34,197,94,0.07);border-color:rgba(34,197,94,0.2)}
-.status-bar.paused{background:rgba(251,191,36,0.07);border-color:rgba(251,191,36,0.2)}
-.status-bar.resolved{background:rgba(82,90,122,0.1);border-color:rgba(82,90,122,0.2)}
-.status-dot{width:7px;height:7px;border-radius:50%;margin-right:8px;display:inline-block}
-.status-bar.open .status-dot{background:var(--green);box-shadow:0 0 6px var(--green)}
-.status-bar.paused .status-dot{background:var(--yellow);box-shadow:0 0 6px var(--yellow)}
-.status-bar.resolved .status-dot{background:var(--muted)}
-.status-label{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.14em;display:flex;align-items:center;gap:6px}
-.status-bar.open .status-label{color:var(--green)}
-.status-bar.paused .status-label{color:var(--yellow)}
-.status-bar.resolved .status-label{color:var(--muted)}
-.ticket-id{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:0.1em}
+/* MESSAGES */
+.messages{flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:4px;position:relative;z-index:1}
+.messages::-webkit-scrollbar{width:4px}
+.messages::-webkit-scrollbar-track{background:transparent}
+.messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
 
-/* CHAT */
-.chat-log{display:flex;flex-direction:column;gap:14px;margin-bottom:20px;max-height:440px;overflow-y:auto;padding-right:4px}
-.chat-log::-webkit-scrollbar{width:4px}
-.chat-log::-webkit-scrollbar-track{background:transparent}
-.chat-log::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
-.msg{display:flex;flex-direction:column;gap:5px;max-width:85%}
-.msg.admin{align-self:flex-start}
-.msg.user{align-self:flex-end}
-.msg-meta{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.1em}
-.msg.user .msg-meta{flex-direction:row-reverse}
-.msg-av{width:20px;height:20px;border-radius:50%;border:1px solid var(--border);object-fit:cover}
-.msg-bubble{padding:10px 14px;border-radius:2px;font-size:13px;line-height:1.6;word-break:break-word}
-.msg.admin .msg-bubble{background:rgba(88,101,242,0.1);border:1px solid rgba(88,101,242,0.2);color:var(--text);border-radius:2px 12px 12px 12px}
-.msg.user  .msg-bubble{background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.15);color:var(--text);border-radius:12px 2px 12px 12px}
-.msg-img{max-width:100%;max-height:200px;border-radius:4px;margin-top:6px;border:1px solid var(--border);cursor:pointer}
-.admin-tag{font-family:var(--mono);font-size:8px;color:var(--orange);background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.2);padding:1px 6px;border-radius:1px;letter-spacing:0.1em}
+.msg-group{display:flex;flex-direction:column;gap:3px;max-width:68%;margin-bottom:10px}
+.msg-group.from-user{align-self:flex-end;align-items:flex-end}
+.msg-group.from-admin{align-self:flex-start;align-items:flex-start}
+.msg-sender{display:flex;align-items:center;gap:7px;margin-bottom:5px;font-family:var(--mono);font-size:9px;color:var(--muted2);letter-spacing:0.08em}
+.msg-group.from-user .msg-sender{flex-direction:row-reverse}
+.msg-av{width:22px;height:22px;border-radius:50%;object-fit:cover;border:1px solid var(--border)}
+.admin-badge{font-family:var(--mono);font-size:7px;color:var(--orange);background:rgba(249,115,22,0.1);border:1px solid rgba(249,115,22,0.2);padding:1px 5px;border-radius:1px;letter-spacing:0.1em}
+.bubble{padding:10px 14px;font-size:14px;line-height:1.6;word-break:break-word;animation:bubbleIn 0.18s ease both}
+@keyframes bubbleIn{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+.from-admin .bubble{background:rgba(88,101,242,0.1);border:1px solid rgba(88,101,242,0.2);border-radius:2px 12px 12px 12px;color:var(--text)}
+.from-user .bubble{background:rgba(0,212,255,0.07);border:1px solid rgba(0,212,255,0.14);border-radius:12px 2px 12px 12px;color:var(--text)}
+.msg-time{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:0.06em;padding:0 3px}
+.bubble-img{max-width:240px;max-height:160px;border-radius:4px;margin-top:8px;display:block;border:1px solid var(--border);cursor:pointer;transition:opacity 0.2s}
+.bubble-img:hover{opacity:0.82}
+.sys-msg{align-self:center;font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.12em;padding:5px 14px;background:rgba(82,90,122,0.08);border:1px solid var(--border2);border-radius:1px;text-align:center;margin:8px 0}
 
-/* REPLY BOX */
-.reply-box{background:var(--panel2);border:1px solid var(--border);border-radius:2px;padding:16px}
-.reply-row{display:flex;gap:10px;align-items:flex-end}
-.reply-inputs{flex:1;display:flex;flex-direction:column;gap:8px}
-.reply-img-preview{display:none;position:relative;margin-top:6px}
-.reply-img-preview img{max-height:80px;border-radius:4px;border:1px solid var(--border)}
-.img-clear{position:absolute;top:4px;left:4px;background:rgba(243,139,168,0.8);border:none;border-radius:50%;width:18px;height:18px;cursor:pointer;font-size:10px;color:#fff;display:flex;align-items:center;justify-content:center}
+/* STATUS NOTICES */
+.status-notice{margin:0 24px 0;padding:10px 16px;border-radius:2px;border:1px solid;font-family:var(--mono);font-size:10px;letter-spacing:0.1em;display:flex;align-items:center;gap:8px;flex-shrink:0;position:relative;z-index:1}
+.status-notice.paused{color:var(--yellow);background:rgba(251,191,36,0.06);border-color:rgba(251,191,36,0.15)}
+.status-notice.resolved{color:var(--muted2);background:rgba(82,90,122,0.07);border-color:rgba(82,90,122,0.15)}
 
-/* EMPTY / LOADER */
-.empty{font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.12em;text-align:center;padding:32px}
-.loader{display:flex;align-items:center;justify-content:center;padding:60px;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.18em}
+/* INPUT */
+.input-area{padding:14px 24px 18px;border-top:1px solid var(--border);background:rgba(6,9,20,0.98);flex-shrink:0;position:relative;z-index:2}
+.input-wrap{display:flex;gap:10px;align-items:flex-end}
+.input-col{flex:1;display:flex;flex-direction:column;gap:6px}
+.msg-input{background:var(--input-bg);border:1px solid var(--border);border-radius:2px;padding:10px 14px;font-family:var(--font);font-size:14px;font-weight:500;color:var(--text);outline:none;transition:all 0.2s;resize:none;min-height:44px;max-height:120px;line-height:1.5;width:100%}
+.msg-input:focus{border-color:rgba(88,101,242,0.5);box-shadow:0 0 0 2px rgba(88,101,242,0.08)}
+.msg-input::placeholder{color:var(--muted)}
+.img-input{background:var(--input-bg);border:1px solid var(--border);border-radius:2px;padding:6px 12px;font-family:var(--mono);font-size:10px;color:var(--muted2);outline:none;transition:all 0.2s;width:100%}
+.img-input:focus{border-color:rgba(88,101,242,0.4)}
+.img-input::placeholder{color:var(--muted)}
+.img-preview-wrap{position:relative;display:inline-block;margin-top:2px}
+.img-preview-wrap img{max-height:56px;border-radius:3px;border:1px solid var(--border);display:block}
+.img-clear{position:absolute;top:-6px;right:-6px;width:16px;height:16px;border-radius:50%;background:rgba(243,139,168,0.9);border:none;cursor:pointer;color:#fff;font-size:9px;display:flex;align-items:center;justify-content:center}
+.send-btn{flex-shrink:0;width:44px;height:44px;background:rgba(88,101,242,0.14);border:1px solid var(--accent);border-radius:2px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;color:var(--accent)}
+.send-btn:hover{background:rgba(88,101,242,0.26);box-shadow:0 0 16px var(--glow)}
+.send-btn:disabled{opacity:0.35;cursor:not-allowed;pointer-events:none}
+.send-btn svg{width:15px;height:15px}
+.input-hint{font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:0.08em;padding-top:5px}
+
+/* EMPTY STATES */
+.empty-chat{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--muted);position:relative;z-index:1}
+.empty-icon{width:48px;height:48px;border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--muted)}
+.empty-icon svg{width:20px;height:20px}
+.empty-title{font-size:14px;font-weight:700;color:var(--muted2);letter-spacing:0.06em}
+.empty-sub{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:0.1em;text-align:center;max-width:260px;line-height:1.8}
+
+/* OPEN FORM */
+.open-panel{flex:1;display:flex;align-items:center;justify-content:center;padding:40px 20px;position:relative;z-index:1}
+.open-card{background:var(--panel);border:1px solid var(--border);border-radius:2px;padding:32px;width:100%;max-width:500px;position:relative;overflow:hidden}
+.open-card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,var(--accent),transparent)}
+.oc-title{font-size:17px;font-weight:700;color:#fff;letter-spacing:0.07em;margin-bottom:6px;display:flex;align-items:center;gap:9px}
+.oc-title svg{width:15px;height:15px;color:var(--accent)}
+.oc-sub{font-family:var(--mono);font-size:9px;color:var(--muted2);letter-spacing:0.1em;margin-bottom:22px;line-height:1.8}
+.field-label{font-family:var(--mono);font-size:9px;color:var(--muted2);letter-spacing:0.16em;margin-bottom:6px;display:block}
+.field-textarea{width:100%;background:rgba(88,101,242,0.05);border:1px solid var(--border);border-radius:2px;padding:12px 14px;font-family:var(--font);font-size:13px;font-weight:500;color:var(--text);outline:none;transition:all 0.2s;resize:vertical;min-height:100px;line-height:1.6;margin-bottom:16px}
+.field-textarea:focus{border-color:rgba(88,101,242,0.5);box-shadow:0 0 0 2px rgba(88,101,242,0.08)}
+.field-textarea::placeholder{color:var(--muted)}
+.open-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px;background:rgba(88,101,242,0.13);border:1px solid var(--accent);border-radius:2px;font-family:var(--font);font-size:13px;font-weight:700;letter-spacing:0.08em;color:var(--accent);cursor:pointer;transition:all 0.2s;text-transform:uppercase}
+.open-btn:hover{background:rgba(88,101,242,0.24);box-shadow:0 0 18px var(--glow)}
+.open-btn:disabled{opacity:0.4;cursor:not-allowed}
+.open-btn svg{width:13px;height:13px}
+
+/* LOADER */
+.full-loader{flex:1;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:11px;color:var(--muted);letter-spacing:0.2em;position:relative;z-index:1}
+.spin-ring{width:26px;height:26px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 0.8s linear infinite;margin-right:12px}
+@keyframes spin{to{transform:rotate(360deg)}}
 
 /* TOAST */
-#toastWrap{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
-.toast{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.1em;padding:12px 18px;border-radius:2px;border:1px solid;display:flex;align-items:center;gap:8px;animation:toastIn 0.3s ease both}
-.toast.ok{color:var(--green);background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.3)}
-.toast.err{color:var(--red);background:rgba(243,139,168,0.1);border-color:rgba(243,139,168,0.3)}
-.toast.inf{color:var(--cyan);background:rgba(0,212,255,0.08);border-color:rgba(0,212,255,0.2)}
-.toast.out{animation:toastOut 0.3s ease forwards}
+#toastWrap{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:7px}
+.toast{font-family:var(--mono);font-size:10px;font-weight:700;letter-spacing:0.1em;padding:10px 16px;border-radius:2px;border:1px solid;display:flex;align-items:center;gap:7px;animation:toastIn 0.25s ease both}
+.toast.ok{color:var(--green);background:rgba(34,197,94,0.1);border-color:rgba(34,197,94,0.25)}
+.toast.err{color:var(--red);background:rgba(243,139,168,0.1);border-color:rgba(243,139,168,0.25)}
+.toast.inf{color:var(--cyan);background:rgba(0,212,255,0.07);border-color:rgba(0,212,255,0.18)}
+.toast.out{animation:toastOut 0.25s ease forwards}
+@keyframes toastIn{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(14px)}}
 
-@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-@keyframes toastIn{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:translateX(0)}}
-@keyframes toastOut{to{opacity:0;transform:translateX(16px)}}
-
-@media(max-width:600px){
-  .topbar{padding:0 14px}
-  .brand{font-size:14px}
-  .wrap{padding:24px 14px}
+@media(max-width:700px){
+  .sidebar{display:none}
+  .msg-group{max-width:90%}
+  .topbar{padding:0 12px}
+  .brand{font-size:13px}
+  .messages{padding:14px}
+  .input-area{padding:10px 14px 14px}
 }
 </style>
 </head>
 <body>
-<canvas id="bgCanvas"></canvas>
 
 <svg style="display:none">
-  <symbol id="i-ticket"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 9a3 3 0 010-6h20a3 3 0 010 6v6a3 3 0 010 6H2a3 3 0 010-6V9z"/><path d="M12 3v18"/></symbol>
-  <symbol id="i-send"    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
-  <symbol id="i-img"     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></symbol>
-  <symbol id="i-back"    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></symbol>
-  <symbol id="i-plus"    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
-  <symbol id="i-user"    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
-  <symbol id="i-list"    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
-  <symbol id="i-out"     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
-  <symbol id="i-regs"    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></symbol>
-  <symbol id="i-trophy"  viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 9H4a2 2 0 01-2-2V5h4M18 9h2a2 2 0 002-2V5h-4"/><path d="M6 5h12v6a6 6 0 01-12 0V5z"/><path d="M12 17v4M8 21h8"/></symbol>
+  <symbol id="i-ticket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 9a3 3 0 010-6h20a3 3 0 010 6v6a3 3 0 010 6H2a3 3 0 010-6V9z"/><path d="M12 3v18"/></symbol>
+  <symbol id="i-send"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></symbol>
+  <symbol id="i-back"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></symbol>
+  <symbol id="i-plus"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-user"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+  <symbol id="i-list"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></symbol>
+  <symbol id="i-out"    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+  <symbol id="i-regs"   viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></symbol>
+  <symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 9H4a2 2 0 01-2-2V5h4M18 9h2a2 2 0 002-2V5h-4"/><path d="M6 5h12v6a6 6 0 01-12 0V5z"/><path d="M12 17v4M8 21h8"/></symbol>
+  <symbol id="i-msg"    viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></symbol>
 </svg>
 
 <!-- TOPBAR -->
 <nav class="topbar">
   <div class="tl">
     <div class="logo-icon">
-      <svg viewBox="0 0 32 32" fill="none" width="18" height="18">
+      <svg viewBox="0 0 32 32" fill="none" width="17" height="17">
         <polygon points="16,2 28,9 28,23 16,30 4,23 4,9" stroke="#5865F2" stroke-width="1.5" fill="none"/>
         <polygon points="16,8 22,11.5 22,20.5 16,24 10,20.5 10,11.5" stroke="#5865F2" stroke-width="1" fill="rgba(88,101,242,0.12)"/>
         <circle cx="16" cy="16" r="2.5" fill="#5865F2"/>
@@ -155,7 +205,7 @@ textarea.form-input{resize:vertical;min-height:90px;font-family:var(--mono);font
     </div>
     <span class="brand">Sovereigns Kingdom</span>
     <span class="page-tag">SUPPORT</span>
-    <a href="dashboard.html" class="back-btn"><svg width="12" height="12"><use href="#i-back"/></svg> Dashboard</a>
+    <a href="dashboard.html" class="back-btn"><svg width="11" height="11"><use href="#i-back"/></svg> Dashboard</a>
   </div>
   <div class="user-pill" onclick="toggleDropdown()">
     <img class="u-av" id="topAv" src="" alt=""/>
@@ -172,61 +222,93 @@ textarea.form-input{resize:vertical;min-height:90px;font-family:var(--mono);font
   </div>
 </nav>
 
-<!-- MAIN -->
-<div class="wrap" id="mainWrap">
-  <div class="loader" id="loader">LOADING...</div>
+<!-- LAYOUT -->
+<div class="layout">
 
-  <!-- NO TICKET -->
-  <div id="viewOpen" style="display:none;animation:fadeUp 0.3s ease both">
-    <div class="pg-title">Support Ticket</div>
-    <div class="pg-sub">// OPEN A TICKET TO GET HELP FROM ADMINS</div>
-    <div class="card">
-      <div class="card-title"><svg><use href="#i-ticket"/></svg> Open a New Ticket</div>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:18px;line-height:1.7">You can open one support ticket at a time. Describe your issue and an admin will respond as soon as possible. You'll get a Discord DM when they reply.</p>
-      <div class="form-group">
-        <label class="form-label">Describe your issue</label>
-        <textarea class="form-input" id="openDesc" placeholder="Explain your issue in detail..."></textarea>
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-title">Your Tickets</div>
+      <button class="new-ticket-btn" id="newTicketBtn" onclick="showOpenForm()" style="display:none">
+        <svg><use href="#i-plus"/></svg> New Ticket
+      </button>
+    </div>
+    <div class="sidebar-scroll" id="sidebarTickets"></div>
+  </div>
+
+  <!-- CHAT AREA -->
+  <div class="chat-area" id="chatArea">
+    <canvas id="bgCanvas"></canvas>
+
+    <!-- LOADER -->
+    <div class="full-loader" id="loader">
+      <div class="spin-ring"></div>LOADING...
+    </div>
+
+    <!-- OPEN TICKET FORM -->
+    <div class="open-panel" id="viewOpen" style="display:none">
+      <div class="open-card">
+        <div class="oc-title"><svg><use href="#i-ticket"/></svg> Open a Support Ticket</div>
+        <div class="oc-sub">Describe your issue and an admin will reply soon. You'll get a Discord DM when they respond.</div>
+        <label class="field-label">DESCRIBE YOUR ISSUE</label>
+        <textarea class="field-textarea" id="openDesc" placeholder="Explain your issue in detail..."></textarea>
+        <button class="open-btn" id="openBtn" onclick="openTicket()">
+          <svg><use href="#i-plus"/></svg> Open Ticket
+        </button>
       </div>
-      <button class="btn btn-primary" id="openBtn" onclick="openTicket()">
+    </div>
+
+    <!-- ACTIVE TICKET -->
+    <div id="viewTicket" style="display:none;flex-direction:column;flex:1;overflow:hidden;min-height:0">
+      <div class="chat-header">
+        <div class="chat-header-left">
+          <div class="ch-title" id="chTitle">Support Ticket</div>
+          <div class="ch-meta" id="chMeta">—</div>
+        </div>
+        <div class="chat-header-right">
+          <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+          <div class="status-chip" id="statusChip">
+            <div class="sdot" id="statusDot"></div>
+            <span id="statusTxt">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="messages" id="messages"></div>
+
+      <div class="status-notice paused"   id="pausedNote"   style="display:none">⏸ &nbsp;Ticket paused by admin — you cannot reply until unpaused.</div>
+      <div class="status-notice resolved" id="resolvedNote" style="display:none">Ticket resolved. Open a new ticket if you need further help.</div>
+
+      <div class="input-area" id="inputArea" style="display:none">
+        <div class="input-wrap">
+          <div class="input-col">
+            <textarea class="msg-input" id="replyText" placeholder="Type a message... (Ctrl+Enter to send)" rows="1" onkeydown="handleKey(event)" oninput="autoResize(this)"></textarea>
+            <input class="img-input" id="replyImg" type="text" placeholder="Image URL (optional)" oninput="previewImg()"/>
+            <div id="imgPreview" style="display:none">
+              <div class="img-preview-wrap">
+                <img id="imgPreviewEl" src="" alt=""/>
+                <button class="img-clear" onclick="clearImg()">✕</button>
+              </div>
+            </div>
+          </div>
+          <button class="send-btn" id="sendBtn" onclick="sendMsg()" title="Send (Ctrl+Enter)">
+            <svg><use href="#i-send"/></svg>
+          </button>
+        </div>
+        <div class="input-hint">CTRL + ENTER TO SEND</div>
+      </div>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div class="empty-chat" id="viewEmpty" style="display:none">
+      <div class="empty-icon"><svg><use href="#i-msg"/></svg></div>
+      <div class="empty-title">No Active Ticket</div>
+      <div class="empty-sub">Open a support ticket to get help from the admins.</div>
+      <button class="open-btn" style="max-width:220px;margin-top:4px" onclick="showOpenForm()">
         <svg><use href="#i-plus"/></svg> Open Ticket
       </button>
     </div>
-  </div>
 
-  <!-- ACTIVE TICKET -->
-  <div id="viewTicket" style="display:none;animation:fadeUp 0.3s ease both">
-    <div class="pg-title">Support Ticket</div>
-    <div class="pg-sub" id="ticketSub">// YOUR ACTIVE TICKET</div>
-
-    <div class="status-bar" id="statusBar">
-      <div class="status-label"><span class="status-dot"></span><span id="statusText">OPEN</span></div>
-      <span class="ticket-id" id="ticketId"></span>
-    </div>
-
-    <!-- CHAT LOG -->
-    <div class="card" style="padding:20px">
-      <div class="chat-log" id="chatLog"></div>
-      <!-- REPLY BOX -->
-      <div class="reply-box" id="replyBox">
-        <div class="reply-inputs">
-          <textarea class="form-input" id="replyText" placeholder="Type your message..." style="min-height:60px" onkeydown="handleKey(event)"></textarea>
-          <input type="text" class="form-input" id="replyImg" placeholder="Image URL (optional)" style="font-family:var(--mono);font-size:11px" oninput="previewImg()"/>
-          <div class="reply-img-preview" id="imgPreview">
-            <img id="imgPreviewEl" src="" alt=""/>
-            <button class="img-clear" onclick="clearImg()">✕</button>
-          </div>
-        </div>
-        <button class="btn btn-primary" id="sendBtn" onclick="sendMsg()" style="flex-shrink:0;align-self:flex-start">
-          <svg><use href="#i-send"/></svg> Send
-        </button>
-      </div>
-      <div id="pausedNote" style="display:none;font-family:var(--mono);font-size:10px;color:var(--yellow);padding:10px 14px;background:rgba(251,191,36,0.06);border:1px solid rgba(251,191,36,0.15);border-radius:2px;margin-top:12px;letter-spacing:0.1em">
-        ⏸ This ticket is paused by an admin. You cannot reply until it is unpaused.
-      </div>
-      <div id="resolvedNote" style="display:none;font-family:var(--mono);font-size:10px;color:var(--muted);padding:10px 14px;background:rgba(82,90,122,0.08);border:1px solid rgba(82,90,122,0.15);border-radius:2px;margin-top:12px;letter-spacing:0.1em">
-        ✅ This ticket has been resolved. Open a new ticket if you need further help.
-      </div>
-    </div>
   </div>
 </div>
 
@@ -239,15 +321,10 @@ if (!raw) window.location.href = 'index.html';
 const user = JSON.parse(raw);
 const OWNER_ID = '921970487431671859';
 
-document.getElementById('topAv').src   = user.avatar || '';
+document.getElementById('topAv').src = user.avatar || '';
 document.getElementById('topName').textContent = user.globalName || user.username;
 if (user.id === OWNER_ID) document.getElementById('adminLink').style.display = '';
 
-function checkAdmin() {
-  const link = document.getElementById('adminLink');
-  if (link && user.id === OWNER_ID) link.style.display = '';
-}
-checkAdmin();
 function toggleDropdown() { document.getElementById('dropdown').classList.toggle('open'); }
 document.addEventListener('click', e => { if (!e.target.closest('.user-pill')) document.getElementById('dropdown').classList.remove('open'); });
 function logout() { localStorage.removeItem('discord_user'); window.location.href = 'index.html'; }
@@ -255,22 +332,121 @@ function logout() { localStorage.removeItem('discord_user'); window.location.hre
 // ── STATE ──
 let currentTicket = null;
 let polling = null;
+let lastMsgCount = 0;
+let lastStatus = null;
 
 // ── INIT ──
 async function init() {
   try {
     const res = await fetch(`/.netlify/functions/register/tickets/my/${user.id}`);
     const d = await res.json();
-    currentTicket = d.ticket;
     document.getElementById('loader').style.display = 'none';
-    if (currentTicket) {
-      showTicket(currentTicket);
+    if (d.ticket) {
+      currentTicket = d.ticket;
+      renderSidebar([d.ticket]);
+      showTicket(d.ticket);
+      startPolling();
     } else {
-      document.getElementById('viewOpen').style.display = 'block';
+      showEmpty();
     }
   } catch(e) {
-    document.getElementById('loader').textContent = 'Could not connect to server.';
+    document.getElementById('loader').innerHTML = '<span style="color:var(--red);font-family:var(--mono);font-size:11px;letter-spacing:0.1em">Could not connect to server.</span>';
   }
+}
+
+// ── SIDEBAR ──
+function renderSidebar(tickets) {
+  const el = document.getElementById('sidebarTickets');
+  if (!tickets || !tickets.length) {
+    el.innerHTML = '<div style="font-family:var(--mono);font-size:9px;color:var(--muted);padding:14px 10px;letter-spacing:0.1em">No tickets yet.</div>';
+    return;
+  }
+  el.innerHTML = tickets.map(t => `
+    <div class="ticket-item ${currentTicket?.id === t.id ? 'active' : ''}">
+      <div class="ti-top">
+        <span class="ti-id">#${t.id.slice(0,8).toUpperCase()}</span>
+        <span class="ti-status ${t.status}"><span class="sdot ${t.status}"></span>${t.status.toUpperCase()}</span>
+      </div>
+      <div class="ti-desc">${escHtml(t.description || 'Support ticket')}</div>
+      <div class="ti-time">${fmtDate(t.created_at)}</div>
+    </div>
+  `).join('');
+}
+
+// ── SHOW STATES ──
+function showEmpty() {
+  document.getElementById('viewEmpty').style.display  = 'flex';
+  document.getElementById('viewOpen').style.display   = 'none';
+  document.getElementById('viewTicket').style.display = 'none';
+  renderSidebar([]);
+}
+
+function showOpenForm() {
+  document.getElementById('viewOpen').style.display   = 'flex';
+  document.getElementById('viewEmpty').style.display  = 'none';
+  document.getElementById('viewTicket').style.display = 'none';
+}
+
+function showTicket(t) {
+  document.getElementById('viewTicket').style.display  = 'flex';
+  document.getElementById('viewOpen').style.display    = 'none';
+  document.getElementById('viewEmpty').style.display   = 'none';
+
+  document.getElementById('chTitle').textContent = `Ticket #${t.id.slice(0,8).toUpperCase()}`;
+  document.getElementById('chMeta').textContent  = `OPENED ${fmtDate(t.created_at)} · ${(t.messages||[]).length} MESSAGES`;
+
+  const chip = document.getElementById('statusChip');
+  chip.className = `status-chip ${t.status}`;
+  document.getElementById('statusDot').className = `sdot ${t.status}`;
+  document.getElementById('statusTxt').textContent = t.status.toUpperCase();
+
+  document.getElementById('inputArea').style.display    = t.status === 'open'     ? 'block' : 'none';
+  document.getElementById('pausedNote').style.display   = t.status === 'paused'   ? 'flex'  : 'none';
+  document.getElementById('resolvedNote').style.display = t.status === 'resolved' ? 'flex'  : 'none';
+  document.getElementById('newTicketBtn').style.display = t.status === 'resolved' ? 'flex'  : 'none';
+
+  renderMessages(t.messages || []);
+  renderSidebar([t]);
+}
+
+// ── RENDER MESSAGES ──
+function renderMessages(msgs) {
+  const el = document.getElementById('messages');
+  const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
+
+  if (!msgs.length) {
+    el.innerHTML = `<div class="sys-msg">TICKET OPENED — AN ADMIN WILL REPLY SOON</div>`;
+    return;
+  }
+
+  // Group consecutive messages from same sender
+  let html = '';
+  let prevIsAdmin = null;
+  msgs.forEach((m, i) => {
+    const isAdmin = m.is_admin;
+    const cls = isAdmin ? 'from-admin' : 'from-user';
+    const av = isAdmin
+      ? `https://cdn.discordapp.com/embed/avatars/0.png`
+      : (user.avatar || `https://cdn.discordapp.com/embed/avatars/0.png`);
+    const showSender = prevIsAdmin !== isAdmin;
+    prevIsAdmin = isAdmin;
+
+    html += `<div class="msg-group ${cls}">
+      ${showSender ? `<div class="msg-sender">
+        <img class="msg-av" src="${av}" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" alt=""/>
+        ${isAdmin ? `<span class="admin-badge">ADMIN</span>` : ''}
+        <span>${escHtml(m.author_name)}</span>
+      </div>` : ''}
+      <div class="bubble">
+        ${m.text ? escHtml(m.text) : ''}
+        ${m.image_url ? `<img class="bubble-img" src="${escHtml(m.image_url)}" alt="attachment" onclick="window.open('${escHtml(m.image_url)}','_blank')"/>` : ''}
+      </div>
+      <div class="msg-time">${fmtDate(m.timestamp)}</div>
+    </div>`;
+  });
+
+  el.innerHTML = html;
+  if (atBottom) el.scrollTop = el.scrollHeight;
 }
 
 // ── OPEN TICKET ──
@@ -284,73 +460,27 @@ async function openTicket() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        discord_id:   user.id,
-        username:     user.username,
+        discord_id: user.id, username: user.username,
         display_name: user.globalName || user.username,
-        avatar:       user.avatar || '',
-        description:  desc,
+        avatar: user.avatar || '', description: desc,
       }),
     });
     const d = await res.json();
     if (!res.ok) throw new Error(d.error || 'Failed');
     currentTicket = d.ticket;
-    document.getElementById('viewOpen').style.display   = 'none';
     showTicket(currentTicket);
     toast('Ticket opened! An admin will reply soon.', 'ok');
+    startPolling();
   } catch(e) {
     toast(e.message === 'TICKET_EXISTS' ? 'You already have an open ticket' : e.message, 'err');
+    btn.disabled = false;
   }
-  btn.disabled = false;
-}
-
-// ── SHOW TICKET ──
-function showTicket(t) {
-  document.getElementById('viewTicket').style.display = 'block';
-  document.getElementById('viewOpen').style.display   = 'none';
-
-  const bar = document.getElementById('statusBar');
-  bar.className = `status-bar ${t.status}`;
-  document.getElementById('statusText').textContent = t.status.toUpperCase();
-  document.getElementById('ticketId').textContent   = `TICKET #${t.id}`;
-  document.getElementById('ticketSub').textContent  = `// OPENED ${fmtDate(t.created_at)}`;
-
-  // Show/hide reply box
-  document.getElementById('replyBox').style.display     = t.status === 'open'     ? 'block' : 'none';
-  document.getElementById('pausedNote').style.display   = t.status === 'paused'   ? 'block' : 'none';
-  document.getElementById('resolvedNote').style.display = t.status === 'resolved' ? 'block' : 'none';
-
-  renderMessages(t.messages || []);
-  startPolling();
-}
-
-function renderMessages(msgs) {
-  const log = document.getElementById('chatLog');
-  log.innerHTML = msgs.map(m => {
-    const isAdmin = m.is_admin;
-    const cls = isAdmin ? 'admin' : 'user';
-    const av  = isAdmin
-      ? `https://cdn.discordapp.com/embed/avatars/0.png`
-      : (user.avatar || `https://cdn.discordapp.com/embed/avatars/0.png`);
-    return `<div class="msg ${cls}">
-      <div class="msg-meta">
-        <img class="msg-av" src="${av}" onerror="this.src='https://cdn.discordapp.com/embed/avatars/0.png'" alt=""/>
-        ${isAdmin ? `<span class="admin-tag">ADMIN</span>` : ''}
-        <span>${m.author_name}</span>
-        <span>${fmtDate(m.timestamp)}</span>
-      </div>
-      <div class="msg-bubble">
-        ${m.text ? escHtml(m.text) : ''}
-        ${m.image_url ? `<br/><img class="msg-img" src="${escHtml(m.image_url)}" alt="attachment" onclick="window.open('${escHtml(m.image_url)}','_blank')"/>` : ''}
-      </div>
-    </div>`;
-  }).join('');
-  log.scrollTop = log.scrollHeight;
 }
 
 // ── SEND MESSAGE ──
 async function sendMsg() {
-  const text  = document.getElementById('replyText').value.trim();
-  const img   = document.getElementById('replyImg').value.trim();
+  const text = document.getElementById('replyText').value.trim();
+  const img  = document.getElementById('replyImg').value.trim();
   if (!text && !img) { toast('Enter a message', 'err'); return; }
   const btn = document.getElementById('sendBtn');
   btn.disabled = true;
@@ -359,20 +489,25 @@ async function sendMsg() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        ticket_id:   currentTicket.id,
-        discord_id:  user.id,
+        ticket_id: currentTicket.id, discord_id: user.id,
         author_name: user.globalName || user.username,
-        text, image_url: img,
-        is_admin: false,
+        text, image_url: img, is_admin: false,
       }),
     });
     const d = await res.json();
     if (!res.ok) throw new Error(d.error || 'Failed');
+    currentTicket.messages = currentTicket.messages || [];
     currentTicket.messages.push(d.message);
+    lastMsgCount = currentTicket.messages.length;
     renderMessages(currentTicket.messages);
+    const el = document.getElementById('messages');
+    el.scrollTop = el.scrollHeight;
     document.getElementById('replyText').value = '';
     document.getElementById('replyImg').value  = '';
     clearImg();
+    autoResize(document.getElementById('replyText'));
+    // Update meta
+    document.getElementById('chMeta').textContent = `OPENED ${fmtDate(currentTicket.created_at)} · ${currentTicket.messages.length} MESSAGES`;
   } catch(e) {
     toast(e.message, 'err');
   }
@@ -380,48 +515,54 @@ async function sendMsg() {
 }
 
 function handleKey(e) { if (e.key === 'Enter' && e.ctrlKey) sendMsg(); }
+function autoResize(el) { el.style.height = 'auto'; el.style.height = Math.min(el.scrollHeight, 120) + 'px'; }
 
-// ── IMAGE PREVIEW ──
 function previewImg() {
   const url = document.getElementById('replyImg').value.trim();
   const box = document.getElementById('imgPreview');
-  const el  = document.getElementById('imgPreviewEl');
-  if (url) { el.src = url; box.style.display = 'block'; }
-  else      { box.style.display = 'none'; }
+  if (url) { document.getElementById('imgPreviewEl').src = url; box.style.display = 'block'; }
+  else { box.style.display = 'none'; }
 }
 function clearImg() {
   document.getElementById('replyImg').value = '';
   document.getElementById('imgPreview').style.display = 'none';
 }
 
-// ── POLLING (refresh every 8s) ──
+// ── LIVE POLLING — every 3 seconds ──
 function startPolling() {
   if (polling) clearInterval(polling);
+  lastMsgCount = (currentTicket?.messages || []).length;
+  lastStatus   = currentTicket?.status;
+
   polling = setInterval(async () => {
-    if (document.hidden) return;
+    if (document.hidden || !currentTicket) return;
     try {
       const res = await fetch(`/.netlify/functions/register/tickets/${currentTicket.id}?discord_id=${user.id}`);
       if (!res.ok) return;
       const d = await res.json();
       if (!d.ticket) return;
-      const prev = currentTicket;
-      currentTicket = d.ticket;
-      // Only re-render if something changed
-      if (JSON.stringify(prev.messages) !== JSON.stringify(currentTicket.messages) || prev.status !== currentTicket.status) {
+      const newCount  = (d.ticket.messages || []).length;
+      const newStatus = d.ticket.status;
+      if (newCount !== lastMsgCount || newStatus !== lastStatus) {
+        const hadNewMsg = newCount > lastMsgCount;
+        currentTicket = d.ticket;
+        lastMsgCount  = newCount;
+        lastStatus    = newStatus;
         showTicket(currentTicket);
+        if (hadNewMsg) toast('New message received', 'inf');
       }
     } catch(e) {}
-  }, 8000);
+  }, 3000);
 }
 
 // ── HELPERS ──
 function fmtDate(iso) {
   if (!iso) return '';
-  const d = new Date(iso);
-  return d.toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
+  return new Date(iso).toLocaleString('en-GB', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
 }
 function escHtml(s) {
-  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br/>');
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br/>');
 }
 function toast(msg, type='inf') {
   const el = document.createElement('div');
@@ -438,9 +579,12 @@ const canvas = document.getElementById('bgCanvas');
 const ctx = canvas.getContext('2d');
 let W, H, dots = [];
 function resize() {
-  W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; dots = [];
-  for (let x = 0; x <= Math.ceil(W/90); x++) for (let y = 0; y <= Math.ceil(H/90); y++)
-    dots.push({x:x*90,y:y*90,ox:x*90,oy:y*90,vx:(Math.random()-.5)*.2,vy:(Math.random()-.5)*.2,r:Math.random()+.3,a:Math.random()*.25+.05});
+  W = canvas.width = canvas.offsetWidth;
+  H = canvas.height = canvas.offsetHeight;
+  dots = [];
+  for (let x = 0; x <= Math.ceil(W/100); x++)
+    for (let y = 0; y <= Math.ceil(H/100); y++)
+      dots.push({x:x*100,y:y*100,ox:x*100,oy:y*100,vx:(Math.random()-.5)*.15,vy:(Math.random()-.5)*.15,r:Math.random()+.3,a:Math.random()*.18+.04});
 }
 function draw() {
   ctx.clearRect(0,0,W,H);
@@ -448,13 +592,15 @@ function draw() {
     const d=dots[i]; d.x+=d.vx; d.y+=d.vy; d.vx+=(d.ox-d.x)*.0005; d.vy+=(d.oy-d.y)*.0005;
     for (let j=i+1;j<dots.length;j++) {
       const e=dots[j],dx=d.x-e.x,dy=d.y-e.y,dist=Math.sqrt(dx*dx+dy*dy);
-      if (dist<110){ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(e.x,e.y);ctx.strokeStyle=`rgba(88,101,242,${0.05*(1-dist/110)})`;ctx.lineWidth=.5;ctx.stroke();}
+      if (dist<120){ctx.beginPath();ctx.moveTo(d.x,d.y);ctx.lineTo(e.x,e.y);ctx.strokeStyle=`rgba(88,101,242,${0.04*(1-dist/120)})`;ctx.lineWidth=.5;ctx.stroke();}
     }
     ctx.beginPath();ctx.arc(d.x,d.y,d.r,0,Math.PI*2);ctx.fillStyle=`rgba(88,101,242,${d.a})`;ctx.fill();
   }
   requestAnimationFrame(draw);
 }
-window.addEventListener('resize',resize); resize(); draw();
+const ro = new ResizeObserver(resize);
+ro.observe(canvas.parentElement);
+resize(); draw();
 </script>
 </body>
 </html>
