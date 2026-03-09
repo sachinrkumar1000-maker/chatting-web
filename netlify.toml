@@ -1,6 +1,46 @@
+[build]
+  publish = "."
+
 [functions]
   directory = "netlify/functions"
 
+# Pretty URLs — strip .html from all pages
+[[redirects]]
+  from = "/dashboard"
+  to   = "/dashboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/callback"
+  to   = "/callback.html"
+  status = 200
+
+[[redirects]]
+  from = "/my-registrations"
+  to   = "/my-registrations.html"
+  status = 200
+
+[[redirects]]
+  from = "/profile"
+  to   = "/profile.html"
+  status = 200
+
+[[redirects]]
+  from = "/leaderboard"
+  to   = "/leaderboard.html"
+  status = 200
+
+[[redirects]]
+  from = "/tickets"
+  to   = "/tickets.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin"
+  to   = "/admin.html"
+  status = 200
+
+# Netlify function proxy
 [[redirects]]
   from = "/.netlify/functions/register/*"
   to   = "/.netlify/functions/register/:splat"
