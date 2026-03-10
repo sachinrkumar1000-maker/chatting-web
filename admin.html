@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<link rel="icon" href="sk-logo.webp" type="image/webp"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Admin Panel — Sovereigns Kingdom</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
@@ -32,7 +31,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 /* TOPBAR */
 .topbar{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:0 28px;height:60px;background:rgba(3,5,13,0.97);border-bottom:1px solid var(--border);backdrop-filter:blur(20px)}
 .tl{display:flex;align-items:center;gap:14px}
-.logo-icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;background:transparent}
+.logo-icon{display:flex;align-items:center;justify-content:center;width:34px;height:34px;border:1px solid var(--border);border-radius:2px;background:rgba(88,101,242,0.08)}
 .topbar-brand{font-size:18px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#fff}
 .admin-badge{font-family:var(--mono);font-size:9px;color:var(--orange);border:1px solid rgba(249,115,22,0.3);padding:2px 8px;border-radius:1px;background:rgba(249,115,22,0.08);letter-spacing:0.12em}
 .back-btn{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:0.1em;color:var(--muted);text-decoration:none;border:1px solid var(--border);padding:6px 14px;border-radius:2px;transition:all 0.2s}
@@ -178,6 +177,7 @@ textarea.form-input{resize:vertical;min-height:80px;font-family:var(--mono);font
   <symbol id="i-back" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M19 12H5M12 5l-7 7 7 7"/></symbol>
   <symbol id="i-menu"     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 12h18M3 6h18M3 18h18"/></symbol>
   <symbol id="i-ticket" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 9a3 3 0 010-6h20a3 3 0 010 6v6a3 3 0 010 6H2a3 3 0 010-6V9z"/><path d="M12 3v18"/></symbol>
+  <symbol id="i-ban" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></symbol>
   <symbol id="i-lock"     viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></symbol>
 </svg>
 
@@ -201,7 +201,11 @@ textarea.form-input{resize:vertical;min-height:80px;font-family:var(--mono);font
       <svg width="16" height="16"><use href="#i-menu"/></svg>
     </button>
     <div class="logo-icon">
-      <img src="sk-logo.webp" alt="SK" style="width:32px;height:32px;object-fit:contain;border-radius:2px;"/>
+      <svg viewBox="0 0 32 32" fill="none" width="18" height="18">
+        <polygon points="16,2 28,9 28,23 16,30 4,23 4,9" stroke="#5865F2" stroke-width="1.5" fill="none"/>
+        <polygon points="16,8 22,11.5 22,20.5 16,24 10,20.5 10,11.5" stroke="#f97316" stroke-width="1" fill="rgba(249,115,22,0.12)"/>
+        <circle cx="16" cy="16" r="2.5" fill="#f97316"/>
+      </svg>
     </div>
     <span class="topbar-brand">Sovereigns Kingdom</span>
     <span class="admin-badge">ADMIN PANEL</span>
@@ -233,6 +237,8 @@ textarea.form-input{resize:vertical;min-height:80px;font-family:var(--mono);font
     <button class="sb-btn" id="nav-dmall"    onclick="go('dmall')"><svg width="15" height="15"><use href="#i-mail"/></svg> DM All Players</button>
     <div class="sb-section">Support</div>
     <button class="sb-btn" id="nav-tickets" onclick="go('tickets')"><svg width="15" height="15"><use href="#i-ticket"/></svg> Tickets</button>
+    <div class="sb-section">Moderation</div>
+    <button class="sb-btn" id="nav-bans" onclick="go('bans')"><svg width="15" height="15"><use href="#i-ban"/></svg> Ban Management</button>
     <div class="sb-divider"></div>
     <button class="sb-btn danger" onclick="logout()"><svg width="15" height="15"><use href="#i-out"/></svg> Sign Out</button>
   </aside>
@@ -389,6 +395,50 @@ textarea.form-input{resize:vertical;min-height:80px;font-family:var(--mono);font
       </div>
     </div>
 
+    <!-- ── BAN MANAGEMENT PAGE ───────────────────────────────────────────── -->
+    <div class="page" id="page-bans">
+      <div class="page-title">Ban Management</div>
+      <div class="page-sub">// RESTRICT USER ACCESS TO SOVEREIGNS KINGDOM</div>
+
+      <!-- Ban a user -->
+      <div class="card" style="margin-bottom:18px">
+        <div class="card-title"><svg width="14" height="14"><use href="#i-ban"/></svg> Ban User / IP</div>
+        <div class="form-row" style="margin-bottom:14px">
+          <div class="form-group" style="max-width:160px">
+            <label class="form-label">Ban Type</label>
+            <select class="form-input" id="banType" onchange="toggleBanType()">
+              <option value="user">Discord User ID</option>
+              <option value="ip">IP Address</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1;max-width:280px">
+            <label class="form-label" id="banTargetLabel">Discord User ID</label>
+            <input type="text" class="form-input" id="banTarget" placeholder="e.g. 123456789012345678"/>
+          </div>
+          <div class="form-group" id="banUsernameGroup" style="flex:1;max-width:200px">
+            <label class="form-label">Username (optional)</label>
+            <input type="text" class="form-input" id="banUsername" placeholder="e.g. coolplayer"/>
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:14px">
+          <label class="form-label">Reason <span style="color:var(--muted);font-size:10px">(shown to user)</span></label>
+          <input type="text" class="form-input" id="banReason" placeholder="e.g. Cheating in tournament" maxlength="300"/>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="doBan()">
+          <svg width="13" height="13"><use href="#i-ban"/></svg> Issue Ban
+        </button>
+      </div>
+
+      <!-- Active bans list -->
+      <div class="card">
+        <div class="card-title" style="display:flex;align-items:center;justify-content:space-between">
+          <span><svg width="14" height="14"><use href="#i-ban"/></svg> Active Bans</span>
+          <button class="btn btn-primary btn-sm" onclick="loadBans()"><svg width="12" height="12"><use href="#i-plus"/></svg> Refresh</button>
+        </div>
+        <div id="bansWrap"><div class="empty">Loading...</div></div>
+      </div>
+    </div>
+
   </main>
 </div>
 
@@ -408,12 +458,12 @@ textarea.form-input{resize:vertical;min-height:80px;font-family:var(--mono);font
 
 <script>
 // ─────────────────────────── AUTH ────────────────────────────
-const ADMIN_IDS = ['921970487431671859','1193838762170523722'];
+const OWNER_ID = '921970487431671859';
 const raw = localStorage.getItem('discord_user');
 if (!raw) { window.location.href = 'index.html'; }
 const user = JSON.parse(raw || '{}');
 
-if (!ADMIN_IDS.includes(user.id)) {
+if (user.id !== OWNER_ID) {
   document.getElementById('tokenScreen').innerHTML = `
     <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="#f38ba8" stroke-width="1.5" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
     <div style="font-family:var(--mono);font-size:14px;color:#f38ba8;letter-spacing:0.2em">ACCESS DENIED</div>
@@ -833,6 +883,22 @@ function closeModal() { document.getElementById('confirmOverlay').classList.remo
 function doConfirm()  { closeModal(); if (_cb) { _cb(); _cb=null; } }
 document.getElementById('confirmOverlay').addEventListener('click', e => { if (e.target.id==='confirmOverlay') closeModal(); });
 
+// Promise-based confirm (used by ban system)
+function confirm2(htmlMsg, cb) {
+  document.getElementById('confirmTitle').textContent = 'Confirm';
+  document.getElementById('confirmBody').innerHTML    = htmlMsg;
+  document.getElementById('confirmOverlay').classList.add('open');
+  _cb = () => cb(true);
+  // Override close to resolve false
+  const overlay = document.getElementById('confirmOverlay');
+  const cancel  = overlay.querySelector('.btn-primary');
+  const _onCancel = () => { closeModal(); cb(false); };
+  cancel.onclick = _onCancel;
+}
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
 // ─────────────────────────── TOAST ────────────────────────────
 function toast(msg, type='inf') {
   const el = document.createElement('div');
@@ -1066,6 +1132,110 @@ function draw() {
   requestAnimationFrame(draw);
 }
 window.addEventListener('resize',resize); resize(); draw();
+
+// ─────────────────────────── BAN MANAGEMENT ────────────────────────────
+function toggleBanType() {
+  const t = document.getElementById('banType').value;
+  document.getElementById('banTargetLabel').textContent = t === 'ip' ? 'IP Address' : 'Discord User ID';
+  document.getElementById('banUsernameGroup').style.display = t === 'ip' ? 'none' : '';
+  document.getElementById('banTarget').placeholder = t === 'ip' ? 'e.g. 192.168.1.1' : 'e.g. 123456789012345678';
+}
+
+async function doBan() {
+  const type     = document.getElementById('banType').value;
+  const target   = document.getElementById('banTarget').value.trim();
+  const username = document.getElementById('banUsername').value.trim();
+  const reason   = document.getElementById('banReason').value.trim() || 'No reason provided.';
+
+  if (!target) { toast('Enter a target to ban.', 'error'); return; }
+  if (type === 'user' && !/^\d+$/.test(target)) { toast('Discord ID must be numeric.', 'error'); return; }
+
+  const ok = await new Promise(r => confirm2(`Ban ${type === 'ip' ? 'IP' : 'user'} <b>${escHtml(target)}</b>?<br><small style="color:var(--muted)">${escHtml(reason)}</small>`, r));
+  if (!ok) return;
+
+  try {
+    const res = await fetch('/.netlify/functions/register/admin/ban', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, target, username, reason, caller_id: user.id, admin_token: ADMIN_TOKEN }),
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || 'Failed');
+    toast(`✅ ${type === 'ip' ? 'IP' : 'User'} banned successfully.`, 'ok');
+    document.getElementById('banTarget').value = '';
+    document.getElementById('banUsername').value = '';
+    document.getElementById('banReason').value = '';
+    loadBans();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function doUnban(type, target) {
+  try {
+    const res = await fetch('/.netlify/functions/register/admin/unban', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type, target, caller_id: user.id, admin_token: ADMIN_TOKEN }),
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || 'Failed');
+    toast(`✅ ${type === 'ip' ? 'IP' : 'User'} unbanned.`, 'ok');
+    loadBans();
+  } catch(e) { toast('Error: ' + e.message, 'error'); }
+}
+
+async function loadBans() {
+  const wrap = document.getElementById('bansWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="empty">Loading...</div>';
+  try {
+    const res = await fetch('/.netlify/functions/register/admin/bans', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ caller_id: user.id, admin_token: ADMIN_TOKEN }),
+    });
+    const d = await res.json();
+    if (!res.ok) throw new Error(d.error || 'Failed');
+
+    const userBans = Object.values(d.bans?.users || {});
+    const ipBans   = Object.values(d.bans?.ips   || {});
+    const all = [
+      ...userBans.map(b => ({ ...b, kind: 'user' })),
+      ...ipBans.map(b   => ({ ...b, kind: 'ip'   })),
+    ].sort((a, b) => (b.banned_at || '').localeCompare(a.banned_at || ''));
+
+    if (!all.length) { wrap.innerHTML = '<div class="empty">No active bans.</div>'; return; }
+
+    wrap.innerHTML = `
+      <table class="ptable">
+        <thead><tr>
+          <th>TYPE</th><th>TARGET</th><th>REASON</th><th>BANNED AT</th><th>ACTION</th>
+        </tr></thead>
+        <tbody>
+          ${all.map(b => `
+            <tr>
+              <td><span style="font-family:var(--mono);font-size:10px;padding:2px 7px;border-radius:2px;background:rgba(243,139,168,0.12);color:var(--red);letter-spacing:0.08em">${b.kind.toUpperCase()}</span></td>
+              <td style="font-family:var(--mono);font-size:12px">
+                ${escHtml(b.target)}
+                ${b.username ? `<span style="color:var(--muted);margin-left:6px">@${escHtml(b.username)}</span>` : ''}
+              </td>
+              <td style="max-width:240px;color:var(--muted);font-size:12px">${escHtml(b.reason || '—')}</td>
+              <td style="font-family:var(--mono);font-size:11px;color:var(--muted)">${(b.banned_at || '').replace('T',' ').replace('Z','')}</td>
+              <td>
+                <button class="btn btn-sm" style="background:rgba(34,197,94,0.08);border-color:rgba(34,197,94,0.3);color:var(--green);font-size:11px"
+                  onclick="confirm2('Unban <b>${escHtml(b.target)}</b>?', ok => ok && doUnban('${b.kind}','${escHtml(b.target)}'))">
+                  Unban
+                </button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>`;
+  } catch(e) { wrap.innerHTML = `<div class="empty">${e.message}</div>`; }
+}
+
+// Load bans when navigating to that page
+const _origGo = go;
+go = function(name) {
+  _origGo(name);
+  if (name === 'bans') loadBans();
+};
 </script>
 </body>
 </html>
