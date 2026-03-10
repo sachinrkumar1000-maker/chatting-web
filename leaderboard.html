@@ -325,7 +325,7 @@ loadLeaderboard();
 function checkAdmin() {
   const u = JSON.parse(localStorage.getItem('discord_user')||'{}');
   const link = document.getElementById('adminLink');
-  if (link && u.id === '921970487431671859') link.style.display = '';
+  if (link && ['921970487431671859','1193838762170523722'].includes(u.id)) link.style.display = '';
 }
 checkAdmin();
 function toggleDropdown() {
