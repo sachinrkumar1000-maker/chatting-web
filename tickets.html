@@ -316,11 +316,11 @@ body{font-family:var(--font);color:var(--text);display:flex;flex-direction:colum
 const raw = localStorage.getItem('discord_user');
 if (!raw) window.location.href = 'index.html';
 const user = JSON.parse(raw);
-const OWNER_ID = '921970487431671859';
+const ADMIN_IDS = ['921970487431671859','1193838762170523722'];
 
 document.getElementById('topAv').src = user.avatar || '';
 document.getElementById('topName').textContent = user.globalName || user.username;
-if (user.id === OWNER_ID) document.getElementById('adminLink').style.display = '';
+if (ADMIN_IDS.includes(user.id)) document.getElementById('adminLink').style.display = '';
 
 function toggleDropdown() { document.getElementById('dropdown').classList.toggle('open'); }
 document.addEventListener('click', e => { if (!e.target.closest('.user-pill')) document.getElementById('dropdown').classList.remove('open'); });
