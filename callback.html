@@ -2,7 +2,6 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<link rel="icon" href="sk-logo.webp" type="image/webp"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Authenticating...</title>
 <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
@@ -176,6 +175,35 @@
     localStorage.setItem('discord_user', JSON.stringify(userObj));
 
     document.getElementById('statusText').textContent = 'ACCESS GRANTED — REDIRECTING...';
+
+    // Check if user is banned before letting them in
+    try {
+      const banRes = await fetch(`/.netlify/functions/register/check-ban?discord_id=${encodeURIComponent(userData.id)}`);
+      const banData = await banRes.json();
+      if (banData.banned) {
+        localStorage.removeItem('discord_user');
+        document.getElementById('statusText').textContent = 'ACCESS RESTRICTED';
+        document.getElementById('statusText').style.color = '#f38ba8';
+        document.body.insertAdjacentHTML('beforeend', `
+          <div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;z-index:999;background:rgba(3,5,13,0.97)">
+            <div style="text-align:center;max-width:480px;padding:40px 32px;background:rgba(8,12,24,0.95);border:1px solid rgba(243,139,168,0.3);border-radius:4px">
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f38ba8" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:18px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
+              <div style="font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;color:#f38ba8;letter-spacing:0.1em;margin-bottom:10px">ACCESS RESTRICTED</div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(255,255,255,0.5);letter-spacing:0.12em;margin-bottom:18px">SOVEREIGNS KINGDOM</div>
+              <div style="font-size:14px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:24px">
+                You have been banned from Sovereigns Kingdom.<br/>
+                <span style="color:#f38ba8;font-style:italic">${banData.reason || 'No reason provided.'}</span>
+              </div>
+              <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3)">If you believe this is a mistake, contact an administrator.</div>
+            </div>
+          </div>
+        `);
+        return;
+      }
+    } catch(e) {
+      // Ban check failed — allow through (fail open so a backend issue doesn't lock everyone out)
+      console.warn('[SK] Ban check failed:', e);
+    }
 
     // Brief pause then redirect
     setTimeout(() => { window.location.href = 'dashboard.html'; }, 800);
