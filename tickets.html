@@ -1,7 +1,9 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
+<link rel="icon" href="sk-logo.webp" type="image/webp"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
 <title>Support — Sovereigns Kingdom</title>
 <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&display=swap" rel="stylesheet"/>
@@ -22,7 +24,7 @@ body{font-family:var(--font);color:var(--text);display:flex;flex-direction:colum
 /* TOPBAR */
 .topbar{height:56px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 20px;background:var(--sidebar);border-bottom:1px solid var(--border);backdrop-filter:blur(20px);z-index:100;position:relative}
 .tl{display:flex;align-items:center;gap:12px}
-.logo-icon{width:32px;height:32px;border:1px solid var(--border);border-radius:2px;background:rgba(88,101,242,0.08);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-icon{width:32px;height:32px;background:transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .brand{font-size:16px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;color:#fff}
 .page-tag{font-family:var(--mono);font-size:8px;color:var(--accent);border:1px solid rgba(88,101,242,0.3);padding:2px 7px;border-radius:1px;letter-spacing:0.12em}
 .back-btn{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;color:var(--muted2);text-decoration:none;border:1px solid var(--border);padding:5px 12px;border-radius:2px;transition:all 0.2s}
@@ -197,11 +199,7 @@ body{font-family:var(--font);color:var(--text);display:flex;flex-direction:colum
 <nav class="topbar">
   <div class="tl">
     <div class="logo-icon">
-      <svg viewBox="0 0 32 32" fill="none" width="17" height="17">
-        <polygon points="16,2 28,9 28,23 16,30 4,23 4,9" stroke="#5865F2" stroke-width="1.5" fill="none"/>
-        <polygon points="16,8 22,11.5 22,20.5 16,24 10,20.5 10,11.5" stroke="#5865F2" stroke-width="1" fill="rgba(88,101,242,0.12)"/>
-        <circle cx="16" cy="16" r="2.5" fill="#5865F2"/>
-      </svg>
+      <img src="sk-logo.webp" alt="SK" style="width:32px;height:32px;object-fit:contain;border-radius:2px;"/>
     </div>
     <span class="brand">Sovereigns Kingdom</span>
     <span class="page-tag">SUPPORT</span>
@@ -319,31 +317,11 @@ body{font-family:var(--font);color:var(--text);display:flex;flex-direction:colum
 const raw = localStorage.getItem('discord_user');
 if (!raw) window.location.href = 'index.html';
 const user = JSON.parse(raw);
-// Ban check on every page load
-(async () => {
-  try {
-    const br = await fetch(`/.netlify/functions/register/check-ban?discord_id=${encodeURIComponent(user.id)}`);
-    const bd = await br.json();
-    if (bd.banned) {
-      localStorage.removeItem('discord_user');
-      document.body.innerHTML = `
-        <div style="position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#03050d;font-family:'Rajdhani',sans-serif;z-index:9999">
-          <div style="text-align:center;max-width:480px;padding:40px 32px;background:rgba(8,12,24,0.97);border:1px solid rgba(243,139,168,0.3);border-radius:4px">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#f38ba8" stroke-width="1.5" stroke-linecap="round" style="margin-bottom:18px"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>
-            <div style="font-size:26px;font-weight:700;color:#f38ba8;letter-spacing:0.1em;margin-bottom:8px">ACCESS RESTRICTED</div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:11px;color:rgba(255,255,255,0.4);letter-spacing:0.12em;margin-bottom:18px">SOVEREIGNS KINGDOM</div>
-            <div style="font-size:14px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:24px">You have been banned from Sovereigns Kingdom.<br/><span style="color:#f38ba8;font-style:italic">${bd.reason || 'No reason provided.'}</span></div>
-            <div style="font-family:'Share Tech Mono',monospace;font-size:10px;color:rgba(255,255,255,0.3)">If you believe this is a mistake, contact an administrator.</div>
-          </div>
-        </div>`;
-    }
-  } catch(e) { /* fail open — don't lock out users if backend is down */ }
-})();
-const OWNER_ID = '921970487431671859';
+const ADMIN_IDS = ['921970487431671859','1193838762170523722'];
 
 document.getElementById('topAv').src = user.avatar || '';
 document.getElementById('topName').textContent = user.globalName || user.username;
-if (user.id === OWNER_ID) document.getElementById('adminLink').style.display = '';
+if (ADMIN_IDS.includes(user.id)) document.getElementById('adminLink').style.display = '';
 
 function toggleDropdown() { document.getElementById('dropdown').classList.toggle('open'); }
 document.addEventListener('click', e => { if (!e.target.closest('.user-pill')) document.getElementById('dropdown').classList.remove('open'); });
