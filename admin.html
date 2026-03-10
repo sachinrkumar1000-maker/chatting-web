@@ -1094,14 +1094,12 @@ function escHtml2(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/\n/g,'<br/>');
 }
 
-// Extend the go() function to handle tickets
+// Extend go() to handle tickets + bans lazy loading
 const _origGo = go;
-
-// Patch go for tickets
-const __go = go;
 go = function(name) {
-  __go(name);
+  _origGo(name);
   if (name === 'tickets') loadTickets();
+  if (name === 'bans')    loadBans();
 };
 
 // ─────────────────────────── START ────────────────────────────
@@ -1231,12 +1229,8 @@ async function loadBans() {
   } catch(e) { wrap.innerHTML = `<div class="empty">${e.message}</div>`; }
 }
 
-// Load bans when navigating to that page
-const _origGo = go;
-go = function(name) {
-  _origGo(name);
-  if (name === 'bans') loadBans();
-};
+// Load bans when navigating to that page — handled in merged go() override above
+
 </script>
 </body>
 </html>
